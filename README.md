@@ -149,4 +149,4 @@ Strategic Plan, State of the City, and 14 advisory board agendas.
 
 ## License
 
-Built for the City of Schertz, TX. Civic use encouraged.
+[MIT](LICENSE) — free to use, fork, and adapt for any city or civic purpose.

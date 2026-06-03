@@ -1,0 +1,97 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Schertz brand colors — navy + gold */
+  --city-navy: #1a3660;
+  --city-gold: #c9a84c;
+  --city-gold-light: #f0d990;
+  --city-navy-light: #2d5096;
+}
+
+@layer base {
+  html {
+    height: 100%;
+  }
+  body {
+    height: 100%;
+  }
+}
+
+@layer components {
+  /* Prose styling for AI responses */
+  .prose-civic {
+    @apply text-gray-800 leading-relaxed;
+  }
+  .prose-civic p {
+    @apply mb-3;
+  }
+  .prose-civic ul {
+    @apply list-disc list-inside mb-3 space-y-1;
+  }
+  .prose-civic ol {
+    @apply list-decimal list-inside mb-3 space-y-1;
+  }
+  .prose-civic strong {
+    @apply font-semibold text-gray-900;
+  }
+  .prose-civic h2, .prose-civic h3 {
+    @apply font-semibold text-gray-900 mt-4 mb-2;
+  }
+  /* Citation badges */
+  .prose-civic .citation {
+    @apply inline-flex items-center gap-1 text-xs bg-blue-50 text-blue-700
+           border border-blue-200 rounded px-1.5 py-0.5 font-mono;
+  }
+  /* AI analysis warning label */
+  .prose-civic .ai-analysis {
+    @apply block bg-amber-50 border-l-4 border-amber-400 px-3 py-2
+           text-amber-800 text-sm rounded-r my-3;
+  }
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+/* Chat message animation */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.message-enter {
+  animation: fadeInUp 0.2s ease-out;
+}
+
+/* Typing indicator */
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0; }
+  40% { opacity: 1; }
+}
+.typing-dot {
+  animation: blink 1.4s infinite;
+}
+.typing-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+.typing-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}

@@ -1,0 +1,44 @@
+{
+  "name": "civic-second-brain",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "ingest:seed": "node -r ./scripts/load-env.cjs -r tsx/cjs scripts/ingest-seed.ts",
+    "ingest:doc": "node -r ./scripts/load-env.cjs -r tsx/cjs scripts/ingest-doc.ts",
+    "lint:wiki": "node -r ./scripts/load-env.cjs -r tsx/cjs scripts/lint-wiki.ts",
+    "scrape:check": "node -r ./scripts/load-env.cjs -r tsx/cjs scripts/scraper-check.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.24.0",
+    "ai": "^6.0.195",
+    "axios": "^1.7.2",
+    "cheerio": "^1.0.0-rc.12",
+    "clsx": "^2.1.1",
+    "dotenv": "^16.4.5",
+    "gray-matter": "^4.0.3",
+    "lucide-react": "^0.395.0",
+    "marked": "^12.0.0",
+    "nanoid": "^5.0.7",
+    "next": "16.2.7",
+    "pdf-parse": "^1.1.1",
+    "react": "^18",
+    "react-dom": "^18",
+    "tailwind-merge": "^2.3.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/pdf-parse": "^1.1.4",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.0.1",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "tsx": "^4.15.7",
+    "typescript": "^5"
+  }
+}

@@ -1,0 +1,178 @@
+import fs from "fs";
+import path from "path";
+import type { WikiPage, IngestResult, Recommendation } from "@/types";
+
+const WIKI_PATH = process.env.WIKI_PATH ?? "./wiki";
+
+// ─── Write or update a wiki page ──────────────────────────────────────────
+
+export function writeWikiPage(page: WikiPage): void {
+  const fullPath = path.join(WIKI_PATH, page.path);
+  const dir = path.dirname(fullPath);
+
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
+  }
+
+  const frontmatter = [
+    "---",
+    `title: ${page.title}`,
+    `type: wiki`,
+    `category: ${page.category}`,
+    `sources:`,
+    ...(page.sources ?? []).map((s) => `  - ${s}`),
+    `last_updated: ${page.lastUpdated}`,
+    "---",
+    "",
+  ].join("\n");
+
+  fs.writeFileSync(fullPath, frontmatter + page.content, "utf-8");
+}
+
+// ─── Append content to an existing wiki page ──────────────────────────────
+
+export function appendToWikiPage(
+  pagePath: string,
+  sectionHeading: string,
+  content: string,
+  updatedDate: string
+): boolean {
+  const fullPath = path.join(WIKI_PATH, pagePath);
+  if (!fs.existsSync(fullPath)) return false;
+
+  const raw = fs.readFileSync(fullPath, "utf-8");
+
+  // Update last_updated in frontmatter
+  const updated = raw
+    .replace(/^last_updated: .+$/m, `last_updated: ${updatedDate}`)
+    .trimEnd();
+
+  const appendBlock = `\n\n### ${sectionHeading}\n\n${content}`;
+  fs.writeFileSync(fullPath, updated + appendBlock, "utf-8");
+  return true;
+}
+
+// ─── Write a decisions page for a specific meeting ────────────────────────
+
+export function writeDecisionsPage(
+  meetingDate: string,
+  board: string,
+  content: string,
+  sources: string[]
+): string {
+  const slug = board.replace(/\s+/g, "-").toLowerCase();
+  const pagePath = `decisions/${meetingDate}-${slug}.md`;
+
+  const page: WikiPage = {
+    title: `${board} Meeting — ${meetingDate}`,
+    type: "wiki",
+    category: "decision",
+    sources,
+    lastUpdated: meetingDate,
+    content,
+    path: pagePath,
+  };
+
+  writeWikiPage(page);
+  return pagePath;
+}
+
+// ─── Write a recommendation page ──────────────────────────────────────────
+
+export function writeRecommendationPage(rec: Recommendation): string {
+  const slug = rec.title
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/gi, "")
+    .toLowerCase();
+  const pagePath = `recommendations/${rec.generatedAt}-${slug}.md`;
+
+  const content = `
+## AI ANALYSIS — Requires Council Review
+
+**Finding:** ${rec.finding}
+
+**Evidence:**
+${rec.evidence.map((e) => `- ${e}`).join("\n")}
+
+${
+  rec.comparableCities?.length
+    ? `**Comparable Cities:**\n${rec.comparableCities.map((c) => `- ${c}`).join("\n")}\n`
+    : ""
+}
+**Suggested Action:** ${rec.suggestedAction}
+
+**Council Discussion Questions:**
+${rec.discussionQuestions.map((q) => `- ${q}`).join("\n")}
+
+**Sources Analyzed:**
+${rec.sourcesAnalyzed.map((s) => `- [[${s}]]`).join("\n")}
+`;
+
+  const page: WikiPage = {
+    title: `${rec.title} — ${rec.generatedAt}`,
+    type: "wiki",
+    category: "recommendation",
+    sources: rec.sourcesAnalyzed,
+    lastUpdated: rec.generatedAt,
+    content: content.trim(),
+    path: pagePath,
+  };
+
+  writeWikiPage(page);
+  return pagePath;
+}
+
+// ─── Update wiki/index.md ──────────────────────────────────────────────────
+
+export function updateWikiIndex(
+  newEntries: Array<{
+    path: string;
+    summary: string;
+    date: string;
+    sourceCount: number;
+    category: string;
+  }>
+): void {
+  const indexPath = path.join(WIKI_PATH, "index.md");
+  if (!fs.existsSync(indexPath)) return;
+
+  let content = fs.readFileSync(indexPath, "utf-8");
+
+  // Update the header counts
+  const existing = content.match(/Pages: (\d+)/);
+  const currentCount = existing ? parseInt(existing[1]) : 0;
+  const newCount = currentCount + newEntries.length;
+  content = content.replace(/Pages: \d+/, `Pages: ${newCount}`);
+
+  const today = new Date().toISOString().split("T")[0];
+  content = content.replace(/Last updated: [\d-]+/, `Last updated: ${today}`);
+
+  // Remove the "empty" placeholder lines
+  content = content.replace(/\| \*\(empty[^)]+\)\* \| \| \| \|\n/g, "");
+
+  // Append new rows under the appropriate section
+  for (const entry of newEntries) {
+    const sectionMap: Record<string, string> = {
+      topic: "## Topics",
+      decision: "## Decisions",
+      person: "## People & Boards",
+      recommendation: "## Recommendations",
+      query: "## Queries Filed",
+    };
+    const section = sectionMap[entry.category] ?? "## Topics";
+    const row = `| [[${entry.path}]] | ${entry.summary.slice(0, 80)} | ${entry.date} | ${entry.sourceCount} |\n`;
+    content = content.replace(section, `${section}\n${row}`);
+  }
+
+  fs.writeFileSync(indexPath, content, "utf-8");
+}
+
+// ─── Append to wiki/log.md ─────────────────────────────────────────────────
+
+export function appendToLog(entry: string): void {
+  const logPath = path.join(WIKI_PATH, "log.md");
+  const existing = fs.existsSync(logPath)
+    ? fs.readFileSync(logPath, "utf-8")
+    : "";
+  fs.writeFileSync(logPath, existing.trimEnd() + "\n\n" + entry + "\n", "utf-8");
+}

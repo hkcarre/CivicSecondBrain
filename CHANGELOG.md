@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/xozai/CivicSecondBrain/compare/v1.2.0...v1.3.0) (2026-06-04)
+
+
+### Features
+
+* **deploy:** add Dockerfile, Railway config, and health endpoint ([#10](https://github.com/xozai/CivicSecondBrain/issues/10)) ([6e7b3f1](https://github.com/xozai/CivicSecondBrain/commit/6e7b3f12d664ddb74dfe68ccc10d972bd8d41343))
+
 ## [1.2.0](https://github.com/xozai/CivicSecondBrain/compare/v1.1.0...v1.2.0) (2026-06-04)
 
 

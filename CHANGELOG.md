@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.3](https://github.com/xozai/CivicSecondBrain/compare/v1.3.2...v1.3.3) (2026-06-04)
+
+
+### Bug Fixes
+
+* **deploy:** auto-initialize wiki volume on first boot ([#17](https://github.com/xozai/CivicSecondBrain/issues/17)) ([709688a](https://github.com/xozai/CivicSecondBrain/commit/709688a09666a642ac1ef7c91a4953e48e16146f))
+
 ## [1.3.2](https://github.com/xozai/CivicSecondBrain/compare/v1.3.1...v1.3.2) (2026-06-04)
 
 

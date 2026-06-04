@@ -19,6 +19,26 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 
 ---
 
+## Screenshots
+
+**Chat Q&A** — ask anything about the city, get cited answers from real documents
+
+![Chat Q&A](public/screenshots/chat.png)
+
+**City Health Dashboard** — AI recommendations and wiki health at a glance
+
+![City Health Dashboard](public/screenshots/dashboard.png)
+
+**Wiki Browser** — browse all ingested pages by category
+
+![Wiki Browser](public/screenshots/wiki.png)
+
+**Admin Panel** — manage document ingestion
+
+![Admin Panel](public/screenshots/admin.png)
+
+---
+
 ## Architecture (Karpathy LLM Wiki Pattern)
 
 ```

@@ -481,3 +481,43 @@
 **Wiki pages read:** topics/governance.md, topics/financial-report.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/strategic-plan.md, topics/budget.md, topics/ordinances.md
 **Filed:** not filed
 **Gap noted:** none
+
+## [2026-06-04] QUERY | Summarize the most recent city council meeting
+**Question:** Summarize the most recent city council meeting
+**Wiki pages read:** topics/governance.md, topics/financial-report.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/strategic-plan.md, topics/budget.md, topics/ordinances.md
+**Filed:** not filed
+**Gap noted:** none
+
+## [2026-06-04] QUERY | Which Strategic Plan goals are on track for 2025?
+**Question:** Which Strategic Plan goals are on track for 2025?
+**Wiki pages read:** topics/strategic-plan.md, topics/financial-report.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/budget.md, topics/ordinances.md, topics/governance.md
+**Filed:** not filed
+**Gap noted:** none
+
+## [2026-06-04] QUERY | yes
+**Question:** yes
+**Wiki pages read:** topics/x.md, topics/budget.md, topics/x.md, topics/financial-report.md, topics/public-safety.md
+**Filed:** not filed
+**Gap noted:** none
+
+## [2026-06-04] LINT | full
+**Pages analyzed:** 21
+**Issues found:** 3 high | 4 medium | 1 low
+**Stale pages:** wiki/decisions/2024/council.md — Last updated Sept 2024 (9 months old); contains only '$42M general fund budget' without context or vote breakdown, wiki/decisions/2024-01-10-city-council.md — Last updated Jan 2024 (17 months old); generic '5-0 vote to approve ordinance' with no ordinance number or subject, wiki/decisions/2024-02-01-planning-&-zoning-board.md — Last updated Jan 2024 (17 months old); contains only placeholder text 'Content.', wiki/topics/financial-report.md — Last updated June 2, 2026, but contains only FY2019 data (7-year-old financials); no FY2020-2025 annual reports ingested
+**Recommendations generated:** recommendations/2026-06-04-disabled-veterans-homestead-exemption-dvhs-crisis-threatens-fiscal-sustainability.md, recommendations/2026-06-04-accelerating-debt-burden-without-comprehensive-debt-management-policy.md, recommendations/2026-06-04-fund-balance-erosion-below-policy-target-signals-budget-structural-imbalance.md, recommendations/2026-06-04-street-maintenance-funding-inadequate-for-growing-infrastructure-liability.md, recommendations/2026-06-04-ems-funding-model-unsustainable-without-regional-cost-sharing-reform.md, recommendations/2026-06-04-sales-tax-revenue-growth-slowing-without-economic-development-diversification-strategy.md, recommendations/2026-06-04-strategic-plan-lacks-measurable-performance-metrics-and-progress-reporting.md, recommendations/2026-06-04-drainage-fund-expansion-lacks-stormwater-utility-fee-policy-and-master-plan.md
+**Top 3 recommended actions:**
+  1. CRITICAL: Develop three-scenario DVHS fiscal impact model (FY2026-2030) and brief Council by September 2026 on revenue mitigation strategies including state lobbying coalition and potential service reductions.
+  2. HIGH PRIORITY: Adopt formal Debt Management Policy by December 2026 with debt service ratio caps, per-capita limits, and mandatory affordability analysis for all bond/CO issuances.
+  3. URGENT: Freeze non-essential General Fund hiring until fund balance returns to 26% target; commission zero-based budget review to identify 3-5% recurring savings by March 2027.
+
+## [2026-06-04] QUERY | How does this year's budget compare to last year?
+**Question:** How does this year's budget compare to last year?
+**Wiki pages read:** topics/budget.md, topics/financial-report.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/strategic-plan.md, topics/ordinances.md, topics/governance.md
+**Filed:** not filed
+**Gap noted:** none
+
+## [2026-06-04] QUERY | How does this year's budget compare to last year?
+**Question:** How does this year's budget compare to last year?
+**Wiki pages read:** topics/budget.md, topics/financial-report.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/strategic-plan.md, topics/ordinances.md, topics/governance.md
+**Filed:** not filed
+**Gap noted:** none

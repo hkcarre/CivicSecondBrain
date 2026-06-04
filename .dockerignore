@@ -1,0 +1,18 @@
+.git
+.gitignore
+.playwright-mcp
+.env*
+node_modules
+.next
+raw-sources
+README.md
+CHANGELOG.md
+CONTRIBUTING.md
+infrastructure
+# Exclude all wiki except the skeleton files needed at boot
+wiki/decisions
+wiki/queries
+wiki/people
+wiki/recommendations
+wiki/topics
+wiki/log.md

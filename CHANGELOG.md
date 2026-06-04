@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/xozai/CivicSecondBrain/compare/v1.1.0...v1.2.0) (2026-06-04)
+
+
+### Features
+
+* **scraper:** deep DocumentCenter crawl + wiki fixes + dashboard fix ([#6](https://github.com/xozai/CivicSecondBrain/issues/6)) ([e913d4f](https://github.com/xozai/CivicSecondBrain/commit/e913d4f7273db4e2cf4b6b9055318cc168f6d9ac))
+
 ## [1.1.0](https://github.com/xozai/CivicSecondBrain/compare/v1.0.0...v1.1.0) (2026-06-04)
 
 

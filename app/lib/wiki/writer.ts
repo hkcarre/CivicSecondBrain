@@ -21,7 +21,7 @@ export function writeWikiPage(page: WikiPage): void {
     `category: ${page.category}`,
     `sources:`,
     ...(page.sources ?? []).map((s) => `  - ${s}`),
-    `last_updated: ${page.lastUpdated}`,
+    `last_updated: "${page.lastUpdated}"`,
     "---",
     "",
   ].join("\n");
@@ -44,7 +44,7 @@ export function appendToWikiPage(
 
   // Update last_updated in frontmatter
   const updated = raw
-    .replace(/^last_updated: .+$/m, `last_updated: ${updatedDate}`)
+    .replace(/^last_updated: .+$/m, `last_updated: "${updatedDate}"`)
     .trimEnd();
 
   const appendBlock = `\n\n### ${sectionHeading}\n\n${content}`;
@@ -138,20 +138,27 @@ export function updateWikiIndex(
 
   let content = fs.readFileSync(indexPath, "utf-8");
 
-  // Update the header counts
-  const existing = content.match(/Pages: (\d+)/);
-  const currentCount = existing ? parseInt(existing[1]) : 0;
-  const newCount = currentCount + newEntries.length;
-  content = content.replace(/Pages: \d+/, `Pages: ${newCount}`);
-
   const today = new Date().toISOString().split("T")[0];
   content = content.replace(/Last updated: [\d-]+/, `Last updated: ${today}`);
 
   // Remove the "empty" placeholder lines
   content = content.replace(/\| \*\(empty[^)]+\)\* \| \| \| \|\n/g, "");
 
-  // Append new rows under the appropriate section
+  // Build set of paths already in the index to avoid duplicates
+  const existingPaths = new Set<string>();
+  const existingRowRegex = /\[\[([^\]]+)\]\]/g;
+  let m;
+  while ((m = existingRowRegex.exec(content)) !== null) {
+    existingPaths.add(m[1].trim());
+  }
+
+  // Append only new rows under the appropriate section
+  let addedCount = 0;
   for (const entry of newEntries) {
+    if (existingPaths.has(entry.path)) continue;
+    existingPaths.add(entry.path);
+    addedCount++;
+
     const sectionMap: Record<string, string> = {
       topic: "## Topics",
       decision: "## Decisions",
@@ -163,6 +170,10 @@ export function updateWikiIndex(
     const row = `| [[${entry.path}]] | ${entry.summary.slice(0, 80)} | ${entry.date} | ${entry.sourceCount} |\n`;
     content = content.replace(section, `${section}\n${row}`);
   }
+
+  // Recalculate count from actual rows rather than incrementing
+  const rowCount = (content.match(/^\| \[\[/gm) ?? []).length;
+  content = content.replace(/Pages: \d+/, `Pages: ${rowCount}`);
 
   fs.writeFileSync(indexPath, content, "utf-8");
 }

@@ -54,10 +54,7 @@ export default async function DashboardPage() {
                   finding={rec.finding}
                   suggestedAction={rec.suggestedAction}
                   generatedAt={rec.generatedAt}
-                  onView={() => {
-                    // In production: open modal or navigate to wiki page
-                    console.log("View:", rec.path);
-                  }}
+                  path={rec.path}
                 />
               ))
             )}

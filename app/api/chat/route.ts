@@ -64,8 +64,23 @@ export async function POST(req: Request) {
     appendToLog(logEntry);
   });
 
-  // Return as streaming response compatible with Vercel AI SDK
-  return new Response(stream.toReadableStream(), {
+  // Pipe only the text delta content — not the raw Anthropic SSE event objects
+  const encoder = new TextEncoder();
+  const body = new ReadableStream({
+    async start(controller) {
+      for await (const event of stream) {
+        if (
+          event.type === "content_block_delta" &&
+          event.delta.type === "text_delta"
+        ) {
+          controller.enqueue(encoder.encode(event.delta.text));
+        }
+      }
+      controller.close();
+    },
+  });
+
+  return new Response(body, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Transfer-Encoding": "chunked",

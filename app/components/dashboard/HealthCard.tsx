@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { clsx } from "clsx";
 import { ChevronRight, AlertCircle, AlertTriangle, CheckCircle } from "lucide-react";
 import type { RecommendationSeverity } from "@/types";
@@ -10,7 +11,7 @@ interface HealthCardProps {
   finding: string;
   suggestedAction: string;
   generatedAt: string;
-  onView: () => void;
+  path?: string;
 }
 
 const SEVERITY_CONFIG = {
@@ -46,7 +47,7 @@ export function HealthCard({
   finding,
   suggestedAction,
   generatedAt,
-  onView,
+  path,
 }: HealthCardProps) {
   const cfg = SEVERITY_CONFIG[severity];
   const Icon = cfg.icon;
@@ -83,12 +84,14 @@ export function HealthCard({
       </div>
 
       {/* View full analysis */}
-      <button
-        onClick={onView}
-        className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-city-navy transition-colors self-start"
-      >
-        View full analysis <ChevronRight size={12} />
-      </button>
+      {path && (
+        <Link
+          href={`/wiki/${encodeURIComponent(path.replace(/\.md$/, ""))}`}
+          className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-city-navy transition-colors self-start"
+        >
+          View full analysis <ChevronRight size={12} />
+        </Link>
+      )}
     </div>
   );
 }

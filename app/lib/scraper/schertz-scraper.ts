@@ -1,17 +1,14 @@
 /**
  * Schertz, TX Government Document Scraper
  *
- * Crawls https://www.schertz.com/27/Government to discover
- * and download all available city documents for ingestion.
- *
  * Document sources:
- *  - AgendaCenter (Laserfiche) — meeting agendas & minutes
- *  - Budget & Finance PDFs
- *  - MuniCode — ordinances (HTML)
- *  - City Charter PDF
- *  - Strategic Plan PDF
- *  - State of the City reports
- *  - Board/Commission agendas (14 boards)
+ *  1. CivicPlus DocumentCenter — deep folder crawl via Document_AjaxBinding API
+ *  2. Budget & Finance sub-pages — /250, /249, /247, /248
+ *  3. Public Notices — /2125 and CivicAlerts.aspx
+ *  4. Laserfiche WebLink archive — meeting agendas, minutes, ordinances, resolutions
+ *
+ * NOTE: The /273 AgendaCenter CID-based URLs (?CID=1..17) do NOT serve documents.
+ * Board agendas and minutes live entirely in Laserfiche (source 4).
  */
 
 import axios from "axios";
@@ -20,43 +17,11 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import type { CivicDocument, DocumentType, BoardName } from "@/types";
+import { discoverLaserficheDocs } from "./laserfiche-scraper";
 
 const BASE_URL = "https://www.schertz.com";
-const GOV_URL = `${BASE_URL}/27/Government`;
 const RAW_SOURCES_PATH = process.env.RAW_SOURCES_PATH ?? "./raw-sources";
-
-// ─── Known document source URLs for Schertz ───────────────────────────────
-
-export const SCHERTZ_SOURCES = {
-  // /273 is the confirmed live Agendas & Minutes page
-  agendaCenter: `${BASE_URL}/273/Agendas-Minutes`,
-  // /251 confirmed live Budget & Finance page
-  budgetFinance: `${BASE_URL}/251/Budget-Finance`,
-  municode: "https://library.municode.com/tx/schertz",
-  publicNotices: `${BASE_URL}/CivicAlerts.aspx`,
-};
-
-// ─── Board URL mappings ────────────────────────────────────────────────────
-
-// Schertz uses a single /273 page for all board agendas with a category filter.
-// The numeric IDs in the URL are the CategoryID query param values.
-export const BOARD_AGENDA_URLS: Record<BoardName, string> = {
-  "city-council":           `${BASE_URL}/273/Agendas-Minutes?CID=1`,
-  "planning-zoning":        `${BASE_URL}/273/Agendas-Minutes?CID=4`,
-  "board-of-adjustment":    `${BASE_URL}/273/Agendas-Minutes?CID=5`,
-  "parks-recreation":       `${BASE_URL}/273/Agendas-Minutes?CID=6`,
-  "historical-preservation":`${BASE_URL}/273/Agendas-Minutes?CID=7`,
-  edc:                      `${BASE_URL}/273/Agendas-Minutes?CID=8`,
-  tsac:                     `${BASE_URL}/273/Agendas-Minutes?CID=9`,
-  "library-advisory":       `${BASE_URL}/273/Agendas-Minutes?CID=10`,
-  "animal-services":        `${BASE_URL}/273/Agendas-Minutes?CID=11`,
-  "senior-center":          `${BASE_URL}/273/Agendas-Minutes?CID=12`,
-  "investment-advisory":    `${BASE_URL}/273/Agendas-Minutes?CID=13`,
-  "keep-schertz-beautiful": `${BASE_URL}/273/Agendas-Minutes?CID=14`,
-  sslgc:                    `${BASE_URL}/273/Agendas-Minutes?CID=15`,
-  "housing-authority":      `${BASE_URL}/273/Agendas-Minutes?CID=16`,
-  tirz:                     `${BASE_URL}/273/Agendas-Minutes?CID=17`,
-};
+const SKIP_DOC_IDS = new Set(["8101"]); // City Building Map — not a civic document
 
 // ─── Discovered document manifest ─────────────────────────────────────────
 
@@ -76,27 +41,25 @@ export async function discoverDocuments(): Promise<DiscoveredDocument[]> {
 
   console.log("🔍 Scraping Schertz government documents...");
 
-  // 1. Discover from AgendaCenter (meeting minutes + agendas)
-  for (const [board, url] of Object.entries(BOARD_AGENDA_URLS)) {
-    try {
-      const docs = await scrapeAgendaCenter(url, board as BoardName);
-      discovered.push(...docs);
-      console.log(`  ✓ ${board}: ${docs.length} documents found`);
-    } catch (err) {
-      console.warn(`  ⚠ ${board}: scrape failed — ${(err as Error).message}`);
-    }
-  }
-
-  // 2. Discover budget/finance documents
+  // 1. Deep crawl of CivicPlus DocumentCenter via internal JSON API
   try {
-    const budgetDocs = await scrapeBudgetDocs();
-    discovered.push(...budgetDocs);
-    console.log(`  ✓ Budget/Finance: ${budgetDocs.length} documents found`);
+    const dcDocs = await scrapeDocumentCenter();
+    discovered.push(...dcDocs);
+    console.log(`  ✓ DocumentCenter: ${dcDocs.length} documents found`);
   } catch (err) {
-    console.warn(`  ⚠ Budget/Finance: ${(err as Error).message}`);
+    console.warn(`  ⚠ DocumentCenter: ${(err as Error).message}`);
   }
 
-  // 3. Discover public notices
+  // 2. Budget & Finance sub-pages not covered by DocumentCenter
+  try {
+    const financeDocs = await scrapeFinanceSubpages();
+    discovered.push(...financeDocs);
+    console.log(`  ✓ Finance sub-pages: ${financeDocs.length} documents found`);
+  } catch (err) {
+    console.warn(`  ⚠ Finance sub-pages: ${(err as Error).message}`);
+  }
+
+  // 3. Public Notices
   try {
     const notices = await scrapePublicNotices();
     discovered.push(...notices);
@@ -105,115 +68,194 @@ export async function discoverDocuments(): Promise<DiscoveredDocument[]> {
     console.warn(`  ⚠ Public Notices: ${(err as Error).message}`);
   }
 
+  // 4. Laserfiche WebLink — board agendas, minutes, ordinances, resolutions
+  try {
+    console.log("  Crawling Laserfiche public records archive...");
+    const lfDocs = await discoverLaserficheDocs();
+    discovered.push(...lfDocs);
+    console.log(`  ✓ Laserfiche: ${lfDocs.length} documents found`);
+  } catch (err) {
+    console.warn(`  ⚠ Laserfiche: ${(err as Error).message}`);
+  }
+
   console.log(`\n📋 Total documents discovered: ${discovered.length}`);
   return discovered;
 }
 
-// ─── AgendaCenter scraper ──────────────────────────────────────────────────
-// Schertz AgendaCenter at /273 renders agenda rows with DocumentCenter PDF links.
-// Each row has: date text + links to Agenda PDF and/or Minutes PDF.
+// ─── CivicPlus DocumentCenter scraper ────────────────────────────────────
+//
+// Two internal APIs (discovered by network inspection):
+//   Folder tree:  POST /admin/DocumentCenter/Home/_AjaxLoadingReact?type=0
+//   Document list: POST /Admin/DocumentCenter/Home/Document_AjaxBinding?renderMode=0&loadSource=7
+//
+// Civic-relevant root folder IDs (from the type=0 response for root folder 1):
+//   Boards & Commissions: 34   City Council: 206   City Secretary: 41
+//   Budget & Finance: 36       Government: 98      Public Information: 65
+//   Engineering: 117           Planning: 142       Police: 49
+//   Fire: 44                   EMS: 42             Parks & Recreation: 27
 
-async function scrapeAgendaCenter(
-  url: string,
-  board: BoardName
-): Promise<DiscoveredDocument[]> {
-  const { data: html } = await axios.get(url, { timeout: 15000 });
-  const $ = cheerio.load(html);
-  const docs: DiscoveredDocument[] = [];
-  const label = boardLabel(board);
+const DC_CIVIC_FOLDERS: Array<{ id: number; name: string; type: DocumentType; board?: BoardName }> = [
+  { id: 36,  name: "Budget & Finance",       type: "budget" },
+  { id: 34,  name: "Boards & Commissions",   type: "agenda" },
+  { id: 206, name: "City Council",           type: "agenda",          board: "city-council" },
+  { id: 41,  name: "City Secretary",         type: "public-notice" },
+  { id: 98,  name: "Government",             type: "charter" },
+  { id: 65,  name: "Public Information",     type: "public-notice" },
+  { id: 142, name: "Planning",               type: "agenda",          board: "planning-zoning" },
+  { id: 27,  name: "Parks & Recreation",     type: "agenda",          board: "parks-recreation" },
+  { id: 44,  name: "Fire",                   type: "financial-report" },
+  { id: 42,  name: "EMS",                    type: "financial-report" },
+  { id: 49,  name: "Police",                 type: "financial-report" },
+];
 
-  // Schertz CivicPlus AgendaCenter: rows are <li> or <tr> elements containing
-  // a date and PDF links. Collect ALL DocumentCenter PDF links on the page.
-  $("a[href]").each((_i, el) => {
-    const href = $(el).attr("href") ?? "";
-    const text = $(el).text().trim();
+const ALLOWED_FILE_TYPES = new Set(["pdf", "doc", "docx", "txt", "xlsx"]);
 
-    // Only follow DocumentCenter PDF links
-    if (!href.includes("/DocumentCenter/") && !href.includes("ViewFile")) return;
-    if (!text) return;
-    // Skip known non-document IDs
-    const SKIP_IDS = ["8101"];
-    if (SKIP_IDS.some((id) => href.includes(`/View/${id}`))) return;
+interface DcFolder { Text: string; Value: string; LoadOnDemand: boolean; ParentID: string }
+interface DcDocument { ID: number; DisplayName: string; FileType: string; URL: string; LastModifiedDateString: string }
 
-    const fullUrl = href.startsWith("http") ? href : `${BASE_URL}${href}`;
-
-    // Classify as agenda or minutes based on link text
-    const lowerText = text.toLowerCase();
-    const isMinutes = lowerText.includes("minute") || lowerText.includes("minutes");
-    const isAgenda = lowerText.includes("agenda") || !isMinutes;
-
-    // Extract date from surrounding context (parent row)
-    const parentText = $(el).closest("li, tr, div").text();
-    const dateMatch = parentText.match(/\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}/i)
-      ?? parentText.match(/\d{1,2}\/\d{1,2}\/\d{4}/);
-    const date = dateMatch ? parseDate(dateMatch[0]) : new Date().toISOString().split("T")[0];
-
-    docs.push({
-      title: `${label} ${isMinutes ? "Minutes" : "Agenda"} — ${date}`,
-      url: fullUrl,
-      type: isMinutes ? "meeting-minutes" : "agenda",
-      board,
-      date,
-    });
-  });
-
-  return docs;
+async function dcFolderTree(folderId: number): Promise<DcFolder[]> {
+  const { data } = await axios.post<{ Data: DcFolder[] }>(
+    `${BASE_URL}/admin/DocumentCenter/Home/_AjaxLoadingReact?type=0`,
+    { value: String(folderId), expandTree: false, loadSource: 7, selectedFolder: folderId },
+    { headers: { "Content-Type": "application/json", "Referer": `${BASE_URL}/DocumentCenter` }, timeout: 15000 }
+  );
+  return data.Data ?? [];
 }
 
-// ─── Budget document scraper ───────────────────────────────────────────────
+async function dcDocuments(folderId: number, page = 1): Promise<{ docs: DcDocument[]; total: number }> {
+  const { data } = await axios.post<{ Documents: DcDocument[]; TotalCount: number }>(
+    `${BASE_URL}/Admin/DocumentCenter/Home/Document_AjaxBinding?renderMode=0&loadSource=7`,
+    { folderId, getDocuments: 1, imageRepo: false, renderMode: 0, loadSource: 7,
+      requestingModuleID: 75, searchString: "", pageNumber: page, rowsPerPage: 100,
+      sortColumn: "DisplayName", sortOrder: 0 },
+    { headers: { "Content-Type": "application/json", "Referer": `${BASE_URL}/DocumentCenter` }, timeout: 15000 }
+  );
+  return { docs: data.Documents ?? [], total: data.TotalCount ?? 0 };
+}
 
-async function scrapeBudgetDocs(): Promise<DiscoveredDocument[]> {
-  const { data: html } = await axios.get(SCHERTZ_SOURCES.budgetFinance, {
-    timeout: 15000,
-  });
-  const $ = cheerio.load(html);
-  const docs: DiscoveredDocument[] = [];
+async function crawlDcFolder(
+  folderId: number,
+  folderName: string,
+  defaultType: DocumentType,
+  defaultBoard: BoardName | undefined,
+  depth: number,
+  results: DiscoveredDocument[]
+): Promise<void> {
+  if (depth > 4) return;
 
-  // Only follow DocumentCenter links that look like real budget/finance documents.
-  // Exclude maps, forms, and other non-financial pages.
-  const SKIP_KEYWORDS = ["map", "form", "contact", "directory", "photo", "image", "building"];
-  // Known non-document IDs to skip (e.g., 8101 = building map)
-  const SKIP_IDS = ["8101"];
+  // Get subfolders
+  const subfolders = await dcFolderTree(folderId);
+  for (const sub of subfolders) {
+    await crawlDcFolder(
+      parseInt(sub.Value),
+      sub.Text,
+      defaultType,
+      defaultBoard,
+      depth + 1,
+      results
+    );
+  }
 
-  $('a[href*="DocumentCenter/View"]').each((_i, el) => {
-    const href = $(el).attr("href") ?? "";
-    const title = $(el).text().trim();
-    if (!title || !href) return;
+  // Get documents with pagination
+  let page = 1;
+  let fetched = 0;
+  let total = Infinity;
 
-    // Skip obviously non-financial documents
-    if (SKIP_KEYWORDS.some((kw) => title.toLowerCase().includes(kw))) return;
-    // Skip known non-document IDs
-    if (SKIP_IDS.some((id) => href.includes(`/View/${id}`))) return;
-    // Must have a meaningful title (not just a number or icon)
-    if (title.length < 5) return;
+  while (fetched < total) {
+    const { docs, total: t } = await dcDocuments(folderId, page);
+    total = t;
+    for (const doc of docs) {
+      const ext = (doc.FileType ?? "").toLowerCase();
+      if (!ALLOWED_FILE_TYPES.has(ext)) continue;
+      const docId = String(doc.ID);
+      if (SKIP_DOC_IDS.has(docId)) continue;
 
-    const url = href.startsWith("http") ? href : `${BASE_URL}${href}`;
-    const type = inferDocType(title);
-    const date = extractYearFromTitle(title);
+      const url = doc.URL.startsWith("http") ? doc.URL : `${BASE_URL}${doc.URL}`;
+      const type = inferDocType(doc.DisplayName, folderName) ?? defaultType;
+      const date = extractDateFromString(doc.LastModifiedDateString) ?? extractYearFromTitle(doc.DisplayName);
 
-    docs.push({ title, url, type, date });
-  });
+      results.push({ title: doc.DisplayName, url, type, board: defaultBoard, date });
+    }
+    fetched += docs.length;
+    if (docs.length < 100) break;
+    page++;
+  }
+}
 
-  return docs;
+async function scrapeDocumentCenter(): Promise<DiscoveredDocument[]> {
+  const results: DiscoveredDocument[] = [];
+  for (const folder of DC_CIVIC_FOLDERS) {
+    try {
+      const before = results.length;
+      await crawlDcFolder(folder.id, folder.name, folder.type, folder.board, 0, results);
+      console.log(`    DC/${folder.name}: ${results.length - before} docs`);
+    } catch (err) {
+      console.warn(`    DC/${folder.name}: ${(err as Error).message}`);
+    }
+  }
+  return results;
+}
+
+// ─── Finance sub-page scrapers ─────────────────────────────────────────────
+// These pages embed DocumentCenter links not covered by folder crawls.
+
+const FINANCE_SUBPAGES: Array<{ url: string; type: DocumentType }> = [
+  { url: `${BASE_URL}/250/Financial-Transparency`, type: "financial-report" },
+  { url: `${BASE_URL}/249/Debt-Obligations`,        type: "financial-report" },
+  { url: `${BASE_URL}/247/City-Pension`,            type: "financial-report" },
+  { url: `${BASE_URL}/248/Texas-Municipal-Retirement-System`, type: "financial-report" },
+  { url: `${BASE_URL}/251/Budget-Finance`,          type: "budget" },
+  { url: `${BASE_URL}/2125/Public-Notices`,         type: "public-notice" },
+];
+
+async function scrapeFinanceSubpages(): Promise<DiscoveredDocument[]> {
+  const results: DiscoveredDocument[] = [];
+  const seen = new Set<string>();
+
+  for (const { url: pageUrl, type } of FINANCE_SUBPAGES) {
+    try {
+      const { data: html } = await axios.get(pageUrl, { timeout: 15000 });
+      const $ = cheerio.load(html);
+
+      $('a[href*="DocumentCenter/View"]').each((_i, el) => {
+        const href = $(el).attr("href") ?? "";
+        const title = $(el).text().trim();
+        if (!title || title.length < 4) return;
+
+        // Extract doc ID and skip known non-civic docs
+        const idMatch = href.match(/\/View\/(\d+)/);
+        if (!idMatch || SKIP_DOC_IDS.has(idMatch[1])) return;
+
+        const fullUrl = href.startsWith("http") ? href : `${BASE_URL}${href}`;
+        if (seen.has(fullUrl)) return;
+        seen.add(fullUrl);
+
+        results.push({
+          title,
+          url: fullUrl,
+          type: inferDocType(title, "") ?? type,
+          date: extractYearFromTitle(title),
+        });
+      });
+    } catch (err) {
+      console.warn(`    subpage ${pageUrl}: ${(err as Error).message}`);
+    }
+  }
+  return results;
 }
 
 // ─── Public notices scraper ────────────────────────────────────────────────
 
 async function scrapePublicNotices(): Promise<DiscoveredDocument[]> {
-  // Schertz public notices are at /CivicAlerts.aspx (no AID filter needed)
-  const { data: html } = await axios.get(SCHERTZ_SOURCES.publicNotices, {
-    timeout: 15000,
-  });
+  const { data: html } = await axios.get(`${BASE_URL}/CivicAlerts.aspx`, { timeout: 15000 });
   const $ = cheerio.load(html);
   const docs: DiscoveredDocument[] = [];
   const today = new Date().toISOString().split("T")[0];
 
-  // CivicPlus alert pages use .liveEditTab or table rows with alert titles
   $(".liveEditTab a, .alertItem a, table.listingTable tr td a").each((_i, el) => {
     const title = $(el).text().trim();
     const href = $(el).attr("href") ?? "";
     if (!title || !href || title.length < 5) return;
-
     docs.push({
       title: `Public Notice: ${title}`,
       url: href.startsWith("http") ? href : `${BASE_URL}${href}`,
@@ -221,15 +263,12 @@ async function scrapePublicNotices(): Promise<DiscoveredDocument[]> {
       date: today,
     });
   });
-
   return docs;
 }
 
 // ─── Download a document to raw-sources/ ──────────────────────────────────
 
-export async function downloadDocument(
-  doc: DiscoveredDocument
-): Promise<string | null> {
+export async function downloadDocument(doc: DiscoveredDocument): Promise<string | null> {
   try {
     const dir = path.join(RAW_SOURCES_PATH, doc.type, doc.board ?? "general");
     fs.mkdirSync(dir, { recursive: true });
@@ -239,21 +278,16 @@ export async function downloadDocument(
       timeout: 60000,
       maxRedirects: 5,
       headers: {
-        "User-Agent":
-          "CivicSecondBrain/1.0 (City Council Research Tool; contact@schertz.com)",
+        "User-Agent": "CivicSecondBrain/1.0 (City Council Research Tool; contact@schertz.com)",
         "Accept": "application/pdf,*/*",
       },
     });
 
-    // Determine extension from Content-Type (more reliable than URL for
-    // CivicPlus DocumentCenter which serves PDFs at extensionless URLs)
-    const contentType: string =
-      (response.headers["content-type"] as string) ?? "";
+    const contentType: string = (response.headers["content-type"] as string) ?? "";
     const ext = contentTypeToExt(contentType) ?? getExtension(doc.url);
     const filename = sanitizeFilename(doc.title) + ext;
     const localPath = path.join(dir, filename);
 
-    // Skip if already downloaded with same checksum
     if (fs.existsSync(localPath)) {
       const existing = fs.readFileSync(localPath);
       const checksum = crypto.createHash("md5").update(existing).digest("hex");
@@ -274,10 +308,8 @@ export async function downloadDocument(
 
 function contentTypeToExt(contentType: string): string | null {
   if (contentType.includes("application/pdf")) return ".pdf";
-  if (contentType.includes("application/vnd.openxmlformats") ||
-      contentType.includes("spreadsheetml")) return ".xlsx";
-  if (contentType.includes("msword") ||
-      contentType.includes("wordprocessingml")) return ".docx";
+  if (contentType.includes("application/vnd.openxmlformats") || contentType.includes("spreadsheetml")) return ".xlsx";
+  if (contentType.includes("msword") || contentType.includes("wordprocessingml")) return ".docx";
   if (contentType.includes("text/html")) return ".html";
   if (contentType.includes("text/plain")) return ".txt";
   return null;
@@ -285,11 +317,7 @@ function contentTypeToExt(contentType: string): string | null {
 
 // ─── Build a CivicDocument manifest entry ─────────────────────────────────
 
-export function toCivicDocument(
-  doc: DiscoveredDocument,
-  localPath: string,
-  id: string
-): CivicDocument {
+export function toCivicDocument(doc: DiscoveredDocument, localPath: string, id: string): CivicDocument {
   return {
     id,
     title: doc.title,
@@ -301,14 +329,10 @@ export function toCivicDocument(
   };
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────
 
 function sanitizeFilename(name: string): string {
-  return name
-    .replace(/[^a-z0-9\s-]/gi, "")
-    .replace(/\s+/g, "-")
-    .toLowerCase()
-    .slice(0, 120);
+  return name.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "-").toLowerCase().slice(0, 120);
 }
 
 function getExtension(url: string): string {
@@ -318,19 +342,20 @@ function getExtension(url: string): string {
   return ".html";
 }
 
-function inferDocType(title: string): DocumentType {
-  const t = title.toLowerCase();
-  if (t.includes("budget")) return "budget";
+function inferDocType(title: string, folderName: string): DocumentType | undefined {
+  const t = `${title} ${folderName}`.toLowerCase();
+  if (t.includes("budget") || t.includes("cip") || t.includes("capital improvement")) return "budget";
   if (t.includes("ordinance")) return "ordinance";
   if (t.includes("charter")) return "charter";
-  if (t.includes("financial") || t.includes("audit")) return "financial-report";
-  if (t.includes("strategic")) return "strategic-plan";
+  if (t.includes("financial") || t.includes("audit") || t.includes("acfr") || t.includes("cafr")) return "financial-report";
+  if (t.includes("strategic") || t.includes("master plan")) return "strategic-plan";
   if (t.includes("state of the city")) return "state-of-city";
   if (t.includes("minutes")) return "meeting-minutes";
   if (t.includes("agenda")) return "agenda";
-  if (t.includes("notice")) return "public-notice";
+  if (t.includes("notice") || t.includes("hearing")) return "public-notice";
   if (t.includes("resolution")) return "resolution";
-  return "financial-report";
+  if (t.includes("tax rate") || t.includes("tax rate")) return "financial-report";
+  return undefined;
 }
 
 function extractYearFromTitle(title: string): string {
@@ -338,31 +363,11 @@ function extractYearFromTitle(title: string): string {
   return match ? `${match[0]}-01-01` : new Date().toISOString().split("T")[0];
 }
 
-function parseDate(text: string): string {
+function extractDateFromString(dateStr: string): string | undefined {
+  if (!dateStr) return undefined;
   try {
-    const d = new Date(text);
+    const d = new Date(dateStr);
     if (!isNaN(d.getTime())) return d.toISOString().split("T")[0];
   } catch {}
-  return new Date().toISOString().split("T")[0];
-}
-
-function boardLabel(board: BoardName): string {
-  const labels: Record<BoardName, string> = {
-    "city-council": "City Council",
-    "planning-zoning": "Planning & Zoning Commission",
-    "board-of-adjustment": "Board of Adjustment",
-    "parks-recreation": "Parks & Recreation Advisory Board",
-    "historical-preservation": "Historical Preservation Committee",
-    edc: "Economic Development Corporation",
-    tsac: "Transportation Safety Advisory Commission",
-    "library-advisory": "Library Advisory Board",
-    "animal-services": "Animal Services Advisory Committee",
-    "senior-center": "Senior Center Advisory Board",
-    "investment-advisory": "Investment Advisory Board",
-    "keep-schertz-beautiful": "Keep Schertz Beautiful Committee",
-    sslgc: "Schertz Seguin Local Government Corporation",
-    "housing-authority": "Schertz Housing Authority",
-    tirz: "Tax Increment Reinvestment Zone Board",
-  };
-  return labels[board] ?? board;
+  return undefined;
 }

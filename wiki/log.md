@@ -201,3 +201,283 @@
 **Manifest:** ./raw-sources/manifest.json
 **Top themes:** Initial bootstrap of Schertz, TX civic document corpus
 **Data source:** https://www.schertz.com/27/Government
+
+## [2026-06-03] QUERY | Summarize the most recent city council meeting
+**Question:** Summarize the most recent city council meeting
+**Wiki pages read:** topics/governance.md, topics/financial-report.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/strategic-plan.md, topics/budget.md, topics/ordinances.md
+**Filed:** not filed
+**Gap noted:** none
+
+## [2024-10-01] Ingested budget.pdf
+
+## [2024-10-01] First entry
+
+## [2024-10-02] Second entry
+
+## [2026-06-03] INGEST-BATCH | Schertz seed ingestion
+**Sources processed:** 1
+**Succeeded:** 0 | **Failed:** 1
+**Elapsed:** 74s
+**Manifest:** ./raw-sources/manifest.json
+**Top themes:** Initial bootstrap of Schertz, TX civic document corpus
+**Data source:** https://www.schertz.com/27/Government
+
+## [2026-06-03] INGEST | City Charter 2024
+**Source:** https://www.schertz.com/DocumentCenter/View/13333/City-of-Schertz-City-Charter-2024
+**Document type:** charter
+**Pages updated:** topics/governance.md, topics/ordinances.md, topics/budget.md
+**Pages created:** none
+**Key facts added:** This is the 2024 Home Rule Charter for the City of Schertz, Texas, adopted by voters on November 5, 2024. It establishes the city's form of government with a Mayor-Council system and appointed City Manager, defines city powers, boundaries, and organizational structure. The Charter details the composition of the City Council (Mayor and seven Council members elected at-large for three-year terms), procedures for meetings and ordinances, financial procedures, and provisions for initiative, referendum, and recall. It also includes general provisions for charter amendments, conflict of interest rules, and disaster procedures.
+**Ordinances referenced:** 15-M-15, 15-M-41
+**Dollar amounts found:** Maximum criminal fine for charter violations: 500; Maximum civil fine for charter violations: 500; Candidate filing fee: 5
+**Votes recorded:** 1
+
+## [2026-06-03] INGEST | Strategic Plan 2024-2025
+**Source:** https://www.schertz.com/DocumentCenter/View/12694/City-of-Schertz-Strategic-Plan-2024-25
+**Document type:** strategic-plan
+**Pages updated:** topics/strategic-plan.md, topics/governance.md, topics/budget.md, topics/infrastructure.md, topics/public-safety.md, topics/development.md
+**Pages created:** none
+**Key facts added:** This is the City of Schertz Strategic Plan for fiscal years 2024-2025. The document outlines the city's vision, mission, and strategic priorities for the two-year period. It establishes goals and objectives across multiple focus areas to guide city operations and decision-making. The plan serves as a roadmap for achieving the community's desired outcomes and measuring progress toward long-term objectives.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 2026 Master Calendar
+**Source:** https://www.schertz.com/DocumentCenter/View/13925/2026-City-of-Schertz-Master-Calendar
+**Document type:** agenda
+**Pages updated:** topics/governance.md, topics/budget.md, topics/strategic-plan.md, topics/development.md
+**Pages created:** none
+**Key facts added:** This is Schertz's 2026 Master Calendar, which serves as a comprehensive scheduling document for all city council meetings, board and commission meetings, city holidays, and special events throughout the year. The calendar includes the regular meeting schedules for City Council (1st and 3rd Tuesdays), Planning & Zoning, Parks & Recreation Advisory Board, Economic Development Corporation, and numerous other advisory bodies. It also marks important city events like Polar Bear 5K, National Night Out, and community celebrations, as well as official city holidays when offices are closed. The document provides specific meeting locations, times, and notes exceptions or rescheduled meetings throughout the year.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | Adopted Budget FY2025-26
+**Source:** https://www.schertz.com/DocumentCenter/View/13847
+**Document type:** budget
+**Pages updated:** topics/budget.md, topics/infrastructure.md, topics/public-safety.md, topics/development.md, topics/governance.md, topics/strategic-plan.md
+**Pages created:** none
+**Key facts added:** The City of Schertz adopted its annual budget for FY2025-26 (October 1, 2025 - September 30, 2026) totaling $272,679,332, including an Operating Budget of $740,762,098 and a Capital Budget of $72,517,234. The budget focuses on five key priorities: staff compensation, street maintenance and repair, capital improvement program (CIP), increasing staffing levels, and new/remodeled facilities. The property tax rate increased 1.1% to $0.5118 per $100 of valuation. The budget adds 26 new positions citywide and addresses challenges including Disabled Veterans Homestead Exemption impacts, EMS funding gaps, and drainage infrastructure needs.
+**Ordinances referenced:** none
+**Dollar amounts found:** Total Combined Budget: 272679332; Operating Budget: 740762098; Capital Budget: 72517234; General Fund Total Revenues: 52815416; Property Tax Revenue: 32004288; Sales Tax Revenue: 23153608; Water & Sewer Fund Revenue: 35391478; Disabled Veterans Homestead Exemption Impact: 5500000; DVHS Exempt Property Value: 7080000000; Street Maintenance (General Fund): 650000; Street Projects (Bond/SEDC/Grants): 53889496; Merit/Step Program: 784000; Traffic Safety and Sidewalk Improvements: 415000; Fire Station 4 Staffing Impact: 1300000; EMS Fund Revenue: 17060386; Drainage Fund Revenue: 2316283; SEDC Fund Revenue: 8928608
+**Votes recorded:** 5
+
+## [2026-06-03] INGEST | Adopted Budget FY2024-25
+**Source:** https://www.schertz.com/DocumentCenter/View/13068
+**Document type:** budget
+**Pages updated:** topics/budget.md, topics/ordinances.md, topics/infrastructure.md, topics/public-safety.md, topics/development.md, topics/governance.md, topics/strategic-plan.md
+**Pages created:** none
+**Key facts added:** The City of Schertz adopted budget for FY2024-25 totals $132.2 million in expenditures across all funds, with revenues of $122.3 million. The General Fund budget is $52.6 million. The budget includes a 3.5% across-the-board salary increase based on the Bureau of Labor Statistics Employer Cost Index, though lower than the 5.1% ECI to align with revenue projections. The property tax rate increases to $0.4900 per $100 valuation, with the M&O portion at $0.3326 and I&S portion at $0.1574. The budget maintains essential services while addressing infrastructure needs, including $1 million for street maintenance and a comprehensive Capital Improvement Program. New positions include an EMS Battalion Chief, 5 Water/Sewer Workers, and a Meter Technician.
+**Ordinances referenced:** none
+**Dollar amounts found:** Total budget expenditures all funds: 132189127; Total revenues all funds: 122269356; General Fund expenditures: 52589778; General Fund revenues: 49993629; Property tax increase: 1345617; Total debt obligation secured by property taxes: 88054065; Water and Sewer Fund expenditures: 35011333; Police Department budget: 13602271; Fire Rescue budget: 10085401; EMS Fund budget: 15371822; Economic Development Corporation budget: 16668840; Street maintenance allocation: 1000000; Certificates of Obligation to be issued: 20000000; Taxable assessed property value: 5645026665; Fund 433 Total Revenues FY2024-25: 425250; Fund 433 Ending Fund Balance FY2024-25: 1903192; Fund 434 Total Revenues FY2024-25: 3315; Library Fund Total Budget FY2024-25: 21500; Historical Committee Total Budget FY2024-25: 14250; Total General Fund Supported Debt Service FY2025: 8148590; Total Water and Wastewater Debt Service FY2025: 2591411; Total Schertz-Seguin LGC Debt Service FY2025: 8116003; General Fund unreserved fund balance policy: null; Debt Service Fund balance policy: null; Capital project threshold for CIP: 100000; Capitalization threshold for tangible assets: 5000; Historical Committee transfer from General Fund: 10750
+**Votes recorded:** 8
+
+## [2026-06-03] QUERY | What is the current total city debt and debt per c
+**Question:** What is the current total city debt and debt per capita?
+**Wiki pages read:** topics/budget.md, topics/financial-report.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/strategic-plan.md, topics/ordinances.md, topics/governance.md
+**Filed:** not filed
+**Gap noted:** none
+
+## [2026-06-03] LINT | full
+**Pages analyzed:** 13
+**Issues found:** 3 high | 4 medium | 1 low
+**Stale pages:** wiki/decisions/2024/council.md — Last updated Sept 2024 (9 months old); contains only '$42M general fund budget' without context or vote breakdown, wiki/decisions/2024-01-10-city-council.md — Last updated Jan 2024 (17 months old); generic '5-0 vote to approve ordinance' with no ordinance number or subject, wiki/decisions/2024-02-01-planning-&-zoning-board.md — Last updated Jan 2024 (17 months old); contains only placeholder text 'Content.', wiki/topics/financial-report.md — Last updated June 2, 2026, but contains only FY2019 data (7-year-old financials); no FY2020-2025 annual reports ingested
+**Recommendations generated:** recommendations/2026-06-03-disabled-veterans-homestead-exemption-dvhs-crisis-threatens-fiscal-sustainability.md, recommendations/2026-06-03-accelerating-debt-burden-without-comprehensive-debt-management-policy.md, recommendations/2026-06-03-fund-balance-erosion-below-policy-target-signals-budget-structural-imbalance.md, recommendations/2026-06-03-street-maintenance-funding-inadequate-for-growing-infrastructure-liability.md, recommendations/2026-06-03-ems-funding-model-unsustainable-without-regional-cost-sharing-reform.md, recommendations/2026-06-03-sales-tax-revenue-growth-slowing-without-economic-development-diversification-strategy.md, recommendations/2026-06-03-strategic-plan-lacks-measurable-performance-metrics-and-progress-reporting.md, recommendations/2026-06-03-drainage-fund-expansion-lacks-stormwater-utility-fee-policy-and-master-plan.md
+**Top 3 recommended actions:**
+  1. CRITICAL: Develop three-scenario DVHS fiscal impact model (FY2026-2030) and brief Council by September 2026 on revenue mitigation strategies including state lobbying coalition and potential service reductions.
+  2. HIGH PRIORITY: Adopt formal Debt Management Policy by December 2026 with debt service ratio caps, per-capita limits, and mandatory affordability analysis for all bond/CO issuances.
+  3. URGENT: Freeze non-essential General Fund hiring until fund balance returns to 26% target; commission zero-based budget review to identify 3-5% recurring savings by March 2027.
+
+## [2026-06-03] INGEST | Adopted Budget FY2022-23
+**Source:** https://www.schertz.com/DocumentCenter/View/8193
+**Document type:** budget
+**Pages updated:** topics/budget.md, topics/infrastructure.md, topics/public-safety.md, topics/development.md, topics/governance.md
+**Pages created:** none
+**Key facts added:** The City of Schertz adopted budget for FY2022-23 (October 1, 2022 – September 30, 2023) totaling $108.5 million across all funds. The budget includes a property tax rate of $0.4950 per $100 valuation, down from $0.5121 the previous year. Major components include General Fund ($44.4M), Water & Sewer Fund ($28.5M), and Interest & Sinking Fund ($8.7M). The budget adds 30 new positions citywide and includes a 3% ECI increase for employees. Key initiatives include street preservation funding, IT infrastructure upgrades, and public safety enhancements.
+**Ordinances referenced:** none
+**Dollar amounts found:** Total Budget - All Funds: 108549921; General Fund Revenue: 44376036; Property Tax Revenue Increase: 2541687; Water & Sewer Fund: 28485858; Total Debt Obligation: 105316557; Street Preservation and Maintenance (SPAM) increase: 250000; EMS Fund Revenue: 11720981; Economic Development Corporation Revenue: 10050960; Drainage Fund Revenue: 1450073; Interest & Sinking Fund Revenue: 8686248; Certificates of Obligation, Series 2019 - General Fund Component - Original Issue Amount: 7495000; Certificates of Obligation, Series 2019 - Utility Fund Bond Component - Original Issue Amount: 7495000; General Obligation Refunding Bonds, Series 2020 - Original Issue Amount: 7555000; General Obligation Refunding Bonds, Series 2021 - General Fund - Original Issue Amount: 6015000; General Obligation Refunding Bonds, Series 2021 - Utility Fund - Original Issue Amount: 6015000; Certificates of Obligation, Series 2022 - Original Issue Amount: 9390000; Certificates of Obligation, Series 2022A - General Fund - Original Issue Amount: 18530000; Certificates of Obligation, Series 2022A - Utility Fund - Original Issue Amount: 18530000; General Obligation Bonds, Series 2022 - Original Issue Amount: 18535000; Total Schertz Debt - All Series Combined - FY2023 Payment: 7570062; Total Schertz Debt - All Series Combined - Total Outstanding: 202829454
+**Votes recorded:** 2
+
+## [2026-06-03] INGEST | Schertz Tax Rates
+**Source:** https://www.schertz.com/DocumentCenter/View/8468/Schertz-Tax-Rates
+**Document type:** financial-report
+**Pages updated:** topics/budget.md, topics/governance.md
+**Pages created:** none
+**Key facts added:** This document provides a comprehensive overview of current tax rates for the City of Schertz as of September 2025. It details sales tax rates, property tax rates across the three counties where Schertz is located (Guadalupe, Bexar, and Comal), and hotel occupancy tax rates. The city's property tax rate is consistent at $0.5118 per $100 of taxable value across all three counties, while other taxing entities vary by county.
+**Ordinances referenced:** none
+**Dollar amounts found:** City of Schertz property tax rate: 0.5118; City of Schertz sales tax rate: 0.01; Schertz Economic Development sales tax: 0.005; Total sales tax rate: 0.0825; Guadalupe County property tax rate: 0.2784; Schertz-Cibolo-Universal City ISD property tax rate: 1.0769; Bexar County property tax rate: 0.276331; East Central ISD property tax rate: 0.9319; Comal County property tax rate: 0.269; Comal Independent School District property tax rate: 1.0748
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | FY 2021-22 Adopted Budget
+**Source:** https://www.schertz.com/DocumentCenter/View/7759/FY-2021-22-Approved-Budget
+**Document type:** budget
+**Pages updated:** topics/budget.md, topics/governance.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md
+**Pages created:** none
+**Key facts added:** The City of Schertz FY 2021-22 Approved Budget was unanimously adopted by City Council. The budget totals $97.3 million in revenues across all funds, with the General Fund representing $39.3 million. The property tax rate remains unchanged at $0.5121 per $100 valuation. Major initiatives include implementing a classification and compensation study, raising minimum wage to $15/hour, replacing financial software, and funding the Animal Adoption Center HVAC replacement. The budget emphasizes maintaining service levels while managing growth.
+**Ordinances referenced:** none
+**Dollar amounts found:** Total revenues all funds: 97335056; General Fund revenue: 39314984; Property tax revenue increase: 761574; Financial software replacement: 500000; Animal Adoption Center HVAC replacement (City portion): 350000; Classification and Compensation Study ECI adjustment: 52750; Contract cleaning services increase: 75000; Total debt obligation secured by property taxes: 66084539; Water & Sewer Fund revenue: 28382723; EMS Fund revenue: 9785424; General Obligation Refunding Series 2018 - Total remaining principal: 4355000; General Obligation Refunding Series 2018 - Total debt service through maturity: 4685561; Certificates of Obligation Series 2018 - General Fund component remaining principal: 4180000; Certificates of Obligation Series 2018 - Water & Sewer component remaining principal: 5040000; General Obligation and Refunding Bonds Series 2018 - General Fund component: 4625000; General Obligation and Refunding Bonds Series 2018 - Utility Fund component: 2055000; Certificates of Obligation Series 2019 - General Fund component: 3510000; Certificates of Obligation Series 2019 - Utility Fund component: 3225000; General Obligation Refunding Bonds Series 2020: 7555000; General Obligation Refunding Bonds Series 2021 - General Fund component: 4070000; General Obligation Refunding Bonds Series 2021 - Utility Fund component: 1945000; Schertz/Seguin Local Government Corporation Contract Revenue Bonds - Total debt service through 2051: 253321852; FY2022 total Schertz debt payment: 4245237; FY2023 total Schertz debt payment: 5054158
+**Votes recorded:** 3
+
+## [2026-06-03] INGEST | FY 2020-21 Adopted Budget
+**Source:** https://www.schertz.com/DocumentCenter/View/6733
+**Document type:** budget
+**Pages updated:** topics/budget.md, topics/infrastructure.md, topics/public-safety.md, topics/development.md, topics/governance.md, topics/strategic-plan.md
+**Pages created:** none
+**Key facts added:** This is the City of Schertz FY 2020-2021 Adopted Budget document approved by City Council. The budget includes a property tax rate of $0.5121/$100, representing a 3.9% increase in total property taxes raised compared to the prior year. The General Fund operating budget increased 7.1% from FY 2019-20 estimates, totaling $37.5 million in revenues and expenditures. Major components include personnel increases from a classification and compensation study, new positions for Police and Fire departments, and $400,000 allocated for a Comprehensive Land Use Plan update.
+**Ordinances referenced:** none
+**Dollar amounts found:** General Fund Total Revenue: 37474811; General Fund Total Expenditures: 37474811; Property Tax Revenue Increase: 777223; Total Debt Obligation Secured by Property Taxes: 75077338; New Personnel Positions and Programs: 386000; Employment Cost Index Adjustment: 211000; Comprehensive Land Use Plan and UDC Update: 400000; Facilities Maintenance Budget Increase: 55000; Transfer from Fund Balance for Capital Projects: 500000; Interest & Sinking Fund Revenue: 7095821; Interest & Sinking Fund Debt Service: 7044861; Water & Sewer Fund Revenue: 25504368; Water & Sewer Fund Expenditures: 24738545; Police Department Budget: 10172678; Fire Rescue Budget: 6150356; Planning & Zoning Budget: 696149; Drainage Fund Total Revenues FY2020-21: 1445564; Drainage Fund Total Expenditures FY2020-21: 1445564; EMS Total Revenues FY2020-21: 9785425; EMS Total Expenditures FY2020-21: 9732293; Economic Development Corporation Sales Tax Revenue FY2020-21: 4507371; SEDC Total Expenditures FY2020-21: 8144799; Hotel/Motel Tax Revenue FY2020-21: 520000; EMS Comal Co ESD #6 Support FY2020-21: 141411; EMS Schertz Support FY2020-21: 667049; SEDC Main Street Infrastructure Contribution: 4050000
+**Votes recorded:** 1
+
+## [2026-06-03] INGEST | Financial Summary and Charts
+**Source:** https://www.schertz.com/DocumentCenter/View/162
+**Document type:** financial-report
+**Pages updated:** topics/budget.md, topics/financial-report.md, topics/governance.md
+**Pages created:** none
+**Key facts added:** This financial transparency report provides comprehensive fiscal data for the City of Schertz for Fiscal Year 2019. The report shows total revenues of $81.2 million and total expenses of $70.3 million, resulting in a positive change in net position of $10.8 million. The document includes detailed breakdowns of governmental and business-type activities, per capita metrics, and multi-year trend data from FY2012 through FY2019. Property tax rate for FY2019 was $0.5146 per $100 valuation, serving a population of 35,121 with 357 budgeted full-time equivalent positions.
+**Ordinances referenced:** none
+**Dollar amounts found:** Total Revenues: 81166160; Total Expenses: 70324365; Change in Net Position: 10841795; Governmental Activities Program Revenues: 7092793; Ad Valorem Tax Revenue: 19151005; Sales Tax Revenue: 12506879; Franchise Fees: 2357150; Hotel/Motel Tax Revenue: 514679; Mixed Drink Tax Revenue: 60518; Investment Earnings - Governmental: 1470258; Miscellaneous Revenue - Governmental: 984257; Total Governmental Activities Revenues: 44056014; Business-type Program Revenues: 35905617; Investment Earnings - Business-type: 855216; Miscellaneous Revenue - Business-type: 267788; Total Business-type Activities Revenues: 37110146; Governmental Activities Expenses: 38186344; Business-type Activities Expenses: 32138021
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 2010 Unified Development CodeFinal UDC 04-13-10
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=121105&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/ordinances.md, topics/development.md, topics/governance.md
+**Pages created:** none
+**Key facts added:** This document is the City of Schertz 2010 Unified Development Code (UDC), finalized on April 13, 2010. The UDC serves as the comprehensive zoning and development regulations document for the city. It consolidates all land use, zoning, subdivision, and development standards into a single regulatory framework. This code replaces previous separate ordinances and establishes unified procedures for development review and approval. The UDC provides the regulatory foundation for managing growth and development within Schertz city limits.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | FINAL 2015 New Volunteer Publication1
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=281608&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md
+**Pages created:** none
+**Key facts added:** This document appears to be a publication regarding new volunteer opportunities or information for the City of Schertz in 2015. The document content was not provided in the extraction request, limiting the ability to provide detailed analysis. Based on the title, it likely contains information about volunteer programs, recruitment, or guidelines for citizen volunteers. This would be an informational publication rather than official council proceedings.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | City of Schertz City Charter 2024
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=527535&dbid=1&repo=SCHERTZ
+**Document type:** charter
+**Pages updated:** topics/governance.md, topics/ordinances.md
+**Pages created:** none
+**Key facts added:** This is the City of Schertz Charter for 2024, which serves as the foundational governing document establishing the structure, powers, and procedures of city government. The charter defines the form of government, council composition and duties, administrative procedures, and fundamental governance principles. As a charter document, it supersedes ordinary ordinances and can only be amended through charter amendment procedures. This document provides the legal framework within which all city operations, ordinances, and policies must operate.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 01-15-2008 Agenda
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=62983&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md
+**Pages created:** none
+**Key facts added:** This is a City Council agenda for January 15, 2008. The document appears to be empty or contains no readable text content beyond the header metadata. Without substantive content, no specific agenda items, discussions, or decisions can be extracted. This may represent a placeholder document or a scanning/digitization issue with the original file.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 01-22-2008a Agenda
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=63003&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md
+**Pages created:** none
+**Key facts added:** This is a City Council agenda for Schertz, TX dated January 22, 2008. The document appears to be empty or contains no readable text content beyond the metadata. No meeting items, decisions, or substantive content could be extracted from the provided document text.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 01-29-2008-Agenda joint meeting with PZ
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=62984&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md, topics/development.md
+**Pages created:** none
+**Key facts added:** This is an agenda for a joint meeting between the Schertz City Council and Planning & Zoning Commission scheduled for January 29, 2008. The document appears to be a cover page or metadata record without detailed agenda items visible in the provided text. The meeting represents coordination between the legislative and planning bodies of the city. Additional details about specific agenda topics are not available in the extracted text.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 01-8-2008a Agenda
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=63004&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md
+**Pages created:** none
+**Key facts added:** This is a City Council agenda for Schertz, TX dated August 6, 2008. The document appears to be incomplete or empty in the provided text, containing only separator markers with no substantive content. Without the actual agenda items, it is not possible to extract meeting topics, decisions to be made, or other relevant details. This may be a cover page or the document text was not fully captured.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 02-05-2008 Agenda
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=63013&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md
+**Pages created:** none
+**Key facts added:** City Council agenda for February 5, 2008. The document appears to be empty or the text content was not successfully extracted from the source PDF. Without accessible content, specific agenda items, decisions, or discussion topics cannot be determined. This represents a data quality issue requiring manual review of the original document.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 02-12-2008 Agenda
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=63009&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md
+**Pages created:** none
+**Key facts added:** This is a City Council agenda for February 12, 2008. The document appears to be empty or the text content was not successfully extracted from the source PDF. Without visible agenda items, staff reports, or meeting details, no substantive information can be extracted. This represents a data quality issue requiring follow-up to obtain the actual agenda content.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 02-12-2008a Agenda
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=63010&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md
+**Pages created:** none
+**Key facts added:** This is a City Council agenda for Schertz, TX dated February 12, 2008. The document appears to be empty or contains no readable text content beyond the title and metadata. Without substantive content, no specific agenda items, decisions, financial matters, or policy discussions can be extracted.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 02-19-2008 Agenda
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=63011&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md
+**Pages created:** none
+**Key facts added:** City Council agenda for February 19, 2008. The document appears to be empty or contains no readable text content. Without visible agenda items, meeting details, or substantive content, no specific decisions, budget items, or policy matters can be extracted from this document.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 02-26-2008 Agenda
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=63012&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** none
+**Pages created:** none
+**Key facts added:** This is a City Council agenda from February 26, 2008. The document appears to be empty or contains no readable text content. No meeting items, discussions, or decisions can be extracted from the provided document.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST | 03-04-2008 Agenda
+**Source:** https://laserfiche.schertzweb.com/WebLink/ElectronicFile.aspx?id=62992&dbid=1&repo=SCHERTZ
+**Document type:** agenda
+**Pages updated:** topics/governance.md
+**Pages created:** none
+**Key facts added:** This is a City Council agenda for March 4, 2008. The document appears to be empty or the text extraction failed, containing no visible content beyond the metadata. Without readable content, no specific agenda items, decisions, or financial information can be extracted. This represents a data quality issue requiring document re-scanning or alternative access methods.
+**Ordinances referenced:** none
+**Dollar amounts found:** none
+**Votes recorded:** 0
+
+## [2026-06-03] INGEST-BATCH | Schertz seed ingestion
+**Sources processed:** 20
+**Succeeded:** 18 | **Failed:** 2
+**Elapsed:** 584s
+**Manifest:** ./raw-sources/manifest.json
+**Top themes:** Initial bootstrap of Schertz, TX civic document corpus
+**Data source:** https://www.schertz.com/27/Government
+
+## [2026-06-04] QUERY | Summarize the most recent city council meeting
+**Question:** Summarize the most recent city council meeting
+**Wiki pages read:** topics/governance.md, topics/financial-report.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/strategic-plan.md, topics/budget.md, topics/ordinances.md
+**Filed:** not filed
+**Gap noted:** none

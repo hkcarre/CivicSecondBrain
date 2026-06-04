@@ -4,7 +4,7 @@ type: wiki
 category: topic
 sources:
   - City Charter 2024
-last_updated: 2026-06-03
+last_updated: "2026-06-03"
 ---
 ## Overview
 
@@ -87,3 +87,51 @@ last_updated: 2026-06-03
 - Classification & Compensation Study includes 0.25% ECI adjustment effective October 1 [SOURCE: FY 2021-22 Adopted Budget]
 - Financial software platform to be replaced after 20 years of use [SOURCE: FY 2021-22 Adopted Budget]
 - Code enforcement functions transferred from Police to new Neighborhood Services division [SOURCE: FY 2021-22 Adopted Budget]
+
+### From City Charter 2024 (2026-06-03)
+
+*From: City Charter 2024 (2026-06-03)*
+
+- The City of Schertz operates under a Mayor-Council form of government with an appointed City Manager who serves at the will and pleasure of City Council [SOURCE: City Charter 2024]
+- City Council consists of a Mayor and seven Council members, all elected at-large for three-year terms [SOURCE: City Charter 2024]
+- Council members must be at least 18 years old, registered voters, and residents of Schertz for at least 12 consecutive months prior to filing deadline [SOURCE: City Charter 2024]
+- The Mayor votes only in the event of a tie; four Council members (excluding the Mayor) constitute a quorum [SOURCE: City Charter 2024]
+- The fiscal year begins on the first day of October and ends on the last day of the following September [SOURCE: City Charter 2024]
+- Regular city elections are held annually on the uniform election date in November [SOURCE: City Charter 2024]
+- Initiative, referendum, and recall petitions require signatures equal to at least 15% of registered voters from the last general city election [SOURCE: City Charter 2024]
+- Charter amendments may be proposed by charter commission, City Council ordinance with majority vote, or petition signed by at least 5% of qualified voters [SOURCE: City Charter 2024]
+- A Charter Review Commission must be appointed at least every five years to review city government operations [SOURCE: City Charter 2024]
+- The City Manager is the chief administrative officer responsible for administration of all city affairs, appointing and removing employees, and preparing the annual budget [SOURCE: City Charter 2024]
+
+### From Adopted Budget FY2024-25 (2026-06-03)
+
+*From: Adopted Budget FY2024-25 (2026-06-03)*
+
+- Property tax rate for FY2024-25 is $0.4900 per $100 valuation, with M&O portion at $0.3326 and I&S portion at $0.1574 [SOURCE: Adopted Budget FY2024-25]
+- Total taxable assessed property value is $5,645,026,665, a 3.9% increase over prior year [SOURCE: Adopted Budget FY2024-25]
+- General Fund balance is projected to be 25% of operating expenditures by end of FY2024-25, below the 26% target [SOURCE: Adopted Budget FY2024-25]
+- Total debt obligation secured by property taxes is $88,054,065 [SOURCE: Adopted Budget FY2024-25]
+- Sales tax revenue growth projected at 6% for FY2024-25 after slowing to 3.5% in FY2023-24 [SOURCE: Adopted Budget FY2024-25]
+- City will issue $20 million in Certificates of Obligation for street projects in September 2024 [SOURCE: Adopted Budget FY2024-25]
+- Fire Station #4 is under design with projected opening in early 2026 [SOURCE: Adopted Budget FY2024-25]
+- Budget includes 3.5% across-the-board salary increase plus merit/step increases [SOURCE: Adopted Budget FY2024-25]
+- New positions added: EMS Battalion Chief, 5 Water/Sewer Workers, Meter Technician [SOURCE: Adopted Budget FY2024-25]
+- Police Department has 5 unfunded school resource officer positions to be filled [SOURCE: Adopted Budget FY2024-25]
+
+### From 2010 Unified Development CodeFinal UDC 04-13-10 (2010-01-01)
+
+*From: 2010 Unified Development CodeFinal UDC 04-13-10 (2010-01-01)*
+
+- The City of Schertz adopted a Unified Development Code in 2010 [SOURCE: 2010 Unified Development CodeFinal UDC 04-13-10]
+- The UDC was finalized on April 13, 2010 [SOURCE: 2010 Unified Development CodeFinal UDC 04-13-10]
+- The UDC consolidates zoning, subdivision, and development regulations into one comprehensive document [SOURCE: 2010 Unified Development CodeFinal UDC 04-13-10]
+- The 2010 UDC serves as the primary land use regulatory framework for the City of Schertz [SOURCE: 2010 Unified Development CodeFinal UDC 04-13-10]
+
+### From City of Schertz City Charter 2024 (2024-01-01)
+
+*From: City of Schertz City Charter 2024 (2024-01-01)*
+
+- The City of Schertz operates under a charter adopted and effective as of January 1, 2024 [SOURCE: City of Schertz City Charter 2024]
+- The charter serves as the fundamental law of the city, establishing its governmental structure and powers [SOURCE: City of Schertz City Charter 2024]
+- Charter amendments require specific procedures and typically voter approval [SOURCE: City of Schertz City Charter 2024]
+- The charter supersedes conflicting ordinances and establishes the legal framework for all city operations [SOURCE: City of Schertz City Charter 2024]

@@ -10,7 +10,10 @@
     "ingest:seed": "node -r ./scripts/load-env.cjs -r tsx/cjs scripts/ingest-seed.ts",
     "ingest:doc": "node -r ./scripts/load-env.cjs -r tsx/cjs scripts/ingest-doc.ts",
     "lint:wiki": "node -r ./scripts/load-env.cjs -r tsx/cjs scripts/lint-wiki.ts",
-    "scrape:check": "node -r ./scripts/load-env.cjs -r tsx/cjs scripts/scraper-check.ts"
+    "scrape:check": "node -r ./scripts/load-env.cjs -r tsx/cjs scripts/scraper-check.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",
@@ -35,10 +38,12 @@
     "@types/pdf-parse": "^1.1.4",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@vitest/coverage-v8": "^4.1.8",
     "autoprefixer": "^10.0.1",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tsx": "^4.15.7",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.8"
   }
 }

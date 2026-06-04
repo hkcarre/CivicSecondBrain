@@ -4,7 +4,7 @@ type: wiki
 category: topic
 sources:
   - Financial Summary and Charts
-last_updated: 2026-06-03
+last_updated: "2026-06-03"
 ---
 ## Overview
 
@@ -25,3 +25,18 @@ last_updated: 2026-06-03
 
 - [[wiki/topics/budget]]
 - [[wiki/topics/governance]]
+
+### From Financial Summary and Charts (2026-06-03)
+
+*From: Financial Summary and Charts (2026-06-03)*
+
+- FY2019 population estimated at 35,121 residents [SOURCE: Financial Summary and Charts]
+- FY2019 budgeted 357.0 full-time equivalent positions [SOURCE: Financial Summary and Charts]
+- Property tax rate was $0.5146 per $100 valuation in FY2019 [SOURCE: Financial Summary and Charts]
+- Total revenues per capita were $2,311.04 in FY2019 [SOURCE: Financial Summary and Charts]
+- Total expenses per capita were $2,002.35 in FY2019 [SOURCE: Financial Summary and Charts]
+- Governmental activities revenues per capita were $1,254.41 in FY2019 [SOURCE: Financial Summary and Charts]
+- Business-type activities revenues per capita were $1,056.64 in FY2019 [SOURCE: Financial Summary and Charts]
+- City generated positive change in net position of $10.8 million in FY2019 [SOURCE: Financial Summary and Charts]
+- Ad valorem taxes were the largest revenue source at $19.1 million [SOURCE: Financial Summary and Charts]
+- Sales tax revenue totaled $12.5 million in FY2019 [SOURCE: Financial Summary and Charts]

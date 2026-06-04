@@ -30,3 +30,4 @@ yarn-error.log*
 .vscode/
 .idea/
 tsconfig.tsbuildinfo
+.playwright-mcp/

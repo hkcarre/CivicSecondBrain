@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/xozai/CivicSecondBrain/compare/v1.3.0...v1.3.1) (2026-06-04)
+
+
+### Bug Fixes
+
+* **deploy:** finalize Dockerfile and Railway config ([#12](https://github.com/xozai/CivicSecondBrain/issues/12)) ([d0f4851](https://github.com/xozai/CivicSecondBrain/commit/d0f48512fbc87096db8e9e0d84e748d8d3bca195))
+
 ## [1.3.0](https://github.com/xozai/CivicSecondBrain/compare/v1.2.0...v1.3.0) (2026-06-04)
 
 

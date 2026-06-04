@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.4](https://github.com/xozai/CivicSecondBrain/compare/v1.3.3...v1.3.4) (2026-06-04)
+
+
+### Bug Fixes
+
+* **wiki:** quote title in YAML frontmatter to handle colons ([#19](https://github.com/xozai/CivicSecondBrain/issues/19)) ([b46d491](https://github.com/xozai/CivicSecondBrain/commit/b46d491b06e300fba4b6677ab2d24fa5eadace1a))
+
 ## [1.3.3](https://github.com/xozai/CivicSecondBrain/compare/v1.3.2...v1.3.3) (2026-06-04)
 
 

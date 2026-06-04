@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/xozai/CivicSecondBrain/compare/v1.0.0...v1.1.0) (2026-06-04)
+
+
+### Features
+
+* **scraper:** add Laserfiche WebLink scraper, wiki page, and test suite ([#4](https://github.com/xozai/CivicSecondBrain/issues/4)) ([2065377](https://github.com/xozai/CivicSecondBrain/commit/20653772bd738085563939152bff8954f7515650))
+
 ## 1.0.0 (2026-06-03)
 
 

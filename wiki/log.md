@@ -521,3 +521,13 @@
 **Wiki pages read:** topics/budget.md, topics/financial-report.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/strategic-plan.md, topics/ordinances.md, topics/governance.md
 **Filed:** not filed
 **Gap noted:** none
+
+## [2026-06-04] INGEST | Adopted Budget FY2023-24
+**Source:** https://www.schertz.com/DocumentCenter/View/9601
+**Document type:** budget
+**Pages updated:** topics/budget.md, topics/governance.md, topics/public-safety.md, topics/infrastructure.md, topics/development.md, topics/strategic-plan.md
+**Pages created:** none
+**Key facts added:** The City of Schertz FY 2023-24 Adopted Budget presents a comprehensive financial plan with total revenues of $114.96 million across all funds. The budget includes a property tax rate of $0.4950 per $100 valuation, representing a 9.9% increase in total property taxes over the prior year. Major initiatives include a classification and compensation study to address employee wages, addition of new positions (firefighters, EMTs, administrative staff), replacement of police camera systems, and $1 million in one-time street improvement funding. The General Fund budget is $49.95 million in expenditures with $47.39 million in revenues.
+**Ordinances referenced:** none
+**Dollar amounts found:** Total Budget - All Funds Expenditures: 118824547; Total Budget - All Funds Revenues: 114960769; General Fund Expenditures: 49954992; General Fund Revenues: 47390488; Property Tax Revenue: 20838000; Sales Tax Revenue: 14180000; Water & Sewer Fund Revenues: 31504800; Water & Sewer Fund Expenditures: 31241901; EMS Fund Revenues: 12860223; EMS Fund Expenditures: 13640836; Economic Development Corporation Revenues: 8407000; Total Debt Obligation Secured by Property Taxes: 96572010; Property Tax Rate Increase Impact: 2398167; Estimated Wage Adjustment from Compensation Study: 2600000; Police Camera/TASER Replacement Annual Cost: 550000; One-time Street Improvement Funding: 1000000; Debt Service Fund Revenues: 9335000; Debt Service Fund Expenditures: 11115131; General Fund Reserve Target: 12988298; Police Department Budget: 17500000; Fire Rescue Department Budget: 6000000
+**Votes recorded:** 4

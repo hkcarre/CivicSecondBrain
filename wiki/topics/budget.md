@@ -4,7 +4,7 @@ type: wiki
 category: topic
 sources:
   - budget-fy2024.pdf
-last_updated: "2026-06-03"
+last_updated: "2026-06-04"
 ---
 The city adopted a $42M general fund budget.
 
@@ -159,3 +159,18 @@ Content.
 - City generated positive change in net position of $10.8 million in FY2019 [SOURCE: Financial Summary and Charts]
 - Ad valorem taxes were the largest revenue source at $19.1 million [SOURCE: Financial Summary and Charts]
 - Sales tax revenue totaled $12.5 million in FY2019 [SOURCE: Financial Summary and Charts]
+
+### From Adopted Budget FY2023-24 (2026-06-04)
+
+*From: Adopted Budget FY2023-24 (2026-06-04)*
+
+- FY 2023-24 property tax rate is $0.4950 per $100 valuation, down from $0.4968 in prior year [SOURCE: Adopted Budget FY2023-24]
+- Maintenance & Operations tax rate decreased from $0.3470 to $0.3324, while debt service rate increased from $0.1480 to $0.1548 [SOURCE: Adopted Budget FY2023-24]
+- Total taxable property value increased 11.3% to $5,440,641,228 [SOURCE: Adopted Budget FY2023-24]
+- City population estimated at 44,000+ with service area covering approximately 32 square miles across three counties [SOURCE: Adopted Budget FY2023-24]
+- General Fund maintains 26% fund balance reserve policy, currently at 29% of operating expenditures [SOURCE: Adopted Budget FY2023-24]
+- Sales tax revenue projected to grow 7% annually after averaging 10% growth in past three years [SOURCE: Adopted Budget FY2023-24]
+- City received S&P AA+ bond rating with stable outlook as of July 2022 [SOURCE: Adopted Budget FY2023-24]
+- Total debt obligation secured by property taxes is $96,572,010 [SOURCE: Adopted Budget FY2023-24]
+- City contracts with YMCA for Recreation Center, Senior Center, and Aquatics Center programming [SOURCE: Adopted Budget FY2023-24]
+- Emergency Medical Services serves 220-230 square mile service area including multiple municipalities and counties [SOURCE: Adopted Budget FY2023-24]

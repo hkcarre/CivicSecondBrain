@@ -16,7 +16,7 @@ export function writeWikiPage(page: WikiPage): void {
 
   const frontmatter = [
     "---",
-    `title: ${page.title}`,
+    `title: "${page.title.replace(/"/g, '\\"')}"`,
     `type: wiki`,
     `category: ${page.category}`,
     `sources:`,

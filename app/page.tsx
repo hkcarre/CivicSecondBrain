@@ -8,16 +8,75 @@ import { TypingIndicator } from "./components/chat/TypingIndicator";
 import { SuggestedQuestions } from "./components/chat/SuggestedQuestions";
 import type { ChatMessage as ChatMessageType } from "./types";
 
+const STORAGE_KEY = "civic-chat-history";
+const MAX_STORED_MESSAGES = 50;
+
+function loadHistory(): ChatMessageType[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as ChatMessageType[];
+    return Array.isArray(parsed) ? parsed.slice(-MAX_STORED_MESSAGES) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistory(messages: ChatMessageType[]): void {
+  try {
+    const capped = messages.slice(-MAX_STORED_MESSAGES);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(capped));
+  } catch {
+    // Storage unavailable — silent fail
+  }
+}
+
 export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [streamingId, setStreamingId] = useState<string | null>(null);
+  const [sessionRestored, setSessionRestored] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = loadHistory();
+    if (saved.length > 0) {
+      setMessages(saved);
+      setSessionRestored(true);
+    }
+  }, []);
+
+  // Hide "Session restored" banner after 3 seconds
+  useEffect(() => {
+    if (!sessionRestored) return;
+    const timer = setTimeout(() => setSessionRestored(false), 3000);
+    return () => clearTimeout(timer);
+  }, [sessionRestored]);
+
+  // Persist messages to localStorage on every update (skip during streaming to
+  // avoid writing partial assistant content).
+  useEffect(() => {
+    if (streamingId !== null) return; // wait until stream is done
+    if (messages.length === 0) return;
+    saveHistory(messages);
+  }, [messages, streamingId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading, streamingId]);
+
+  const clearHistory = useCallback(() => {
+    setMessages([]);
+    setSessionRestored(false);
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+    } catch {
+      // ignore
+    }
+  }, []);
 
   const sendMessage = useCallback(async () => {
     const text = input.trim();
@@ -132,6 +191,23 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
+      <header className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+        <div className="max-w-3xl mx-auto flex items-center justify-between">
+          <div>
+            <h1 className="text-lg font-semibold text-city-navy">Ask the City</h1>
+            <p className="text-xs text-gray-400 mt-0.5">
+              Answers grounded in official Schertz city documents
+            </p>
+          </div>
+          {messages.length > 0 && (
+            <button
+              onClick={clearHistory}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors px-2 py-1 rounded hover:bg-gray-100"
+              aria-label="Clear chat history"
+            >
+              Clear history
+            </button>
+          )}
       <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
         <div className="max-w-3xl mx-auto">
           <h1 className="text-lg font-semibold text-city-navy dark:text-city-gold">Ask the City</h1>
@@ -139,6 +215,12 @@ export default function ChatPage() {
             Answers grounded in official Schertz city documents
           </p>
         </div>
+        {/* Session restored indicator */}
+        {sessionRestored && (
+          <div className="max-w-3xl mx-auto mt-2">
+            <p className="text-xs text-emerald-600">Session restored</p>
+          </div>
+        )}
       </header>
 
       {/* Message area */}

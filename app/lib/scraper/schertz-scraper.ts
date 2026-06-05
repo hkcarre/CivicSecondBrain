@@ -38,48 +38,47 @@ export interface DiscoveredDocument {
 // ─── Main scraper entry point ──────────────────────────────────────────────
 
 export async function discoverDocuments(): Promise<DiscoveredDocument[]> {
+  console.log("🔍 Scraping Schertz government documents (parallel)...");
+
+  // All four scrapers are independent — run them concurrently
+  const [dcResult, financeResult, noticesResult, lfResult] = await Promise.allSettled([
+    scrapeDocumentCenter(),
+    scrapeFinanceSubpages(),
+    scrapePublicNotices(),
+    discoverLaserficheDocs(),
+  ]);
+
   const discovered: DiscoveredDocument[] = [];
 
-  console.log("🔍 Scraping Schertz government documents...");
-
-  // 1. Deep crawl of CivicPlus DocumentCenter via internal JSON API
-  try {
-    const dcDocs = await scrapeDocumentCenter();
-    discovered.push(...dcDocs);
-    console.log(`  ✓ DocumentCenter: ${dcDocs.length} documents found`);
-  } catch (err) {
-    console.warn(`  ⚠ DocumentCenter: ${(err as Error).message}`);
+  if (dcResult.status === "fulfilled") {
+    discovered.push(...dcResult.value);
+    console.log(`  ✓ DocumentCenter: ${dcResult.value.length} documents found`);
+  } else {
+    console.warn(`  ⚠ DocumentCenter: ${dcResult.reason?.message}`);
   }
 
-  // 2. Budget & Finance sub-pages not covered by DocumentCenter
-  try {
-    const financeDocs = await scrapeFinanceSubpages();
-    discovered.push(...financeDocs);
-    console.log(`  ✓ Finance sub-pages: ${financeDocs.length} documents found`);
-  } catch (err) {
-    console.warn(`  ⚠ Finance sub-pages: ${(err as Error).message}`);
+  if (financeResult.status === "fulfilled") {
+    discovered.push(...financeResult.value);
+    console.log(`  ✓ Finance sub-pages: ${financeResult.value.length} documents found`);
+  } else {
+    console.warn(`  ⚠ Finance sub-pages: ${financeResult.reason?.message}`);
   }
 
-  // 3. Public Notices
-  try {
-    const notices = await scrapePublicNotices();
-    discovered.push(...notices);
-    console.log(`  ✓ Public Notices: ${notices.length} found`);
-  } catch (err) {
-    console.warn(`  ⚠ Public Notices: ${(err as Error).message}`);
+  if (noticesResult.status === "fulfilled") {
+    discovered.push(...noticesResult.value);
+    console.log(`  ✓ Public Notices: ${noticesResult.value.length} found`);
+  } else {
+    console.warn(`  ⚠ Public Notices: ${noticesResult.reason?.message}`);
   }
 
-  // 4. Laserfiche WebLink — board agendas, minutes, ordinances, resolutions
-  try {
-    console.log("  Crawling Laserfiche public records archive...");
-    const lfDocs = await discoverLaserficheDocs();
-    discovered.push(...lfDocs);
-    console.log(`  ✓ Laserfiche: ${lfDocs.length} documents found`);
-    if (lfDocs.length === 0) {
-      console.warn("  ⚠ Laserfiche returned 0 docs — session handshake may have failed. Check network connectivity to laserfiche.schertzweb.com");
+  if (lfResult.status === "fulfilled") {
+    discovered.push(...lfResult.value);
+    console.log(`  ✓ Laserfiche: ${lfResult.value.length} documents found`);
+    if (lfResult.value.length === 0) {
+      console.warn("  ⚠ Laserfiche returned 0 docs — session handshake may have failed.");
     }
-  } catch (err) {
-    console.error(`  ✗ Laserfiche FAILED: ${(err as Error).message}`);
+  } else {
+    console.error(`  ✗ Laserfiche FAILED: ${lfResult.reason?.message}`);
     console.error("    This accounts for ~6,800 missing documents. Check Railway outbound network access.");
   }
 

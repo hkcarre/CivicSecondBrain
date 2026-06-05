@@ -7,10 +7,10 @@
  *
  * Usage:
  *   npm run ingest:seed
- *   npm run ingest:seed -- --dry-run        # discover only, no download
- *   npm run ingest:seed -- --board council  # specific board only
- *   npm run ingest:seed -- --type budget    # specific doc type only
- *   npm run ingest:seed -- --limit 5        # process first N docs
+ *   npm run ingest:seed -- --dry-run              # discover only, no download
+ *   npm run ingest:seed -- --type budget          # specific doc type only (skips scrape)
+ *   npm run ingest:seed -- --limit 5              # process first N docs
+ *   npm run ingest:seed -- --concurrency 5        # parallel workers (default 3)
  *
  * What it does:
  *   1. Scrapes schertz.com/27/Government to discover all documents
@@ -49,6 +49,11 @@ const BOARD_FILTER = (() => {
 const TYPE_FILTER = (() => {
   const idx = args.indexOf("--type");
   return idx >= 0 ? args[idx + 1] : null;
+})();
+// --concurrency N: how many documents to ingest in parallel (default 3)
+const CONCURRENCY = (() => {
+  const idx = args.indexOf("--concurrency");
+  return idx >= 0 ? parseInt(args[idx + 1]) : 3;
 })();
 
 const MANIFEST_PATH = "./raw-sources/manifest.json";
@@ -242,65 +247,73 @@ async function main() {
     return;
   }
 
-  // ── Step 2: Download + Ingest ─────────────────────────────────────────────
+  // ── Step 2: Download + Ingest (parallel worker pool) ─────────────────────
 
-  console.log("\nSTEP 2 — Downloading and ingesting documents...\n");
+  const cap = Math.min(toProcess.length, LIMIT);
+  console.log(`\nSTEP 2 — Downloading and ingesting ${cap} documents (${CONCURRENCY} workers)...\n`);
 
   let processed = 0;
   let succeeded = 0;
   let failed = 0;
 
   const startTime = Date.now();
+  const queue = toProcess.slice(0, cap);
 
-  for (const doc of toProcess) {
-    if (processed >= LIMIT) break;
-    processed++;
+  // Mutex: ensures manifest reads/writes are never concurrent
+  let manifestLock = Promise.resolve();
+  const withManifest = (fn: () => void) => {
+    manifestLock = manifestLock.then(fn);
+    return manifestLock;
+  };
 
+  // Worker: processes one document end-to-end
+  const processDoc = async (doc: DiscoveredDocument, index: number) => {
     const id = docId(doc.url);
-    console.log(`\n[${processed}/${Math.min(toProcess.length, LIMIT)}] ${doc.title}`);
+    console.log(`\n[${index + 1}/${cap}] ${doc.title}`);
 
-    // Download
     const localPath = await downloadDocument(doc);
     if (!localPath) {
-      failed++;
-      continue;
+      await withManifest(() => { failed++; });
+      return;
     }
 
-    // Build CivicDocument
     const civicDoc = toCivicDocument(doc, localPath, id);
 
-    // Ingest via Claude
     try {
       const result = await ingestDocument(civicDoc);
       civicDoc.ingestedAt = new Date().toISOString();
-      civicDoc.sourceModifiedAt = doc.sourceModifiedAt; // persist for future change detection
-      manifest[id] = civicDoc;
-      saveManifest(manifest);
-      succeeded++;
+      civicDoc.sourceModifiedAt = doc.sourceModifiedAt;
 
-      console.log(`  📝 Pages updated: ${result.pagesUpdated.length}`);
-      console.log(`  📝 Pages created: ${result.pagesCreated.length}`);
-      if (result.votesRecorded > 0) {
-        console.log(`  🗳  Votes recorded: ${result.votesRecorded}`);
-      }
+      await withManifest(() => {
+        manifest[id] = civicDoc;
+        saveManifest(manifest);
+        succeeded++;
+      });
 
-      // Delete the downloaded file after successful ingest to free disk space.
-      // The manifest records that it was ingested so it won't be re-processed.
+      console.log(`  ✅ [${index + 1}] Pages updated: ${result.pagesUpdated.length} | Created: ${result.pagesCreated.length}`);
+
       if (localPath && fs.existsSync(localPath)) {
         fs.unlinkSync(localPath);
-        console.log(`  🗑  Deleted local file (ingested)`);
       }
     } catch (err) {
-      console.error(`  ✗ Ingest failed: ${(err as Error).message}`);
-      failed++;
-      // Save to manifest as failed so we can retry
-      manifest[id] = { ...civicDoc, ingestedAt: undefined };
-      saveManifest(manifest);
+      console.error(`  ✗ [${index + 1}] Ingest failed: ${(err as Error).message}`);
+      await withManifest(() => {
+        manifest[id] = { ...civicDoc, ingestedAt: undefined };
+        saveManifest(manifest);
+        failed++;
+      });
     }
 
-    // Pause to respect rate limits and allow GC to reclaim memory
-    await sleep(2000);
     if (typeof global.gc === "function") global.gc();
+  };
+
+  // Run workers in batches of CONCURRENCY
+  for (let i = 0; i < queue.length; i += CONCURRENCY) {
+    processed += Math.min(CONCURRENCY, queue.length - i);
+    const batch = queue.slice(i, i + CONCURRENCY);
+    await Promise.all(batch.map((doc, j) => processDoc(doc, i + j)));
+    // Pause between batches to respect Claude rate limits
+    if (i + CONCURRENCY < queue.length) await sleep(1000);
   }
 
   // ── Step 3: Summary ───────────────────────────────────────────────────────

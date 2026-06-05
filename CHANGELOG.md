@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/xozai/CivicSecondBrain/compare/v1.5.4...v1.6.0) (2026-06-05)
+
+
+### Features
+
+* **ingest:** configurable max file size via MAX_FILE_SIZE_MB env var ([#66](https://github.com/xozai/CivicSecondBrain/issues/66)) ([c1e2862](https://github.com/xozai/CivicSecondBrain/commit/c1e2862a7a2597d6dae0e45dafae49cea573dc08))
+
 ## [1.5.4](https://github.com/xozai/CivicSecondBrain/compare/v1.5.3...v1.5.4) (2026-06-05)
 
 

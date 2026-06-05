@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/xozai/CivicSecondBrain/compare/v1.5.0...v1.5.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* **chat:** add try/catch to chat route, enrich health endpoint ([#33](https://github.com/xozai/CivicSecondBrain/issues/33)) ([c3e5cba](https://github.com/xozai/CivicSecondBrain/commit/c3e5cba3326766dd9cf5a88cf04cfb36b677435b))
+
 ## [1.5.0](https://github.com/xozai/CivicSecondBrain/compare/v1.4.2...v1.5.0) (2026-06-05)
 
 

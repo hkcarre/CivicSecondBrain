@@ -145,25 +145,20 @@ Direct scrape of `/250` (Financial Transparency), `/249` (Debt Obligations), `/2
 ## Wiki Structure
 
 ```
-wiki/
-├── SCHEMA.md                    ← Governing document for wiki conventions
-├── index.md                     ← Content catalog used by the query engine
+wiki/                            ← Only seed files are committed to the repo
+├── SCHEMA.md                    ← Governing document for wiki conventions (committed)
+└── index.md                     ← Empty catalog template (committed, seed for first boot)
+```
+
+All generated content lives on the Railway persistent volume (`/data/wiki`) and is rebuilt by `ingest:seed` and `lint:wiki`. It is gitignored and never committed:
+
+```
+/data/wiki/                      ← Railway volume (not in repo)
 ├── log.md                       ← Append-only operation history
-├── topics/
-│   ├── budget.md                ← Budget & Finance (multi-year trends)
-│   ├── ordinances.md            ← Ordinance index & amendments
-│   ├── infrastructure.md        ← Roads, utilities, parks, CIP
-│   ├── public-safety.md         ← Police, fire, courts
-│   ├── development.md           ← Zoning, permits, EDC
-│   ├── governance.md            ← Charter, boards, elections
-│   ├── financial-report.md      ← ACFRs, audits, transparency reports
-│   └── strategic-plan.md        ← Goals, KPIs, progress
-├── decisions/
-│   └── YYYY-MM-DD-[board].md    ← Per-meeting votes & decisions
-├── recommendations/
-│   └── YYYY-MM-DD-[topic].md    ← AI-generated analysis (requires council review)
-└── queries/
-    └── [filed answers]          ← Saved Q&A for reuse
+├── topics/                      ← Policy areas built from ingested documents
+├── decisions/                   ← Per-meeting votes (YYYY-MM-DD-[board].md)
+├── recommendations/             ← AI-generated analysis (requires council review)
+└── queries/                     ← Saved Q&A answers
 ```
 
 All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `last_updated`) and inline `[SOURCE: filename, p.N]` citations. Financial figures always carry fiscal year context (`$4.2M FY2024`). Schertz fiscal year runs Oct 1 – Sep 30.

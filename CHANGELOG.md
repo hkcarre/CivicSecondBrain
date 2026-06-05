@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.1](https://github.com/xozai/CivicSecondBrain/compare/v1.4.0...v1.4.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* **ingest:** skip full scrape when --type, --limit, or --board flags are used ([#26](https://github.com/xozai/CivicSecondBrain/issues/26)) ([5f5c216](https://github.com/xozai/CivicSecondBrain/commit/5f5c216eb570136dbf8e2bf19d92ecf042e80229))
+
 ## [1.4.0](https://github.com/xozai/CivicSecondBrain/compare/v1.3.5...v1.4.0) (2026-06-05)
 
 

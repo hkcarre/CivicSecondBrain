@@ -3,7 +3,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import matter from "gray-matter";
-import type { WikiPage } from "../types";
+import type { WikiPage, Recommendation } from "../types";
 
 let tmpDir: string;
 
@@ -120,6 +120,83 @@ describe("writeDecisionsPage", () => {
     const { data } = matter(fs.readFileSync(path.join(tmpDir, pagePath), "utf-8"));
     expect(data.title).toBe("City Council Meeting — 2024-01-10");
     expect(data.category).toBe("decision");
+  });
+});
+
+const sampleRecommendation = (): Recommendation => ({
+  id: "rec-001",
+  title: "Improve Road Maintenance",
+  severity: "high",
+  finding: "Roads in district 3 are deteriorating.",
+  evidence: ["Inspection report Q1 2024"],
+  comparableCities: ["Austin, TX"],
+  suggestedAction: "Allocate $2M for resurfacing.",
+  discussionQuestions: ["What is the timeline?"],
+  sourcesAnalyzed: ["roads-report-2024.pdf"],
+  generatedAt: "2026-06-03",
+  path: "",
+});
+
+describe("writeRecommendationPage", () => {
+  it("creates a new dated file when no existing slug match", async () => {
+    const { writeRecommendationPage } = await importWriter();
+    fs.mkdirSync(path.join(tmpDir, "recommendations"), { recursive: true });
+
+    const rec = sampleRecommendation();
+    const pagePath = writeRecommendationPage(rec);
+
+    expect(pagePath).toBe("recommendations/2026-06-03-improve-road-maintenance.md");
+    expect(fs.existsSync(path.join(tmpDir, pagePath))).toBe(true);
+  });
+
+  it("updates the existing file in place when slug already exists", async () => {
+    const { writeRecommendationPage } = await importWriter();
+    fs.mkdirSync(path.join(tmpDir, "recommendations"), { recursive: true });
+
+    // First write — creates 2026-06-03-improve-road-maintenance.md
+    const rec1 = sampleRecommendation();
+    const firstPath = writeRecommendationPage(rec1);
+    expect(firstPath).toBe("recommendations/2026-06-03-improve-road-maintenance.md");
+
+    // Second write with a different date — should reuse the existing file, not create a new one
+    const rec2 = { ...sampleRecommendation(), generatedAt: "2026-06-04" };
+    const secondPath = writeRecommendationPage(rec2);
+
+    expect(secondPath).toBe(firstPath); // same file, not a new dated file
+    const files = fs.readdirSync(path.join(tmpDir, "recommendations"));
+    expect(files).toHaveLength(1); // only one file in the directory
+  });
+
+  it("updates last_updated frontmatter when reusing existing file", async () => {
+    const { writeRecommendationPage } = await importWriter();
+    fs.mkdirSync(path.join(tmpDir, "recommendations"), { recursive: true });
+
+    writeRecommendationPage(sampleRecommendation());
+    const updatedRec = { ...sampleRecommendation(), generatedAt: "2026-06-05" };
+    const pagePath = writeRecommendationPage(updatedRec);
+
+    const { data } = matter(fs.readFileSync(path.join(tmpDir, pagePath), "utf-8"));
+    expect(data.last_updated).toBe("2026-06-05");
+  });
+
+  it("creates separate files for recommendations with different titles", async () => {
+    const { writeRecommendationPage } = await importWriter();
+    fs.mkdirSync(path.join(tmpDir, "recommendations"), { recursive: true });
+
+    writeRecommendationPage(sampleRecommendation());
+    writeRecommendationPage({ ...sampleRecommendation(), title: "Fix Water Pipes", id: "rec-002" });
+
+    const files = fs.readdirSync(path.join(tmpDir, "recommendations"));
+    expect(files).toHaveLength(2);
+  });
+
+  it("writes category: recommendation in frontmatter", async () => {
+    const { writeRecommendationPage } = await importWriter();
+    fs.mkdirSync(path.join(tmpDir, "recommendations"), { recursive: true });
+
+    const pagePath = writeRecommendationPage(sampleRecommendation());
+    const { data } = matter(fs.readFileSync(path.join(tmpDir, pagePath), "utf-8"));
+    expect(data.category).toBe("recommendation");
   });
 });
 

@@ -80,11 +80,23 @@ export function writeDecisionsPage(
 // ─── Write a recommendation page ──────────────────────────────────────────
 
 export function writeRecommendationPage(rec: Recommendation): string {
-  const slug = rec.title
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/gi, "")
-    .toLowerCase();
-  const pagePath = `recommendations/${rec.generatedAt}-${slug}.md`;
+  const slug = rec.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+  // Check if an existing recommendation file already contains this slug
+  const recsDir = path.join(WIKI_PATH, "recommendations");
+  let pagePath: string | null = null;
+
+  if (fs.existsSync(recsDir)) {
+    const existing = fs.readdirSync(recsDir).find((f) => f.includes(slug));
+    if (existing) {
+      pagePath = `recommendations/${existing}`;
+    }
+  }
+
+  // No existing file found — create a new dated file
+  if (!pagePath) {
+    pagePath = `recommendations/${rec.generatedAt}-${slug}.md`;
+  }
 
   const content = `
 ## AI ANALYSIS — Requires Council Review

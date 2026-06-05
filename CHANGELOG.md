@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.3](https://github.com/xozai/CivicSecondBrain/compare/v1.5.2...v1.5.3) (2026-06-05)
+
+
+### Bug Fixes
+
+* **reader:** auto-repair unquoted YAML titles instead of crashing ([#38](https://github.com/xozai/CivicSecondBrain/issues/38)) ([318e2b2](https://github.com/xozai/CivicSecondBrain/commit/318e2b24ae7012689ea016b892ad58827d535165))
+
 ## [1.5.2](https://github.com/xozai/CivicSecondBrain/compare/v1.5.1...v1.5.2) (2026-06-05)
 
 

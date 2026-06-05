@@ -267,6 +267,13 @@ async function main() {
       if (result.votesRecorded > 0) {
         console.log(`  🗳  Votes recorded: ${result.votesRecorded}`);
       }
+
+      // Delete the downloaded file after successful ingest to free disk space.
+      // The manifest records that it was ingested so it won't be re-processed.
+      if (localPath && fs.existsSync(localPath)) {
+        fs.unlinkSync(localPath);
+        console.log(`  🗑  Deleted local file (ingested)`);
+      }
     } catch (err) {
       console.error(`  ✗ Ingest failed: ${(err as Error).message}`);
       failed++;

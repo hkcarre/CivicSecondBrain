@@ -268,20 +268,42 @@ async function scrapePublicNotices(): Promise<DiscoveredDocument[]> {
 
 // ─── Download a document to raw-sources/ ──────────────────────────────────
 
+const MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024; // 25 MB — matches pdf-parser limit
+
 export async function downloadDocument(doc: DiscoveredDocument): Promise<string | null> {
   try {
     const dir = path.join(RAW_SOURCES_PATH, doc.type, doc.board ?? "general");
     fs.mkdirSync(dir, { recursive: true });
 
+    const HEADERS = {
+      "User-Agent": "CivicSecondBrain/1.0 (City Council Research Tool; contact@schertz.com)",
+      "Accept": "application/pdf,*/*",
+    };
+
+    // HEAD request first to check Content-Length before downloading
+    try {
+      const head = await axios.head(doc.url, { timeout: 10000, maxRedirects: 5, headers: HEADERS });
+      const contentLength = parseInt((head.headers["content-length"] as string) ?? "0", 10);
+      if (contentLength > MAX_DOWNLOAD_BYTES) {
+        console.warn(`  ⚠ Skipping oversized file (${Math.round(contentLength / 1024 / 1024)}MB): ${doc.title}`);
+        return null;
+      }
+    } catch {
+      // HEAD not supported by server — proceed and check size after download
+    }
+
     const response = await axios.get(doc.url, {
       responseType: "arraybuffer",
       timeout: 60000,
       maxRedirects: 5,
-      headers: {
-        "User-Agent": "CivicSecondBrain/1.0 (City Council Research Tool; contact@schertz.com)",
-        "Accept": "application/pdf,*/*",
-      },
+      headers: HEADERS,
     });
+
+    // Double-check size after download in case HEAD wasn't available
+    if (response.data.byteLength > MAX_DOWNLOAD_BYTES) {
+      console.warn(`  ⚠ Skipping oversized file (${Math.round(response.data.byteLength / 1024 / 1024)}MB): ${doc.title}`);
+      return null;
+    }
 
     const contentType: string = (response.headers["content-type"] as string) ?? "";
     const ext = contentTypeToExt(contentType) ?? getExtension(doc.url);

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.1](https://github.com/xozai/CivicSecondBrain/compare/v1.8.0...v1.8.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* **health:** add live Anthropic API probe to catch revoked keys ([#84](https://github.com/xozai/CivicSecondBrain/issues/84)) ([5435b91](https://github.com/xozai/CivicSecondBrain/commit/5435b916ead6d723b44606237c84867de2abb504))
+
 ## [1.8.0](https://github.com/xozai/CivicSecondBrain/compare/v1.7.2...v1.8.0) (2026-06-05)
 
 

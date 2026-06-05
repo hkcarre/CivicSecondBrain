@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.2](https://github.com/xozai/CivicSecondBrain/compare/v1.8.1...v1.8.2) (2026-06-05)
+
+
+### Bug Fixes
+
+* skip unsupported formats (docx/xlsx) without calling Claude ([#82](https://github.com/xozai/CivicSecondBrain/issues/82)) ([f259115](https://github.com/xozai/CivicSecondBrain/commit/f259115507c04c75453a85859491849d2df336c0))
+
 ## [1.8.1](https://github.com/xozai/CivicSecondBrain/compare/v1.8.0...v1.8.1) (2026-06-05)
 
 

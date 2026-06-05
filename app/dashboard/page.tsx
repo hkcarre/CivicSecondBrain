@@ -15,8 +15,8 @@ export default async function DashboardPage() {
       <div className="max-w-5xl mx-auto px-6 py-6">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-city-navy">City Health</h1>
-          <p className="text-sm text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold text-city-navy dark:text-city-gold">City Health</h1>
+          <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
             AI-generated analysis from{" "}
             <span className="font-medium">{stats.sourcesIngested}</span> city
             documents ·{" "}
@@ -36,11 +36,11 @@ export default async function DashboardPage() {
           {/* Recommendations — 2/3 width */}
           <div className="col-span-2 space-y-4">
             <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-gray-900">
+              <h2 className="font-semibold text-gray-900 dark:text-gray-100">
                 AI Recommendations
               </h2>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-gray-400 dark:text-gray-500">
                   ⚠️ All items require council review
                 </span>
                 <RunAnalysisButton />
@@ -77,20 +77,20 @@ export default async function DashboardPage() {
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 px-4 py-3">
-      <p className="text-2xl font-bold text-city-navy">{value}</p>
-      <p className="text-xs text-gray-400 mt-0.5">{label}</p>
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3">
+      <p className="text-2xl font-bold text-city-navy dark:text-city-gold">{value}</p>
+      <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">{label}</p>
     </div>
   );
 }
 
 function EmptyRecommendations() {
   return (
-    <div className="bg-white rounded-xl border border-dashed border-gray-300 p-8 text-center">
-      <p className="text-gray-400 text-sm mb-2">No recommendations yet.</p>
-      <p className="text-gray-400 text-xs">
+    <div className="bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-600 p-8 text-center">
+      <p className="text-gray-400 dark:text-gray-500 text-sm mb-2">No recommendations yet.</p>
+      <p className="text-gray-400 dark:text-gray-500 text-xs">
         Run{" "}
-        <code className="bg-gray-100 px-1.5 py-0.5 rounded">
+        <code className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
           npm run lint:wiki
         </code>{" "}
         to generate the first analysis, or wait for the nightly job at 2:00 AM CT.

@@ -16,27 +16,27 @@ interface HealthCardProps {
 
 const SEVERITY_CONFIG = {
   high: {
-    bg: "bg-red-50",
-    border: "border-red-200",
-    badge: "bg-red-100 text-red-700",
+    bg: "bg-red-50 dark:bg-red-900/20",
+    border: "border-red-200 dark:border-red-800",
+    badge: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300",
     icon: AlertCircle,
-    iconColor: "text-red-500",
+    iconColor: "text-red-500 dark:text-red-400",
     label: "High Priority",
   },
   medium: {
-    bg: "bg-amber-50",
-    border: "border-amber-200",
-    badge: "bg-amber-100 text-amber-700",
+    bg: "bg-amber-50 dark:bg-amber-900/20",
+    border: "border-amber-200 dark:border-amber-800",
+    badge: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300",
     icon: AlertTriangle,
-    iconColor: "text-amber-500",
+    iconColor: "text-amber-500 dark:text-amber-400",
     label: "Medium Priority",
   },
   low: {
-    bg: "bg-green-50",
-    border: "border-green-200",
-    badge: "bg-green-100 text-green-700",
+    bg: "bg-green-50 dark:bg-green-900/20",
+    border: "border-green-200 dark:border-green-800",
+    badge: "bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300",
     icon: CheckCircle,
-    iconColor: "text-green-500",
+    iconColor: "text-green-500 dark:text-green-400",
     label: "For Review",
   },
 };
@@ -68,26 +68,26 @@ export function HealthCard({
             {cfg.label}
           </span>
         </div>
-        <span className="text-xs text-gray-400 flex-shrink-0">{formatDate(generatedAt)}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-500 flex-shrink-0">{formatDate(generatedAt)}</span>
       </div>
 
       {/* Title */}
-      <h3 className="font-semibold text-gray-900 text-sm leading-snug">{title}</h3>
+      <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm leading-snug">{title}</h3>
 
       {/* Finding */}
-      <p className="text-sm text-gray-600 leading-relaxed">{finding}</p>
+      <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{finding}</p>
 
       {/* Suggested action */}
-      <div className="bg-white/70 rounded-lg px-3 py-2 border border-white">
-        <p className="text-xs font-semibold text-gray-500 mb-0.5">Suggested Action</p>
-        <p className="text-sm text-gray-700">{suggestedAction}</p>
+      <div className="bg-white/70 dark:bg-gray-800/70 rounded-lg px-3 py-2 border border-white dark:border-gray-700">
+        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-0.5">Suggested Action</p>
+        <p className="text-sm text-gray-700 dark:text-gray-300">{suggestedAction}</p>
       </div>
 
       {/* View full analysis */}
       {path && (
         <Link
           href={`/wiki/${encodeURIComponent(path.replace(/\.md$/, ""))}`}
-          className="flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-city-navy transition-colors self-start"
+          className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-city-navy dark:hover:text-city-gold transition-colors self-start"
         >
           View full analysis <ChevronRight size={12} />
         </Link>

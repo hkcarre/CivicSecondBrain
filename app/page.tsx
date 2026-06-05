@@ -132,10 +132,10 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex-shrink-0">
         <div className="max-w-3xl mx-auto">
-          <h1 className="text-lg font-semibold text-city-navy">Ask the City</h1>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h1 className="text-lg font-semibold text-city-navy dark:text-city-gold">Ask the City</h1>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
             Answers grounded in official Schertz city documents
           </p>
         </div>

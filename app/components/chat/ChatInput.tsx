@@ -37,14 +37,14 @@ export function ChatInput({
   };
 
   return (
-    <div className="border-t border-gray-200 bg-white px-4 py-3">
+    <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
       <div className="max-w-3xl mx-auto">
         <div
           className={clsx(
-            "flex items-end gap-2 rounded-2xl border bg-gray-50 px-4 py-2.5 transition-colors",
+            "flex items-end gap-2 rounded-2xl border bg-gray-50 dark:bg-gray-800 px-4 py-2.5 transition-colors",
             isLoading
-              ? "border-gray-200"
-              : "border-gray-300 focus-within:border-city-navy focus-within:bg-white focus-within:shadow-sm"
+              ? "border-gray-200 dark:border-gray-700"
+              : "border-gray-300 dark:border-gray-600 focus-within:border-city-navy dark:focus-within:border-city-gold focus-within:bg-white dark:focus-within:bg-gray-900 focus-within:shadow-sm"
           )}
         >
           <textarea
@@ -55,8 +55,8 @@ export function ChatInput({
             placeholder={placeholder}
             disabled={isLoading}
             rows={1}
-            className="flex-1 bg-transparent resize-none outline-none text-sm text-gray-800
-                       placeholder:text-gray-400 min-h-[24px] max-h-[160px] py-0.5
+            className="flex-1 bg-transparent resize-none outline-none text-sm text-gray-800 dark:text-gray-200
+                       placeholder:text-gray-400 dark:placeholder:text-gray-500 min-h-[24px] max-h-[160px] py-0.5
                        disabled:opacity-50"
           />
           <button
@@ -65,8 +65,8 @@ export function ChatInput({
             className={clsx(
               "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all",
               !isLoading && value.trim()
-                ? "bg-city-navy text-white hover:bg-city-navy-light"
-                : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                ? "bg-city-navy dark:bg-city-gold text-white dark:text-city-navy hover:bg-city-navy-light dark:hover:opacity-90"
+                : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
             )}
           >
             {isLoading ? (
@@ -76,7 +76,7 @@ export function ChatInput({
             )}
           </button>
         </div>
-        <p className="text-xs text-gray-400 mt-1.5 text-center">
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 text-center">
           Answers cite official Schertz city documents · Press Enter to send
         </p>
       </div>

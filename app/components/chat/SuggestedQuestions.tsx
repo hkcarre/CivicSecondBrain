@@ -22,13 +22,13 @@ export function SuggestedQuestions({ onSelect }: SuggestedQuestionsProps) {
     <div className="max-w-2xl mx-auto px-4 py-8">
       {/* Hero */}
       <div className="text-center mb-8">
-        <div className="w-16 h-16 rounded-2xl bg-city-navy flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-city-navy dark:bg-gray-800 flex items-center justify-center mx-auto mb-4">
           <span className="text-3xl">🏛</span>
         </div>
-        <h1 className="text-2xl font-bold text-city-navy mb-2">
+        <h1 className="text-2xl font-bold text-city-navy dark:text-city-gold mb-2">
           Ask the City
         </h1>
-        <p className="text-gray-500 text-sm max-w-md mx-auto">
+        <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">
           Ask anything about Schertz, TX — city finances, ordinances, meeting
           decisions, strategic goals. Every answer is cited from official documents.
         </p>
@@ -36,7 +36,7 @@ export function SuggestedQuestions({ onSelect }: SuggestedQuestionsProps) {
 
       {/* Suggested questions */}
       <div>
-        <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+        <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide mb-3 flex items-center gap-1.5">
           <Sparkles size={12} />
           Suggested questions
         </p>
@@ -45,9 +45,11 @@ export function SuggestedQuestions({ onSelect }: SuggestedQuestionsProps) {
             <button
               key={q}
               onClick={() => onSelect(q)}
-              className="text-left text-sm px-4 py-3 rounded-xl border border-gray-200
-                         bg-white hover:border-city-navy/40 hover:bg-city-navy/5
-                         text-gray-700 hover:text-city-navy transition-all shadow-sm"
+              className="text-left text-sm px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-700
+                         bg-white dark:bg-gray-800 hover:border-city-navy/40 dark:hover:border-city-gold/40
+                         hover:bg-city-navy/5 dark:hover:bg-city-gold/10
+                         text-gray-700 dark:text-gray-300 hover:text-city-navy dark:hover:text-city-gold
+                         transition-all shadow-sm"
             >
               {q}
             </button>

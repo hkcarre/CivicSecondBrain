@@ -26,7 +26,7 @@ export function ChatMessage({ message, onFile, isStreaming = false }: ChatMessag
           "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
           isUser
             ? "bg-city-navy text-white"
-            : "bg-city-gold/20 text-city-navy border border-city-gold/30"
+            : "bg-city-gold/20 text-city-navy dark:text-city-gold border border-city-gold/30"
         )}
       >
         {isUser ? <User size={16} /> : <Bot size={16} />}
@@ -38,7 +38,7 @@ export function ChatMessage({ message, onFile, isStreaming = false }: ChatMessag
           "max-w-[78%] rounded-2xl px-4 py-3 text-sm",
           isUser
             ? "bg-city-navy text-white rounded-tr-sm"
-            : "bg-white border border-gray-200 text-gray-800 rounded-tl-sm shadow-sm"
+            : "bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-sm shadow-sm"
         )}
       >
         {isUser ? (
@@ -49,14 +49,14 @@ export function ChatMessage({ message, onFile, isStreaming = false }: ChatMessag
 
         {/* Streaming cursor — visible while response is still generating */}
         {!isUser && isStreaming && (
-          <span className="inline-block w-2 h-4 bg-city-navy/60 animate-pulse rounded-sm ml-0.5 align-middle" />
+          <span className="inline-block w-2 h-4 bg-city-navy/60 dark:bg-city-gold/60 animate-pulse rounded-sm ml-0.5 align-middle" />
         )}
 
         {/* Actions for assistant messages — only shown after stream is complete */}
         {!isUser && !isStreaming && onFile && !message.filed && (
           <button
             onClick={() => onFile(message)}
-            className="mt-3 flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 transition-colors"
+            className="mt-3 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
           >
             <BookMarked size={12} />
             Save answer to wiki
@@ -64,7 +64,7 @@ export function ChatMessage({ message, onFile, isStreaming = false }: ChatMessag
         )}
 
         {message.filed && (
-          <p className="mt-2 text-xs text-green-600 flex items-center gap-1">
+          <p className="mt-2 text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
             <BookMarked size={12} />
             Saved to wiki/queries/
           </p>
@@ -74,7 +74,7 @@ export function ChatMessage({ message, onFile, isStreaming = false }: ChatMessag
         <p
           className={clsx(
             "text-xs mt-1.5",
-            isUser ? "text-white/50 text-right" : "text-gray-400"
+            isUser ? "text-white/50 text-right" : "text-gray-400 dark:text-gray-500"
           )}
         >
           {formatTime(message.timestamp)}
@@ -156,7 +156,7 @@ function renderInlineMarkdown(text: string): string {
   return text
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`(.+?)`/g, '<code class="bg-gray-100 px-1 rounded text-xs font-mono">$1</code>')
+    .replace(/`(.+?)`/g, '<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded text-xs font-mono">$1</code>')
     .replace(/\n/g, "<br>");
 }
 

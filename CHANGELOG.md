@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.0](https://github.com/xozai/CivicSecondBrain/compare/v1.10.1...v1.11.0) (2026-06-05)
+
+
+### Features
+
+* persist chat history to localStorage across page refreshes ([#79](https://github.com/xozai/CivicSecondBrain/issues/79)) ([d63ab9f](https://github.com/xozai/CivicSecondBrain/commit/d63ab9f699059da9ba6c17e4a83464b723c5c48c))
+
 ## [1.10.1](https://github.com/xozai/CivicSecondBrain/compare/v1.10.0...v1.10.1) (2026-06-05)
 
 

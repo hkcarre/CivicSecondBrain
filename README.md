@@ -173,7 +173,7 @@ All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `la
 | `/wiki` | Browse all wiki pages by category |
 | `/dashboard` | City health dashboard — KPIs and AI recommendations |
 | `/admin` | Document ingestion management |
-| `GET /api/health` | Health check endpoint (used by Railway) |
+| `GET /api/health` | Health check — returns env vars, wiki state, and errors |
 | `POST /api/chat` | Streaming chat endpoint (plain text delta stream) |
 | `POST /api/ingest` | Trigger document ingestion |
 | `POST /api/lint` | Trigger wiki health check and recommendation generation |
@@ -219,13 +219,31 @@ railway run npm run ingest:seed -- --limit 10   # quick start
 railway run npm run lint:wiki                    # generate recommendations
 ```
 
-### Memory Notes
+### Disk & Memory Management
 
-The ingest process is configured with `--max-old-space-size=768` and skips PDFs >25MB. If OOM errors occur, increase Railway memory to 1GB and process in batches:
+- **PDFs >25MB** are skipped before download via HTTP HEAD (prevents disk full errors on large budget books)
+- **Downloaded files are deleted** immediately after successful ingest — `/data/raw-sources/` stays near-empty; the manifest is the only persistent state
+- **Change detection** — on re-runs, already-ingested docs are skipped unless the server's `Last-Modified` or `ETag` header has changed
+- **Memory** — ingest runs with `--max-old-space-size=768`. If OOM errors occur, increase Railway memory to 1GB and batch:
 
 ```bash
 npm run ingest:seed -- --limit 1   # one doc at a time
 ```
+
+### Diagnosing Issues
+
+Hit `/api/health` to see the current state without digging into logs:
+
+```json
+{
+  "status": "ok",
+  "env": { "ANTHROPIC_API_KEY": true, "WIKI_PATH": "/data/wiki" },
+  "wiki": { "indexExists": true, "topicCount": 8 },
+  "errors": []
+}
+```
+
+If `status` is `"degraded"`, the `errors` array will list the specific problem (missing API key, empty wiki, etc.).
 
 ---
 
@@ -236,6 +254,8 @@ GitHub Actions runs on every push to `main` and every PR:
 - `npm run build` — validates the Next.js build
 
 Railway's **"Wait for CI"** setting ensures deploys only happen after tests pass.
+
+Add `ANTHROPIC_API_KEY` as a GitHub Actions secret (repo Settings → Secrets → Actions) so the build step has it available.
 
 ---
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/xozai/CivicSecondBrain/compare/v1.7.0...v1.7.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* **lint:** dedup recommendation pages by slug instead of always creating dated files ([#83](https://github.com/xozai/CivicSecondBrain/issues/83)) ([3555f4f](https://github.com/xozai/CivicSecondBrain/commit/3555f4f1769e0a8a829d33848eac9e4fa58da6e3))
+
 ## [1.7.0](https://github.com/xozai/CivicSecondBrain/compare/v1.6.0...v1.7.0) (2026-06-05)
 
 

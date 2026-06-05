@@ -18,74 +18,96 @@ import type { WikiIndexEntry } from "@/types";
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
-  const { messages, fileAnswer } = await req.json();
-  const userMessage: string = messages[messages.length - 1]?.content ?? "";
+  try {
+    const { messages, fileAnswer } = await req.json();
+    const userMessage: string = messages[messages.length - 1]?.content ?? "";
 
-  const today = new Date().toISOString().split("T")[0];
+    const today = new Date().toISOString().split("T")[0];
 
-  // ── 1. Select relevant wiki pages ────────────────────────────────────────
+    // ── 1. Select relevant wiki pages ────────────────────────────────────────
 
-  const indexEntries = readWikiIndex();
-  const relevantPaths = selectRelevantPages(userMessage, indexEntries);
-  const wikiPages = readRelevantPages(relevantPaths);
-  const wikiContext = buildWikiContext(wikiPages);
+    const indexEntries = readWikiIndex();
+    const relevantPaths = selectRelevantPages(userMessage, indexEntries);
+    const wikiPages = readRelevantPages(relevantPaths);
+    const wikiContext = buildWikiContext(wikiPages);
 
-  // ── 2. Build system prompt ───────────────────────────────────────────────
+    // ── 2. Build system prompt ───────────────────────────────────────────────
 
-  const systemPrompt = QUERY_SYSTEM_PROMPT.replace("{DATE}", today);
+    const systemPrompt = QUERY_SYSTEM_PROMPT.replace("{DATE}", today);
 
-  const contextBlock =
-    wikiPages.length > 0
-      ? `\n\n## WIKI KNOWLEDGE BASE\n\nThe following wiki pages are relevant to this query:\n\n${wikiContext}`
-      : "\n\n## WIKI KNOWLEDGE BASE\n\nNo wiki pages have been ingested yet. " +
-        "Run `npm run ingest:seed` to populate the knowledge base.";
+    const contextBlock =
+      wikiPages.length > 0
+        ? `\n\n## WIKI KNOWLEDGE BASE\n\nThe following wiki pages are relevant to this query:\n\n${wikiContext}`
+        : "\n\n## WIKI KNOWLEDGE BASE\n\nNo wiki pages have been ingested yet. " +
+          "Run `npm run ingest:seed` to populate the knowledge base.";
 
-  // ── 3. Stream response ───────────────────────────────────────────────────
+    // ── 3. Stream response ───────────────────────────────────────────────────
 
-  const stream = await claude.messages.stream({
-    model: MODELS.sonnet,
-    max_tokens: 2048,
-    system: systemPrompt + contextBlock,
-    messages: messages.map((m: { role: string; content: string }) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    })),
-  });
+    const stream = await claude.messages.stream({
+      model: MODELS.sonnet,
+      max_tokens: 2048,
+      system: systemPrompt + contextBlock,
+      messages: messages.map((m: { role: string; content: string }) => ({
+        role: m.role as "user" | "assistant",
+        content: m.content,
+      })),
+    });
 
-  // ── 4. Log the query (async, non-blocking) ───────────────────────────────
+    // ── 4. Log the query (async, non-blocking, non-fatal) ────────────────────
 
-  stream.finalMessage().then((finalMsg) => {
-    const truncatedQ = userMessage.slice(0, 50);
-    const logEntry = `## [${today}] QUERY | ${truncatedQ}
+    stream.finalMessage().then(() => {
+      try {
+        const truncatedQ = userMessage.slice(0, 50);
+        const logEntry = `## [${today}] QUERY | ${truncatedQ}
 **Question:** ${userMessage}
 **Wiki pages read:** ${relevantPaths.join(", ") || "none"}
 **Filed:** ${fileAnswer ? "pending" : "not filed"}
 **Gap noted:** ${wikiPages.length === 0 ? "No wiki pages ingested — run ingest:seed" : "none"}`;
-    appendToLog(logEntry);
-  });
-
-  // Pipe only the text delta content — not the raw Anthropic SSE event objects
-  const encoder = new TextEncoder();
-  const body = new ReadableStream({
-    async start(controller) {
-      for await (const event of stream) {
-        if (
-          event.type === "content_block_delta" &&
-          event.delta.type === "text_delta"
-        ) {
-          controller.enqueue(encoder.encode(event.delta.text));
-        }
+        appendToLog(logEntry);
+      } catch {
+        // Log write failures are non-fatal — don't interrupt the response
       }
-      controller.close();
-    },
-  });
+    }).catch(() => {});
 
-  return new Response(body, {
-    headers: {
-      "Content-Type": "text/plain; charset=utf-8",
-      "Transfer-Encoding": "chunked",
-    },
-  });
+    // Pipe only the text delta content — not the raw Anthropic SSE event objects
+    const encoder = new TextEncoder();
+    const body = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const event of stream) {
+            if (
+              event.type === "content_block_delta" &&
+              event.delta.type === "text_delta"
+            ) {
+              controller.enqueue(encoder.encode(event.delta.text));
+            }
+          }
+        } catch (err) {
+          // Stream error mid-response — emit a readable error message
+          controller.enqueue(
+            encoder.encode(`\n\n[Error: ${(err as Error).message}]`)
+          );
+        } finally {
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(body, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+      },
+    });
+  } catch (err) {
+    // Top-level error (bad API key, JSON parse, wiki read failure, etc.)
+    const message = (err as Error).message ?? "Unknown error";
+    console.error("[/api/chat] Error:", message);
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status: 500, headers: { "Content-Type": "application/json" } }
+    );
+  }
 }
 
 // ─── Simple keyword-based page selector ───────────────────────────────────

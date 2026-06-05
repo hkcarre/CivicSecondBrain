@@ -12,14 +12,46 @@ export function readWikiPage(pagePath: string): WikiPage | null {
   if (!fs.existsSync(fullPath)) return null;
 
   const raw = fs.readFileSync(fullPath, "utf-8");
-  const { data, content } = matter(raw);
+
+  let data: Record<string, unknown> = {};
+  let content = raw;
+
+  try {
+    const parsed = matter(raw);
+    data = parsed.data;
+    content = parsed.content;
+  } catch {
+    // YAML parse error (e.g. unquoted colon in title).
+    // Auto-repair: re-quote the title line and retry once.
+    const repaired = raw.replace(
+      /^(title:\s*)(.+)$/m,
+      (_match, prefix, value) => {
+        const trimmed = value.trim();
+        if (!trimmed.startsWith('"')) {
+          return `${prefix}"${trimmed.replace(/"/g, '\\"')}"`;
+        }
+        return _match;
+      }
+    );
+    try {
+      const parsed = matter(repaired);
+      data = parsed.data;
+      content = parsed.content;
+      // Persist the repair so future reads don't need it
+      fs.writeFileSync(fullPath, repaired, "utf-8");
+    } catch {
+      // Still broken — return null and skip this page
+      console.warn(`  ⚠ Skipping unparseable wiki page: ${pagePath}`);
+      return null;
+    }
+  }
 
   return {
-    title: data.title ?? path.basename(pagePath, ".md"),
+    title: data.title as string ?? path.basename(pagePath, ".md"),
     type: "wiki",
-    category: data.category ?? "topic",
-    sources: data.sources ?? [],
-    lastUpdated: data.last_updated ?? "",
+    category: data.category as WikiPage["category"] ?? "topic",
+    sources: data.sources as string[] ?? [],
+    lastUpdated: data.last_updated as string ?? "",
     content,
     path: pagePath,
   };

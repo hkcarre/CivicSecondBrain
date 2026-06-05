@@ -40,7 +40,8 @@ export interface CivicDocument {
   fiscalYear?: string; // e.g., "FY2024"
   sourceUrl: string;
   localPath?: string;
-  checksum?: string;
+  checksum?: string;        // MD5 of file content at ingest time
+  sourceModifiedAt?: string; // Last-Modified or ETag from server at discovery time
   ingestedAt?: string;
 }
 

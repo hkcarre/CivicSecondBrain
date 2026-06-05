@@ -205,10 +205,25 @@ async function main() {
     console.log(`  Filtered to type: ${TYPE_FILTER}`);
   }
 
-  // Skip already-ingested
+  // Skip already-ingested docs unless the source has changed since last ingest.
+  // Change detection: if the discovered doc carries a sourceModifiedAt date
+  // that differs from what's stored in the manifest, re-ingest it.
   const toProcess = filteredDocs.filter((d) => {
     const id = docId(d.url);
-    return !manifest[id]?.ingestedAt;
+    const entry = manifest[id];
+    if (!entry?.ingestedAt) return true; // never ingested
+
+    // Re-ingest if source signals a newer modification date
+    if (
+      d.sourceModifiedAt &&
+      entry.sourceModifiedAt &&
+      d.sourceModifiedAt !== entry.sourceModifiedAt
+    ) {
+      console.log(`  🔄 Re-ingesting (source changed): ${d.title}`);
+      return true;
+    }
+
+    return false; // already ingested, no change detected
   });
 
   console.log(`\n📊 Discovery summary:`);
@@ -258,6 +273,7 @@ async function main() {
     try {
       const result = await ingestDocument(civicDoc);
       civicDoc.ingestedAt = new Date().toISOString();
+      civicDoc.sourceModifiedAt = doc.sourceModifiedAt; // persist for future change detection
       manifest[id] = civicDoc;
       saveManifest(manifest);
       succeeded++;

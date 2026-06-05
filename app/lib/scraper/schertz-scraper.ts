@@ -32,6 +32,7 @@ export interface DiscoveredDocument {
   board?: BoardName;
   date?: string;
   checksum?: string;
+  sourceModifiedAt?: string; // Last-Modified or ETag from the server
 }
 
 // ─── Main scraper entry point ──────────────────────────────────────────────
@@ -310,14 +311,16 @@ export async function downloadDocument(doc: DiscoveredDocument): Promise<string 
     const filename = sanitizeFilename(doc.title) + ext;
     const localPath = path.join(dir, filename);
 
-    if (fs.existsSync(localPath)) {
-      const existing = fs.readFileSync(localPath);
-      const checksum = crypto.createHash("md5").update(existing).digest("hex");
-      if (checksum === doc.checksum) {
-        console.log(`  ↩ Skipped (unchanged): ${filename}`);
-        return localPath;
-      }
-    }
+    // Capture server's change signal for manifest (used to detect updates on future runs)
+    const serverModified =
+      (response.headers["last-modified"] as string) ??
+      (response.headers["etag"] as string) ??
+      "";
+    doc.sourceModifiedAt = serverModified || doc.sourceModifiedAt;
+
+    // Compute checksum of downloaded content
+    const checksum = crypto.createHash("md5").update(response.data as Buffer).digest("hex");
+    doc.checksum = checksum;
 
     fs.writeFileSync(localPath, response.data);
     console.log(`  ↓ Downloaded: ${filename} (${ext}, ${Math.round(response.data.byteLength / 1024)}KB)`);
@@ -348,6 +351,8 @@ export function toCivicDocument(doc: DiscoveredDocument, localPath: string, id: 
     date: doc.date ?? new Date().toISOString().split("T")[0],
     sourceUrl: doc.url,
     localPath,
+    checksum: doc.checksum,
+    sourceModifiedAt: doc.sourceModifiedAt,
   };
 }
 

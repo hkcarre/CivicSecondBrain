@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.4](https://github.com/xozai/CivicSecondBrain/compare/v1.5.3...v1.5.4) (2026-06-05)
+
+
+### Performance Improvements
+
+* **ingest:** parallelize discovery and ingest worker pool ([#63](https://github.com/xozai/CivicSecondBrain/issues/63)) ([c550185](https://github.com/xozai/CivicSecondBrain/commit/c55018598b7a2ca51d79cb94971e0407fd700b79))
+
 ## [1.5.3](https://github.com/xozai/CivicSecondBrain/compare/v1.5.2...v1.5.3) (2026-06-05)
 
 

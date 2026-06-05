@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.0](https://github.com/xozai/CivicSecondBrain/compare/v1.3.5...v1.4.0) (2026-06-05)
+
+
+### Features
+
+* MVP features — wiki detail page, file answer, multi-city config, run analysis button, manifest dedup ([#22](https://github.com/xozai/CivicSecondBrain/issues/22)) ([f877ab4](https://github.com/xozai/CivicSecondBrain/commit/f877ab4ce6880fb9067625ff10d7c3333d40d17c))
+
 ## [1.3.5](https://github.com/xozai/CivicSecondBrain/compare/v1.3.4...v1.3.5) (2026-06-05)
 
 

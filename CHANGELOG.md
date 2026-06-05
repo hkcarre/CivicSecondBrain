@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.0](https://github.com/xozai/CivicSecondBrain/compare/v1.7.2...v1.8.0) (2026-06-05)
+
+
+### Features
+
+* add dark mode support with Tailwind class strategy ([#85](https://github.com/xozai/CivicSecondBrain/issues/85)) ([d578c42](https://github.com/xozai/CivicSecondBrain/commit/d578c42414d81c719a950349a46e950d5df4919d))
+
 ## [1.7.2](https://github.com/xozai/CivicSecondBrain/compare/v1.7.1...v1.7.2) (2026-06-05)
 
 

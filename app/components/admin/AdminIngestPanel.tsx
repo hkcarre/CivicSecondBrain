@@ -18,18 +18,26 @@ export function AdminIngestPanel({ stats, logSummary }: AdminIngestPanelProps) {
     "idle" | "running" | "done" | "error"
   >("idle");
   const [result, setResult] = useState<string | null>(null);
+  const [failureCount, setFailureCount] = useState<number>(0);
+  const [failedDocuments, setFailedDocuments] = useState<string[]>([]);
   const [activeAction, setActiveAction] = useState<string | null>(null);
 
   const run = async (action: "ingest" | "lint" | "scrape-check") => {
     setStatus("running");
     setActiveAction(action);
     setResult(null);
+    setFailureCount(0);
+    setFailedDocuments([]);
 
     try {
       const res = await fetch(`/api/${action}`, { method: "POST" });
       const data = await res.json();
       setStatus("done");
       setResult(data.message ?? "Complete.");
+      if (data.failed != null && data.failed > 0) {
+        setFailureCount(data.failed);
+        setFailedDocuments(data.failedDocuments ?? []);
+      }
     } catch (err) {
       setStatus("error");
       setResult("Error — check server logs.");
@@ -97,6 +105,20 @@ export function AdminIngestPanel({ stats, logSummary }: AdminIngestPanelProps) {
           >
             <CheckCircle size={12} />
             {result}
+          </div>
+        )}
+
+        {/* Failure details */}
+        {failureCount > 0 && (
+          <div className="mt-2 text-xs px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+            <p className="font-semibold text-amber-800 mb-1">
+              {failureCount} document{failureCount > 1 ? "s" : ""} failed — see wiki/log.md for details
+            </p>
+            <ul className="list-disc list-inside space-y-0.5 text-amber-700">
+              {failedDocuments.map((title) => (
+                <li key={title}>{title}</li>
+              ))}
+            </ul>
           </div>
         )}
       </div>

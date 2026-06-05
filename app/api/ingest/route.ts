@@ -18,6 +18,7 @@ import {
   needsIngestion,
   markIngested,
 } from "@/lib/manifest";
+import { appendToLog } from "@/lib/wiki/writer";
 
 export const maxDuration = 300;
 
@@ -40,6 +41,7 @@ export async function POST(req: Request) {
 
     let processed = 0;
     let succeeded = 0;
+    const failures: string[] = [];
 
     for (const doc of pending.slice(0, limit)) {
       processed++;
@@ -63,6 +65,11 @@ export async function POST(req: Request) {
         succeeded++;
       } catch (err) {
         console.error(`Ingest failed for ${doc.title}:`, err);
+        failures.push(doc.title);
+        const ts = new Date().toISOString();
+        appendToLog(
+          `## [ERROR] [${ts}] Ingest failed: ${doc.title}\n\n${(err as Error).message}`
+        );
       }
     }
 
@@ -70,6 +77,8 @@ export async function POST(req: Request) {
       message: `Ingested ${succeeded}/${processed} documents.`,
       processed,
       succeeded,
+      failed: failures.length,
+      failedDocuments: failures,
     });
   } catch (err) {
     return NextResponse.json(

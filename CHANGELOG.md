@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/xozai/CivicSecondBrain/compare/v1.4.2...v1.5.0) (2026-06-05)
+
+
+### Features
+
+* **ingest:** change detection — only re-ingest modified documents ([#31](https://github.com/xozai/CivicSecondBrain/issues/31)) ([d49ed50](https://github.com/xozai/CivicSecondBrain/commit/d49ed50b7d7855a487eed5c3a365793acc17d956))
+
 ## [1.4.2](https://github.com/xozai/CivicSecondBrain/compare/v1.4.1...v1.4.2) (2026-06-05)
 
 

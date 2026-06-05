@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.5](https://github.com/xozai/CivicSecondBrain/compare/v1.3.4...v1.3.5) (2026-06-05)
+
+
+### Performance Improvements
+
+* reduce memory usage in ingest and lint ([#23](https://github.com/xozai/CivicSecondBrain/issues/23)) ([7cf36b9](https://github.com/xozai/CivicSecondBrain/commit/7cf36b99b5e835aa7f3335b5f3c58c1ccdd7e75d))
+
 ## [1.3.4](https://github.com/xozai/CivicSecondBrain/compare/v1.3.3...v1.3.4) (2026-06-04)
 
 

@@ -15,6 +15,15 @@ out/
 # raw documents (not committed — too large, use S3 in prod)
 raw-sources/
 
+# Generated wiki content — lives on the Railway volume, rebuilt by ingest/lint
+# SCHEMA.md and index.md are kept as seed files for first-boot initialization
+wiki/decisions/
+wiki/log.md
+wiki/people/
+wiki/queries/
+wiki/recommendations/
+wiki/topics/
+
 # build
 dist/
 build/

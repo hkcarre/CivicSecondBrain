@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.9.0](https://github.com/xozai/CivicSecondBrain/compare/v1.8.3...v1.9.0) (2026-06-05)
+
+
+### Features
+
+* add full-text wiki search API endpoint ([#80](https://github.com/xozai/CivicSecondBrain/issues/80)) ([e103b9b](https://github.com/xozai/CivicSecondBrain/commit/e103b9b097d39f51130f2f89a44d1e0a63c3bbd3))
+
 ## [1.8.3](https://github.com/xozai/CivicSecondBrain/compare/v1.8.2...v1.8.3) (2026-06-05)
 
 

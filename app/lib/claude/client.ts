@@ -13,9 +13,16 @@ export const MODELS = {
   haiku: "claude-haiku-4-5",
 } as const;
 
+// ─── City identity (env-configurable) ────────────────────────────────────
+// Set CITY_NAME and CITY_STATE in .env.local to adapt to any municipality.
+
+const CITY_NAME = process.env.CITY_NAME ?? process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz";
+const CITY_STATE = process.env.CITY_STATE ?? process.env.NEXT_PUBLIC_CITY_STATE ?? "TX";
+export const CITY_FULL = `${CITY_NAME}, ${CITY_STATE}`;
+
 // ─── System Prompts ────────────────────────────────────────────────────────
 
-export const QUERY_SYSTEM_PROMPT = `You are CivicSecondBrain, an AI assistant for the Schertz, TX City Council.
+export const QUERY_SYSTEM_PROMPT = `You are CivicSecondBrain, an AI assistant for the ${CITY_FULL} City Council.
 You have access to a curated wiki of city documents. Today's date is {DATE}.
 
 RULES — follow these strictly:
@@ -35,7 +42,7 @@ FORMAT your responses as:
 - [Optional] Related topics from the wiki
 - [Optional] Gaps: what additional documents would help`;
 
-export const INGEST_SYSTEM_PROMPT = `You are the CivicSecondBrain ingestion engine for Schertz, TX.
+export const INGEST_SYSTEM_PROMPT = `You are the CivicSecondBrain ingestion engine for ${CITY_FULL}.
 Your job is to process a city document and extract structured knowledge.
 
 Extract ALL of the following (return as JSON):
@@ -53,7 +60,7 @@ Extract ALL of the following (return as JSON):
 - keyFacts: array of strings — important facts to add to wiki pages
 - openQuestions: items that need follow-up or further research`;
 
-export const LINT_SYSTEM_PROMPT = `You are the CivicSecondBrain nightly analysis engine for Schertz, TX.
+export const LINT_SYSTEM_PROMPT = `You are the CivicSecondBrain nightly analysis engine for ${CITY_FULL}.
 You have read the complete wiki. Today's date is {DATE}.
 
 Your job:

@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { claude, MODELS, LINT_SYSTEM_PROMPT } from "@/lib/claude/client";
+import { claude, MODELS, LINT_SYSTEM_PROMPT, CITY_FULL } from "@/lib/claude/client";
 import { readFullWiki, buildWikiContext } from "@/lib/wiki/reader";
 import { writeRecommendationPage, updateWikiIndex, appendToLog } from "@/lib/wiki/writer";
 import type { Recommendation } from "@/types";
@@ -36,7 +36,7 @@ export async function POST() {
       messages: [
         {
           role: "user",
-          content: `Analyze the following Schertz, TX wiki and generate civic recommendations.
+          content: `Analyze the following ${CITY_FULL} wiki and generate civic recommendations.
 
 Return a JSON object with:
 {

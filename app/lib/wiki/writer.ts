@@ -178,6 +178,37 @@ export function updateWikiIndex(
   fs.writeFileSync(indexPath, content, "utf-8");
 }
 
+// ─── Write a saved query page ─────────────────────────────────────────────
+
+export function writeQueryPage(
+  message: { content: string; timestamp?: string },
+  date: string
+): { path: string; title: string } {
+  // Derive a slug from the first sentence or first 60 chars
+  const firstLine = message.content.split("\n")[0].slice(0, 60).trim();
+  const slug = firstLine
+    .replace(/[^a-z0-9\s-]/gi, "")
+    .replace(/\s+/g, "-")
+    .toLowerCase()
+    .slice(0, 60);
+
+  const pagePath = `queries/${date}-${slug}.md`;
+  const title = `Q&A — ${firstLine}`;
+
+  const page: WikiPage = {
+    title,
+    type: "wiki",
+    category: "query",
+    sources: [],
+    lastUpdated: date,
+    content: message.content,
+    path: pagePath,
+  };
+
+  writeWikiPage(page);
+  return { path: pagePath, title };
+}
+
 // ─── Append to wiki/log.md ─────────────────────────────────────────────────
 
 export function appendToLog(entry: string): void {

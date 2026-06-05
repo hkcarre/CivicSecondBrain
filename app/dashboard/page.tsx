@@ -1,6 +1,7 @@
 import { HealthCard } from "../components/dashboard/HealthCard";
 import { WikiHealthPanel } from "../components/dashboard/WikiHealthPanel";
 import { RecentActivity } from "../components/dashboard/RecentActivity";
+import { RunAnalysisButton } from "../components/dashboard/RunAnalysisButton";
 import { getDashboardData } from "../lib/wiki/dashboard-data";
 
 export const revalidate = 300; // Revalidate every 5 minutes
@@ -38,9 +39,12 @@ export default async function DashboardPage() {
               <h2 className="font-semibold text-gray-900">
                 AI Recommendations
               </h2>
-              <span className="text-xs text-gray-400">
-                ⚠️ All items require council review
-              </span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-400">
+                  ⚠️ All items require council review
+                </span>
+                <RunAnalysisButton />
+              </div>
             </div>
 
             {recommendations.length === 0 ? (

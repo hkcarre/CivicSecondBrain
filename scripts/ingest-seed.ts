@@ -152,24 +152,36 @@ async function main() {
   const today = new Date().toISOString().split("T")[0];
 
   // ── Step 1: Scrape document discovery ────────────────────────────────────
+  //
+  // When --type or --limit flags are used, skip the full live scrape and work
+  // only from the priority seed list. This avoids scraping thousands of
+  // documents from DocumentCenter/Laserfiche when the user just wants to
+  // quickly ingest a handful of specific docs.
+  //
+  // Full scrape runs only when neither flag is set (i.e. unattended bulk ingest).
 
-  console.log("STEP 1 — Discovering documents from schertz.com...\n");
-  let discovered: DiscoveredDocument[] = [];
+  const USE_PRIORITY_ONLY = !!(TYPE_FILTER || BOARD_FILTER || LIMIT < Infinity);
 
-  try {
-    discovered = await discoverDocuments();
-  } catch (err) {
-    console.warn(
-      `⚠ Auto-discovery failed: ${(err as Error).message}\n` +
-        `  Falling back to priority seed list only.`
-    );
-  }
-
-  // Add priority seeds at the front
   const priorityDocs: DiscoveredDocument[] = PRIORITY_SEED_URLS.map((d) => ({
     ...d,
     date: today,
   }));
+
+  let discovered: DiscoveredDocument[] = [];
+
+  if (USE_PRIORITY_ONLY) {
+    console.log("STEP 1 — Using priority seed list (skipping full scrape due to --type/--limit/--board flag)...\n");
+  } else {
+    console.log("STEP 1 — Discovering documents from all sources (full scrape)...\n");
+    try {
+      discovered = await discoverDocuments();
+    } catch (err) {
+      console.warn(
+        `⚠ Auto-discovery failed: ${(err as Error).message}\n` +
+          `  Falling back to priority seed list only.`
+      );
+    }
+  }
 
   // Merge: priority first, then discovered, deduped by URL
   const seenUrls = new Set<string>();

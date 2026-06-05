@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/xozai/CivicSecondBrain/compare/v1.7.1...v1.7.2) (2026-06-05)
+
+
+### Performance Improvements
+
+* enforce token budget in buildWikiContext, fix hard slice in LINT ([#86](https://github.com/xozai/CivicSecondBrain/issues/86)) ([fdcb371](https://github.com/xozai/CivicSecondBrain/commit/fdcb371f596b4f0494c70f3280aea31737000781))
+
 ## [1.7.1](https://github.com/xozai/CivicSecondBrain/compare/v1.7.0...v1.7.1) (2026-06-05)
 
 

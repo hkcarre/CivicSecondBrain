@@ -1,4 +1,4 @@
-# ─── Stage 1: Dependencies ────────────────────────────────────────────────────
+# ─── Stage 1: All Dependencies (build-time) ────────────────────────────────────
 FROM node:20-alpine AS deps
 
 WORKDIR /app
@@ -7,10 +7,20 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat
 
 COPY package*.json ./
-# Install all deps including devDeps (tsx is needed to run CLI scripts at runtime)
+# Install all deps including devDeps (needed for the build stage)
 RUN npm ci
 
-# ─── Stage 2: Build ───────────────────────────────────────────────────────────
+# ─── Stage 2: Production-only Dependencies ─────────────────────────────────────
+FROM node:20-alpine AS prod-deps
+
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat
+
+COPY package*.json ./
+RUN npm ci --omit=dev
+
+# ─── Stage 3: Build ───────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
 
 WORKDIR /app
@@ -22,7 +32,7 @@ COPY . .
 
 RUN npm run build
 
-# ─── Stage 3: Production runner ───────────────────────────────────────────────
+# ─── Stage 4: Production runner ───────────────────────────────────────────────
 FROM node:20-alpine AS runner
 
 WORKDIR /app
@@ -46,8 +56,11 @@ COPY --from=builder /app/package*.json ./
 RUN mkdir -p ./public
 COPY --from=builder /app/public ./public
 
-# Full node_modules (includes tsx for ingest/lint CLI scripts)
-COPY --from=deps /app/node_modules ./node_modules
+# Production node_modules (devDependencies excluded)
+COPY --from=prod-deps /app/node_modules ./node_modules
+
+# tsx is needed at runtime for CLI scripts (ingest/lint) — install separately
+RUN npm install tsx
 
 # CLI scripts — used via `railway run` or cron service
 COPY --from=builder /app/scripts ./scripts

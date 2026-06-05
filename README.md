@@ -99,15 +99,18 @@ Open [http://localhost:3000](http://localhost:3000)
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
 | `npm test` | Run unit tests (Vitest, 31 tests) |
-| `npm run ingest:seed` | Full ingestion from all sources — scrapes ~8,000 documents |
+| `npm run ingest:seed` | Full parallel ingestion from all sources (~8,000 documents, 3 workers) |
 | `npm run ingest:seed -- --dry-run` | Discover documents without downloading |
 | `npm run ingest:seed -- --type budget` | Ingest only budget documents (skips scraping) |
 | `npm run ingest:seed -- --type budget --limit 2` | Budget docs, max 2 (instant, no scraping) |
+| `npm run ingest:seed -- --concurrency 5` | Use 5 parallel ingest workers (default 3) |
 | `npm run ingest:doc -- --url <url>` | Ingest a single document by URL |
 | `npm run lint:wiki` | Analyze wiki, generate AI recommendations for dashboard |
 | `npm run scrape:check` | Check for new documents without ingesting |
 
 > **Note:** When `--type`, `--limit`, or `--board` flags are used, the full live scrape is skipped and only the curated priority seed list is used. This makes targeted runs near-instant. Full scraping only runs with no flags.
+>
+> **Parallelism:** Discovery runs all 4 scrapers concurrently (~3-4× faster). Ingest uses a configurable worker pool (`--concurrency N`, default 3). Tune to Railway memory: 512MB → 2 workers, 1GB → 3, 2GB → 5.
 
 ---
 
@@ -247,10 +250,23 @@ If `status` is `"degraded"`, the `errors` array will list the specific problem (
 
 ---
 
+## Reliability
+
+### Chat streaming
+The chat UI shows a typing indicator until the first token arrives, a blinking cursor while streaming, and only reveals the "Save to wiki" button after the stream fully completes. Actual error messages from the API are surfaced in-line instead of a generic fallback.
+
+### YAML auto-repair
+Wiki pages written before the title-quoting fix may have unquoted colons in their YAML frontmatter. The reader auto-detects and repairs these on first read, writing the corrected file back to disk — no manual intervention needed.
+
+### Change detection
+On periodic ingest runs, already-ingested documents are skipped unless the server's `Last-Modified` or `ETag` header has changed since last ingest, ensuring only new and updated documents are processed.
+
+---
+
 ## CI/CD
 
 GitHub Actions runs on every push to `main` and every PR:
-- `npm test` — 31 Vitest unit tests
+- `npm test` — 46 Vitest unit tests
 - `npm run build` — validates the Next.js build
 
 Railway's **"Wait for CI"** setting ensures deploys only happen after tests pass.

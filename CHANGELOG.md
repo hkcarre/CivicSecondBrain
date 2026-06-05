@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.8.3](https://github.com/xozai/CivicSecondBrain/compare/v1.8.2...v1.8.3) (2026-06-05)
+
+
+### Performance Improvements
+
+* **docker:** slim production image with npm ci --omit=dev ([#81](https://github.com/xozai/CivicSecondBrain/issues/81)) ([aa2f5a5](https://github.com/xozai/CivicSecondBrain/commit/aa2f5a585850aeecf257eb821b3dfa74e1904f42))
+
 ## [1.8.2](https://github.com/xozai/CivicSecondBrain/compare/v1.8.1...v1.8.2) (2026-06-05)
 
 

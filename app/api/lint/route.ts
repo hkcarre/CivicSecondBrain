@@ -25,7 +25,7 @@ export async function POST() {
       });
     }
 
-    const wikiContext = buildWikiContext(pages);
+    const wikiContext = buildWikiContext(pages, 80_000);
     const systemPrompt = LINT_SYSTEM_PROMPT.replace("{DATE}", today);
 
     // 2. Ask Claude to analyze and generate recommendations
@@ -58,7 +58,7 @@ Return a JSON object with:
 
 Wiki content:
 ---
-${wikiContext.slice(0, 150000)}
+${wikiContext}
 ---
 
 Return ONLY valid JSON.`,

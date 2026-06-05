@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     const indexEntries = readWikiIndex();
     const relevantPaths = selectRelevantPages(userMessage, indexEntries);
     const wikiPages = readRelevantPages(relevantPaths);
-    const wikiContext = buildWikiContext(wikiPages);
+    const wikiContext = buildWikiContext(wikiPages, 40_000);
 
     // ── 2. Build system prompt ───────────────────────────────────────────────
 

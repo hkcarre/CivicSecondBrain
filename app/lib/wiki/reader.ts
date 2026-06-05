@@ -144,11 +144,35 @@ function inferCategory(pagePath: string): WikiIndexEntry["category"] {
 }
 
 // ─── Build context string for Claude ──────────────────────────────────────
+//
+// Adds pages one-by-one, stopping before the cumulative token estimate
+// (text.length / 4) would exceed maxTokens.  A truncation notice is
+// appended whenever pages are omitted so Claude knows the context is partial.
 
-export function buildWikiContext(pages: WikiPage[]): string {
-  return pages
-    .map(
-      (p) => `=== WIKI PAGE: ${p.path} (updated ${p.lastUpdated}) ===\n${p.content}`
-    )
-    .join("\n\n");
+export function buildWikiContext(pages: WikiPage[], maxTokens = 80_000): string {
+  const sections: string[] = [];
+  let cumulativeChars = 0;
+  let truncated = false;
+
+  for (const p of pages) {
+    const section = `=== WIKI PAGE: ${p.path} (updated ${p.lastUpdated}) ===\n${p.content}`;
+    const estimatedTokens = (cumulativeChars + section.length) / 4;
+    if (estimatedTokens > maxTokens) {
+      truncated = true;
+      break;
+    }
+    sections.push(section);
+    cumulativeChars += section.length + 2; // +2 for the "\n\n" separator
+  }
+
+  const context = sections.join("\n\n");
+  if (!truncated) return context;
+
+  const included = sections.length;
+  const omitted = pages.length - included;
+  const notice =
+    `\n\n<!-- TRUNCATION NOTICE: Context limited to ~${maxTokens} tokens. ` +
+    `${included} of ${pages.length} pages included; ${omitted} page(s) omitted. -->`;
+
+  return context + notice;
 }

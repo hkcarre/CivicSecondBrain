@@ -263,8 +263,9 @@ async function main() {
       saveManifest(manifest);
     }
 
-    // Brief pause to respect rate limits
-    await sleep(1000);
+    // Pause to respect rate limits and allow GC to reclaim memory
+    await sleep(2000);
+    if (typeof global.gc === "function") global.gc();
   }
 
   // ── Step 3: Summary ───────────────────────────────────────────────────────

@@ -10,9 +10,22 @@
  */
 
 import { claude, MODELS, LINT_SYSTEM_PROMPT } from "../app/lib/claude/client";
-import { readFullWiki, buildWikiContext } from "../app/lib/wiki/reader";
+import { readFullWiki, readWikiPage, buildWikiContext } from "../app/lib/wiki/reader";
 import { writeRecommendationPage, updateWikiIndex, appendToLog } from "../app/lib/wiki/writer";
 import type { Recommendation } from "../app/types";
+
+// Lint focuses on high-value topic pages — not every ingested document page.
+// This keeps memory and token usage bounded regardless of wiki size.
+const LINT_TOPIC_PAGES = [
+  "topics/budget.md",
+  "topics/governance.md",
+  "topics/infrastructure.md",
+  "topics/public-safety.md",
+  "topics/development.md",
+  "topics/ordinances.md",
+  "topics/strategic-plan.md",
+  "topics/financial-report.md",
+];
 
 async function main() {
   console.log("═══════════════════════════════════════════════════");
@@ -21,15 +34,18 @@ async function main() {
 
   const today = new Date().toISOString().split("T")[0];
 
-  // 1. Read full wiki
-  const pages = readFullWiki();
+  // 1. Read only topic pages (bounded memory regardless of wiki size)
+  const pages = LINT_TOPIC_PAGES
+    .map((p) => readWikiPage(p))
+    .filter(Boolean) as ReturnType<typeof readWikiPage>[];
+
   if (pages.length === 0) {
-    console.log("⚠  No wiki pages found. Run npm run ingest:seed first.");
+    console.log("⚠  No wiki topic pages found. Run npm run ingest:seed first.");
     process.exit(0);
   }
 
-  console.log(`📖 Analyzing ${pages.length} wiki pages...\n`);
-  const wikiContext = buildWikiContext(pages);
+  console.log(`📖 Analyzing ${pages.length} topic pages...\n`);
+  const wikiContext = buildWikiContext(pages as any);
   const systemPrompt = LINT_SYSTEM_PROMPT.replace("{DATE}", today);
 
   // 2. Ask Claude to analyze and generate recommendations

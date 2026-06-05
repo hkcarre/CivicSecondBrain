@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.1](https://github.com/xozai/CivicSecondBrain/compare/v1.11.0...v1.11.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* **deploy:** move tsx to dependencies, fix duplicate header JSX ([#102](https://github.com/xozai/CivicSecondBrain/issues/102)) ([a19d324](https://github.com/xozai/CivicSecondBrain/commit/a19d3246c38524d5845cd6e135f7385272ba5ef8))
+
 ## [1.11.0](https://github.com/xozai/CivicSecondBrain/compare/v1.10.1...v1.11.0) (2026-06-05)
 
 

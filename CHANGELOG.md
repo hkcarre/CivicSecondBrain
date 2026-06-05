@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.2](https://github.com/xozai/CivicSecondBrain/compare/v1.5.1...v1.5.2) (2026-06-05)
+
+
+### Bug Fixes
+
+* chat streaming UX, Laserfiche error visibility, wiki 404 UX ([#35](https://github.com/xozai/CivicSecondBrain/issues/35)) ([fb9d43f](https://github.com/xozai/CivicSecondBrain/commit/fb9d43f81023090a086fdb0c3a10801f3b5f87a1))
+
 ## [1.5.1](https://github.com/xozai/CivicSecondBrain/compare/v1.5.0...v1.5.1) (2026-06-05)
 
 

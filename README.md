@@ -111,6 +111,8 @@ Open [http://localhost:3000](http://localhost:3000)
 > **Note:** When `--type`, `--limit`, or `--board` flags are used, the full live scrape is skipped and only the curated priority seed list is used. This makes targeted runs near-instant. Full scraping only runs with no flags.
 >
 > **Parallelism:** Discovery runs all 4 scrapers concurrently (~3-4× faster). Ingest uses a configurable worker pool (`--concurrency N`, default 3). Tune to Railway memory: 512MB → 2 workers, 1GB → 3, 2GB → 5.
+>
+> **File size limit:** PDFs larger than `MAX_FILE_SIZE_MB` (default 25MB) are skipped before download. Set this env var in Railway to allow larger files: 1GB RAM → `50`, 2GB RAM → `100`.
 
 ---
 

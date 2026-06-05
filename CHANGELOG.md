@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.4.2](https://github.com/xozai/CivicSecondBrain/compare/v1.4.1...v1.4.2) (2026-06-05)
+
+
+### Bug Fixes
+
+* **ingest:** prevent disk full — HEAD check before download, delete after ingest ([#29](https://github.com/xozai/CivicSecondBrain/issues/29)) ([a92e59d](https://github.com/xozai/CivicSecondBrain/commit/a92e59d3faacbb0794954ad63d8540ee1f26ce35))
+
 ## [1.4.1](https://github.com/xozai/CivicSecondBrain/compare/v1.4.0...v1.4.1) (2026-06-05)
 
 

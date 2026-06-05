@@ -272,7 +272,8 @@ async function scrapePublicNotices(): Promise<DiscoveredDocument[]> {
 
 // ─── Download a document to raw-sources/ ──────────────────────────────────
 
-const MAX_DOWNLOAD_BYTES = 25 * 1024 * 1024; // 25 MB — matches pdf-parser limit
+// Set MAX_FILE_SIZE_MB env var to override (e.g. MAX_FILE_SIZE_MB=50 for larger memory)
+const MAX_DOWNLOAD_BYTES = parseInt(process.env.MAX_FILE_SIZE_MB ?? "25") * 1024 * 1024;
 
 export async function downloadDocument(doc: DiscoveredDocument): Promise<string | null> {
   try {

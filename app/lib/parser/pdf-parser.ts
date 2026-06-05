@@ -15,9 +15,9 @@ export interface ParsedDocument {
   metadata?: Record<string, string>;
 }
 
-// Cap: skip PDFs larger than 25 MB — they're usually raw data exports
-// (spreadsheet-embedded budgets) that produce poor text anyway.
-const MAX_PDF_BYTES = 25 * 1024 * 1024;
+// Cap: skip PDFs larger than MAX_FILE_SIZE_MB (default 25 MB).
+// Set the env var to allow larger files when more memory is available.
+const MAX_PDF_BYTES = parseInt(process.env.MAX_FILE_SIZE_MB ?? "25") * 1024 * 1024;
 
 // Cap extracted text at ~400k chars (~100k tokens) before chunking.
 // Prevents runaway memory on massive documents.

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/xozai/CivicSecondBrain/compare/v1.6.0...v1.7.0) (2026-06-05)
+
+
+### Features
+
+* export recommendations as markdown/PDF-ready report ([#71](https://github.com/xozai/CivicSecondBrain/issues/71)) ([c3ba887](https://github.com/xozai/CivicSecondBrain/commit/c3ba887dde779243f9230301d9d047760811eed4))
+
 ## [1.6.0](https://github.com/xozai/CivicSecondBrain/compare/v1.5.4...v1.6.0) (2026-06-05)
 
 

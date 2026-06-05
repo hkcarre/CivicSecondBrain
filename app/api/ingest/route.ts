@@ -41,6 +41,7 @@ export async function POST(req: Request) {
 
     let processed = 0;
     let succeeded = 0;
+    let skipped = 0;
     const failures: string[] = [];
 
     for (const doc of pending.slice(0, limit)) {
@@ -59,10 +60,16 @@ export async function POST(req: Request) {
       const civicDoc = toCivicDocument(doc, localPath, id);
 
       try {
-        await ingestDocument(civicDoc);
-        markIngested(manifest, id, civicDoc, localPath);
-        saveManifest(manifest);
-        succeeded++;
+        const result = await ingestDocument(civicDoc);
+        if (result.skipped) {
+          // Unsupported format — do not mark as ingested so we retry if a parser is added later
+          console.warn(`⏭ Skipped unsupported format: ${doc.title}`);
+          skipped++;
+        } else {
+          markIngested(manifest, id, civicDoc, localPath);
+          saveManifest(manifest);
+          succeeded++;
+        }
       } catch (err) {
         console.error(`Ingest failed for ${doc.title}:`, err);
         failures.push(doc.title);
@@ -74,9 +81,10 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({
-      message: `Ingested ${succeeded}/${processed} documents.`,
+      message: `Ingested ${succeeded}/${processed} documents (${skipped} skipped — unsupported format).`,
       processed,
       succeeded,
+      skipped,
       failed: failures.length,
       failedDocuments: failures,
     });

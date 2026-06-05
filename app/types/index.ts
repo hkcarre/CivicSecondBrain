@@ -122,6 +122,8 @@ export interface IngestResult {
   ordinancesReferenced: string[];
   dollarAmounts: string[];
   votesRecorded: number;
+  /** True when the document was skipped because its format is not supported. */
+  skipped?: boolean;
 }
 
 // ─── Recommendation Types ──────────────────────────────────────────────────

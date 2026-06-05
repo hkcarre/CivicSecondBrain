@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-// ─── Module mocks ──────────────────────────────────────────────────────────────
+// ─── Module mocks ────────────────────────────────────────────────────────────
 
 vi.mock("@/lib/scraper/schertz-scraper", () => ({
   discoverDocuments: vi.fn(),
@@ -31,7 +31,7 @@ vi.mock("@/lib/wiki/writer", () => ({
   appendToLog: vi.fn(),
 }));
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function makeRequest(body: object = {}): Request {
   return new Request("http://localhost/api/ingest", {
@@ -41,7 +41,7 @@ function makeRequest(body: object = {}): Request {
   });
 }
 
-// ─── Tests ─────────────────────────────────────────────────────────────────────
+// ─── Tests ───────────────────────────────────────────────────────────────────
 
 describe("POST /api/ingest — failure tracking", () => {
   beforeEach(() => {
@@ -49,6 +49,8 @@ describe("POST /api/ingest — failure tracking", () => {
   });
 
   it("returns empty failures when all documents succeed", async () => {
+    vi.resetModules();
+
     const { discoverDocuments, downloadDocument, toCivicDocument } =
       await import("@/lib/scraper/schertz-scraper");
     const { ingestDocument } = await import("@/lib/claude/ingest-engine");
@@ -58,10 +60,9 @@ describe("POST /api/ingest — failure tracking", () => {
     ] as any);
     vi.mocked(downloadDocument).mockResolvedValue("/tmp/doc1.pdf");
     vi.mocked(toCivicDocument).mockReturnValue({ id: "doc1" } as any);
-    vi.mocked(ingestDocument).mockResolvedValue(undefined);
+    vi.mocked(ingestDocument).mockResolvedValue({ skipped: false } as any);
 
     // Re-import route after mocks are set up
-    vi.resetModules();
     const { POST } = await import("@/api/ingest/route");
 
     const res = await POST(makeRequest({ limit: 5 }));
@@ -88,7 +89,6 @@ describe("POST /api/ingest — failure tracking", () => {
     vi.mocked(toCivicDocument).mockReturnValue({ id: "fail" } as any);
     vi.mocked(ingestDocument).mockRejectedValue(new Error("Claude API error"));
 
-    vi.resetModules();
     const { POST } = await import("@/api/ingest/route");
 
     const res = await POST(makeRequest({ limit: 5 }));
@@ -115,7 +115,6 @@ describe("POST /api/ingest — failure tracking", () => {
     vi.mocked(toCivicDocument).mockReturnValue({ id: "bad" } as any);
     vi.mocked(ingestDocument).mockRejectedValue(new Error("timeout"));
 
-    vi.resetModules();
     const { POST } = await import("@/api/ingest/route");
 
     await POST(makeRequest({ limit: 5 }));
@@ -142,7 +141,6 @@ describe("POST /api/ingest — failure tracking", () => {
     vi.mocked(toCivicDocument).mockReturnValue({ id: "x" } as any);
     vi.mocked(ingestDocument).mockRejectedValue(new Error("network error"));
 
-    vi.resetModules();
     const { POST } = await import("@/api/ingest/route");
 
     const res = await POST(makeRequest({ limit: 10 }));
@@ -168,7 +166,6 @@ describe("POST /api/ingest — failure tracking", () => {
     vi.mocked(toCivicDocument).mockReturnValue({ id: "x" } as any);
     vi.mocked(ingestDocument).mockRejectedValue(new Error("API failure"));
 
-    vi.resetModules();
     const { POST } = await import("@/api/ingest/route");
 
     const res = await POST(makeRequest({ limit: 5 }));
@@ -189,7 +186,6 @@ describe("POST /api/ingest — failure tracking", () => {
     const { needsIngestion } = await import("@/lib/manifest");
     vi.mocked(needsIngestion).mockReturnValue(false);
 
-    vi.resetModules();
     const { POST } = await import("@/api/ingest/route");
 
     const res = await POST(makeRequest());

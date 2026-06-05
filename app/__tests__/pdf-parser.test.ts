@@ -1,5 +1,65 @@
-import { describe, it, expect } from "vitest";
-import { chunkDocument } from "../lib/parser/pdf-parser";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { chunkDocument, parseDocument } from "../lib/parser/pdf-parser";
+import fs from "fs";
+import path from "path";
+import os from "os";
+
+// ─── parseDocument — skipped-format tests ─────────────────────────────────
+
+describe("parseDocument — unsupported formats", () => {
+  const tmpDir = os.tmpdir();
+
+  const makeFile = (name: string) => {
+    const p = path.join(tmpDir, name);
+    fs.writeFileSync(p, "dummy");
+    return p;
+  };
+
+  it("returns skipped=true for .docx", async () => {
+    const filePath = makeFile("test.docx");
+    const result = await parseDocument(filePath);
+    expect(result.skipped).toBe(true);
+    expect(result.text).toBe("");
+    expect(result.pageCount).toBe(0);
+  });
+
+  it("returns skipped=true for .doc", async () => {
+    const filePath = makeFile("test.doc");
+    const result = await parseDocument(filePath);
+    expect(result.skipped).toBe(true);
+    expect(result.text).toBe("");
+  });
+
+  it("returns skipped=true for .xlsx", async () => {
+    const filePath = makeFile("test.xlsx");
+    const result = await parseDocument(filePath);
+    expect(result.skipped).toBe(true);
+    expect(result.text).toBe("");
+    expect(result.pageCount).toBe(0);
+  });
+
+  it("returns skipped=true for .xls", async () => {
+    const filePath = makeFile("test.xls");
+    const result = await parseDocument(filePath);
+    expect(result.skipped).toBe(true);
+    expect(result.text).toBe("");
+  });
+
+  it("does NOT set skipped for .txt files", async () => {
+    const filePath = makeFile("test.txt");
+    fs.writeFileSync(filePath, "hello world");
+    const result = await parseDocument(filePath);
+    expect(result.skipped).toBeFalsy();
+    expect(result.text).toContain("hello world");
+  });
+
+  it("throws for truly unknown extensions", async () => {
+    const filePath = makeFile("test.pptx");
+    await expect(parseDocument(filePath)).rejects.toThrow("Unsupported file type");
+  });
+});
+
+// ─── chunkDocument ─────────────────────────────────────────────────────────
 
 describe("chunkDocument", () => {
   it("returns single chunk when text fits within limit", () => {

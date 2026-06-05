@@ -69,6 +69,26 @@ export async function ingestDocument(
   }
 
   const parsed = await parseDocument(doc.localPath);
+
+  // Guard: unsupported file formats (e.g. .docx, .xlsx) return skipped=true.
+  // Do NOT call Claude or write any wiki pages for these — they have no text to extract.
+  if (parsed.skipped) {
+    console.warn(
+      `  ⚠ Skipping unsupported format — no parser available for: ${doc.localPath}`
+    );
+    return {
+      success: false,
+      document: doc,
+      pagesUpdated: [],
+      pagesCreated: [],
+      keyFacts: "",
+      ordinancesReferenced: [],
+      dollarAmounts: [],
+      votesRecorded: 0,
+      skipped: true,
+    };
+  }
+
   const chunks = chunkDocument(parsed.text);
 
   console.log(

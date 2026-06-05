@@ -13,6 +13,8 @@ export interface ParsedDocument {
   pageCount?: number;
   title?: string;
   metadata?: Record<string, string>;
+  /** True when the file format is not supported and was intentionally skipped. */
+  skipped?: boolean;
 }
 
 // Cap: skip PDFs larger than MAX_FILE_SIZE_MB (default 25 MB).
@@ -42,9 +44,9 @@ export async function parseDocument(
     case ".xls":
     case ".docx":
     case ".doc":
-      // Return a stub — these formats need a separate parser.
-      // Returning empty text lets the ingest skip gracefully rather than crash.
-      return { text: "", pageCount: 0, title: path.basename(localPath) };
+      // Return a skip marker — these formats need a dedicated parser.
+      // The caller must check `skipped` and bail out before calling Claude.
+      return { text: "", pageCount: 0, title: path.basename(localPath), skipped: true };
     default:
       throw new Error(`Unsupported file type: ${ext}`);
   }

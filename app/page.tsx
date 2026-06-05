@@ -12,12 +12,12 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [streamingId, setStreamingId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // Scroll to bottom on new message
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, isLoading]);
+  }, [messages, isLoading, streamingId]);
 
   const sendMessage = useCallback(async () => {
     const text = input.trim();
@@ -46,9 +46,11 @@ export default function ChatPage() {
         }),
       });
 
-      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        throw new Error(errBody.error ?? `API error: ${res.status}`);
+      }
 
-      // Stream the response
       const assistantId = nanoid();
       const assistantMsg: ChatMessageType = {
         id: assistantId,
@@ -57,19 +59,34 @@ export default function ChatPage() {
         timestamp: new Date().toISOString(),
       };
 
+      // Add the empty message and mark it as actively streaming.
+      // Keep isLoading true and show the typing indicator until the first chunk.
       setMessages((prev) => [...prev, assistantMsg]);
-      setIsLoading(false);
+      setStreamingId(assistantId);
+      // isLoading stays true until first chunk arrives
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
 
-      if (!reader) return;
+      if (!reader) {
+        setIsLoading(false);
+        setStreamingId(null);
+        return;
+      }
 
+      let firstChunk = true;
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         const chunk = decoder.decode(value, { stream: true });
+
+        if (firstChunk) {
+          // First content received — hide typing indicator, show the bubble
+          setIsLoading(false);
+          firstChunk = false;
+        }
+
         setMessages((prev) =>
           prev.map((m) =>
             m.id === assistantId
@@ -78,13 +95,17 @@ export default function ChatPage() {
           )
         );
       }
+
+      // Stream complete — allow "Save wiki" button to appear
+      setStreamingId(null);
+      setIsLoading(false);
     } catch (err) {
       setIsLoading(false);
+      setStreamingId(null);
       const errorMsg: ChatMessageType = {
         id: nanoid(),
         role: "assistant",
-        content:
-          "Sorry, I encountered an error reaching the knowledge base. Please try again.",
+        content: `Sorry, I encountered an error: ${(err as Error).message}`,
         timestamp: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMsg]);
@@ -127,8 +148,14 @@ export default function ChatPage() {
         ) : (
           <div className="max-w-3xl mx-auto px-4 py-6 space-y-5">
             {messages.map((msg) => (
-              <ChatMessage key={msg.id} message={msg} onFile={handleFile} />
+              <ChatMessage
+                key={msg.id}
+                message={msg}
+                onFile={handleFile}
+                isStreaming={msg.id === streamingId}
+              />
             ))}
+            {/* Show typing indicator while waiting for the first token */}
             {isLoading && <TypingIndicator />}
             <div ref={bottomRef} />
           </div>
@@ -140,7 +167,7 @@ export default function ChatPage() {
         value={input}
         onChange={setInput}
         onSubmit={sendMessage}
-        isLoading={isLoading}
+        isLoading={isLoading || streamingId !== null}
       />
     </div>
   );

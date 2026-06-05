@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound } from "next/navigation"; // eslint-disable-line @typescript-eslint/no-unused-vars
 import Link from "next/link";
 import { readWikiPage, readWikiIndex } from "../../lib/wiki/reader";
 import { marked } from "marked";
@@ -27,7 +27,27 @@ export default async function WikiDetailPage({ params }: Props) {
   const pagePath = rawPath.endsWith(".md") ? rawPath : `${rawPath}.md`;
 
   const page = readWikiPage(pagePath);
-  if (!page) notFound();
+  if (!page) {
+    return (
+      <div className="h-full overflow-y-auto">
+        <div className="max-w-4xl mx-auto px-6 py-12 text-center">
+          <p className="text-5xl mb-4">📭</p>
+          <h1 className="text-xl font-bold text-city-navy mb-2">Wiki page not found</h1>
+          <p className="text-gray-500 text-sm mb-1">
+            <code className="bg-gray-100 px-1.5 py-0.5 rounded">{pagePath}</code>
+          </p>
+          <p className="text-gray-400 text-sm mt-4 mb-6">
+            This page hasn&apos;t been created yet. Run{" "}
+            <code className="bg-gray-100 px-1.5 py-0.5 rounded">npm run ingest:seed</code>{" "}
+            in the Railway shell to populate the wiki from city documents.
+          </p>
+          <Link href="/wiki" className="text-sm text-city-navy hover:underline">
+            ← Back to Wiki
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   // Render markdown → HTML
   const htmlContent = await marked.parse(page.content, { async: true });

@@ -75,8 +75,12 @@ export async function discoverDocuments(): Promise<DiscoveredDocument[]> {
     const lfDocs = await discoverLaserficheDocs();
     discovered.push(...lfDocs);
     console.log(`  ✓ Laserfiche: ${lfDocs.length} documents found`);
+    if (lfDocs.length === 0) {
+      console.warn("  ⚠ Laserfiche returned 0 docs — session handshake may have failed. Check network connectivity to laserfiche.schertzweb.com");
+    }
   } catch (err) {
-    console.warn(`  ⚠ Laserfiche: ${(err as Error).message}`);
+    console.error(`  ✗ Laserfiche FAILED: ${(err as Error).message}`);
+    console.error("    This accounts for ~6,800 missing documents. Check Railway outbound network access.");
   }
 
   console.log(`\n📋 Total documents discovered: ${discovered.length}`);

@@ -7,9 +7,10 @@ import type { ChatMessage as ChatMessageType } from "@/types";
 interface ChatMessageProps {
   message: ChatMessageType;
   onFile?: (message: ChatMessageType) => void;
+  isStreaming?: boolean;
 }
 
-export function ChatMessage({ message, onFile }: ChatMessageProps) {
+export function ChatMessage({ message, onFile, isStreaming = false }: ChatMessageProps) {
   const isUser = message.role === "user";
 
   return (
@@ -46,8 +47,13 @@ export function ChatMessage({ message, onFile }: ChatMessageProps) {
           <AssistantContent content={message.content} />
         )}
 
-        {/* Actions for assistant messages */}
-        {!isUser && onFile && !message.filed && (
+        {/* Streaming cursor — visible while response is still generating */}
+        {!isUser && isStreaming && (
+          <span className="inline-block w-2 h-4 bg-city-navy/60 animate-pulse rounded-sm ml-0.5 align-middle" />
+        )}
+
+        {/* Actions for assistant messages — only shown after stream is complete */}
+        {!isUser && !isStreaming && onFile && !message.filed && (
           <button
             onClick={() => onFile(message)}
             className="mt-3 flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 transition-colors"

@@ -56,11 +56,8 @@ COPY --from=builder /app/package*.json ./
 RUN mkdir -p ./public
 COPY --from=builder /app/public ./public
 
-# Production node_modules (devDependencies excluded)
+# Production node_modules (tsx is in dependencies so it's included here)
 COPY --from=prod-deps /app/node_modules ./node_modules
-
-# tsx is needed at runtime for CLI scripts (ingest/lint) — install separately
-RUN npm install tsx
 
 # CLI scripts — used via `railway run` or cron service
 COPY --from=builder /app/scripts ./scripts

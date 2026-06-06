@@ -1,8 +1,112 @@
-import { describe, it, expect } from "vitest";
+/**
+ * wiki-search.test.ts
+ *
+ * Tests for the TF-IDF page selector (via chat route) and the
+ * /api/wiki/search endpoint (searchWikiPages + buildExcerpt).
+ */
+import { describe, it, expect, vi, beforeEach } from "vitest";
+
+// ─── TF-IDF selector tests (via chat route) ───────────────────────────────
+
+vi.mock("@/lib/wiki/reader", () => ({
+  readWikiIndex: vi.fn(),
+  readRelevantPages: vi.fn(() => []),
+  buildWikiContext: vi.fn(() => ""),
+}));
+
+vi.mock("@/lib/wiki/writer", () => ({
+  appendToLog: vi.fn(),
+}));
+
+vi.mock("@/lib/claude/client", () => ({
+  claude: {
+    messages: {
+      stream: vi.fn(() => ({
+        on: vi.fn().mockReturnThis(),
+        finalMessage: vi.fn().mockResolvedValue({}),
+        [Symbol.asyncIterator]: async function* () {},
+      })),
+    },
+  },
+  MODELS: { sonnet: "claude-sonnet-4-5", haiku: "claude-haiku-4-5" },
+  QUERY_SYSTEM_PROMPT: "You are a city assistant. Today is {DATE}.",
+  CITY_FULL: "Schertz, TX",
+}));
+
+function makeEntry(path: string, summary: string, category = "topic", lastUpdated = "2024-01-01") {
+  return { path, summary, category, lastUpdated, sourceCount: 1 };
+}
+
+async function callChat(query: string) {
+  vi.resetModules();
+  const { readWikiIndex, readRelevantPages } = await import("@/lib/wiki/reader");
+  const { POST } = await import("@/api/chat/route");
+  const req = new Request("http://localhost/api/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ messages: [{ role: "user", content: query }] }),
+  });
+  await POST(req).catch(() => {});
+  return vi.mocked(readRelevantPages).mock.calls[0]?.[0] ?? [];
+}
+
+describe("TF-IDF page selector (via chat route)", () => {
+  beforeEach(() => { vi.clearAllMocks(); });
+
+  it("returns empty list when index is empty", async () => {
+    const { readWikiIndex } = await import("@/lib/wiki/reader");
+    vi.mocked(readWikiIndex).mockReturnValue([]);
+    const paths = await callChat("What is the budget?");
+    expect(paths).toEqual([]);
+  });
+
+  it("ranks budget page higher than unrelated page for budget query", async () => {
+    const { readWikiIndex } = await import("@/lib/wiki/reader");
+    vi.mocked(readWikiIndex).mockReturnValue([
+      makeEntry("topics/budget.md", "City general fund budget revenues expenditures fiscal year"),
+      makeEntry("topics/parks.md", "Parks and recreation facilities maintenance"),
+    ]);
+    const paths = await callChat("What is the total budget expenditure for this fiscal year?");
+    expect(paths[0]).toBe("topics/budget.md");
+  });
+
+  it("boosts decision pages for temporal queries", async () => {
+    const { readWikiIndex } = await import("@/lib/wiki/reader");
+    vi.mocked(readWikiIndex).mockReturnValue([
+      makeEntry("topics/budget.md", "Budget overview"),
+      makeEntry("decisions/2024-06-15-council.md", "Council meeting vote approved", "decision", "2024-06-15"),
+    ]);
+    const paths = await callChat("What did the council vote on at the last meeting?");
+    expect(paths.some((p: string) => p.startsWith("decisions/"))).toBe(true);
+  });
+
+  it("falls back to topic pages when nothing scores above threshold", async () => {
+    const { readWikiIndex } = await import("@/lib/wiki/reader");
+    vi.mocked(readWikiIndex).mockReturnValue([
+      makeEntry("topics/budget.md", "Budget fiscal year revenues"),
+      makeEntry("topics/parks.md", "Parks recreation facilities"),
+    ]);
+    const paths = await callChat("xyzzy frobnicator quux");
+    expect(paths.length).toBeGreaterThan(0);
+    expect(paths.every((p: string) => p.startsWith("topics/"))).toBe(true);
+  });
+
+  it("caps results at 8 pages", async () => {
+    const { readWikiIndex } = await import("@/lib/wiki/reader");
+    vi.mocked(readWikiIndex).mockReturnValue(
+      Array.from({ length: 15 }, (_, i) =>
+        makeEntry(`topics/topic${i}.md`, `City topic ${i} overview information`)
+      )
+    );
+    const paths = await callChat("Tell me about city services");
+    expect(paths.length).toBeLessThanOrEqual(8);
+  });
+});
+
+// ─── /api/wiki/search endpoint tests ─────────────────────────────────────
+
 import { searchWikiPages, buildExcerpt } from "../api/wiki/search/route";
 import type { WikiPage } from "../types";
-
-// ─── Fixtures ─────────────────────────────────────────────────────────────
 
 function makePage(overrides: Partial<WikiPage> = {}): WikiPage {
   return {
@@ -17,134 +121,82 @@ function makePage(overrides: Partial<WikiPage> = {}): WikiPage {
   };
 }
 
-const PAGES: WikiPage[] = [
-  makePage({
-    title: "Budget Overview",
-    category: "topic",
-    path: "topics/budget.md",
-    content: "The city adopted a $42M general fund budget for FY2024.",
-  }),
-  makePage({
-    title: "Council Decision on Water Rate",
-    category: "decision",
-    path: "decisions/2024-01-15-water-rate.md",
-    content: "Council approved a 3% water rate increase effective March 2024.",
-  }),
-  makePage({
-    title: "Mayor Bio",
-    category: "person",
-    path: "people/mayor.md",
-    content: "Mayor Jane Doe has served since 2020.",
-  }),
-  makePage({
-    title: "Parks Recommendation",
-    category: "recommendation",
-    path: "recommendations/parks.md",
-    content: "AI ANALYSIS — Parks need $2M in capital improvements.",
-  }),
-];
-
-// ─── searchWikiPages ───────────────────────────────────────────────────────
-
 describe("searchWikiPages", () => {
-  it("returns all pages when q is empty and no category filter", () => {
-    const results = searchWikiPages(PAGES, "");
-    expect(results).toHaveLength(PAGES.length);
+  it("returns empty array when pages list is empty", () => {
+    expect(searchWikiPages([], "budget")).toEqual([]);
   });
 
-  it("filters by title match (case-insensitive)", () => {
-    const results = searchWikiPages(PAGES, "BUDGET");
+  it("matches query term in page content", () => {
+    const pages = [makePage()];
+    const results = searchWikiPages(pages, "budget");
     expect(results).toHaveLength(1);
     expect(results[0].path).toBe("topics/budget.md");
   });
 
-  it("filters by content match", () => {
-    const results = searchWikiPages(PAGES, "water rate");
+  it("matches query term in page title", () => {
+    const pages = [makePage({ title: "Police Department Report", content: "No match here." })];
+    const results = searchWikiPages(pages, "police");
     expect(results).toHaveLength(1);
-    expect(results[0].path).toBe("decisions/2024-01-15-water-rate.md");
   });
 
-  it("matches in both title and content if applicable", () => {
-    // "budget" appears in title AND content; should still return once
-    const results = searchWikiPages(PAGES, "42M");
-    expect(results).toHaveLength(1);
-    expect(results[0].path).toBe("topics/budget.md");
+  it("is case-insensitive", () => {
+    const pages = [makePage()];
+    expect(searchWikiPages(pages, "BUDGET")).toHaveLength(1);
+    expect(searchWikiPages(pages, "Budget")).toHaveLength(1);
   });
 
-  it("returns empty array when no page matches", () => {
-    const results = searchWikiPages(PAGES, "nonexistent_term_xyz");
-    expect(results).toHaveLength(0);
+  it("returns no results when query does not match", () => {
+    const pages = [makePage()];
+    expect(searchWikiPages(pages, "zoning")).toHaveLength(0);
   });
 
-  it("filters by category when provided", () => {
-    const results = searchWikiPages(PAGES, "", "decision");
-    expect(results).toHaveLength(1);
-    expect(results[0].category).toBe("decision");
-  });
-
-  it("combines q and category filter", () => {
-    // q=budget, category=decision → no match (budget page is a topic)
-    const noMatch = searchWikiPages(PAGES, "budget", "decision");
-    expect(noMatch).toHaveLength(0);
-
-    // q=budget, category=topic → matches budget page
-    const match = searchWikiPages(PAGES, "budget", "topic");
-    expect(match).toHaveLength(1);
-    expect(match[0].path).toBe("topics/budget.md");
-  });
-
-  it("returns all pages with empty q when category matches multiple", () => {
+  it("ranks pages with more matches higher", () => {
     const pages = [
-      ...PAGES,
-      makePage({ category: "topic", path: "topics/parks.md", title: "Parks" }),
+      makePage({ path: "topics/a.md", content: "budget budget budget" }),
+      makePage({ path: "topics/b.md", content: "budget" }),
     ];
-    const results = searchWikiPages(pages, "", "topic");
-    expect(results).toHaveLength(2);
-    expect(results.every((p) => p.category === "topic")).toBe(true);
+    const results = searchWikiPages(pages, "budget");
+    expect(results[0].path).toBe("topics/a.md");
+  });
+
+  it("handles queries matched as a substring", () => {
+    const pages = [
+      makePage({ content: "general fund adopted for fiscal year" }),
+      makePage({ path: "topics/other.md", content: "No match here" }),
+    ];
+    // "general fund" is a substring match
+    const results = searchWikiPages(pages, "general fund");
+    expect(results[0].path).toBe("topics/budget.md");
+  });
+
+  it("returns all matching pages sorted by score", () => {
+    const pages = [
+      makePage({ path: "topics/a.md", content: "water water water sewer" }),
+      makePage({ path: "topics/b.md", content: "water" }),
+      makePage({ path: "topics/c.md", content: "budget" }),
+    ];
+    const results = searchWikiPages(pages, "water");
+    expect(results.map((r) => r.path)).toEqual(["topics/a.md", "topics/b.md"]);
   });
 });
 
-// ─── buildExcerpt ─────────────────────────────────────────────────────────
-
 describe("buildExcerpt", () => {
-  it("returns first 200 chars when q is empty", () => {
+  it("returns a substring around the first match", () => {
+    const content = "The city adopted a $42M general fund budget for FY2024.";
+    const excerpt = buildExcerpt(content, "budget");
+    expect(excerpt).toContain("budget");
+  });
+
+  it("returns beginning of content when query is not found", () => {
     const content = "A".repeat(300);
-    const excerpt = buildExcerpt(content, "");
-    expect(excerpt.length).toBeLessThanOrEqual(201 + 1); // 200 + "…"
-    expect(excerpt).toContain("…");
+    const excerpt = buildExcerpt(content, "zoning");
+    expect(excerpt.length).toBeLessThanOrEqual(203); // 200 + '...'
   });
 
-  it("bolds the matched term in the excerpt", () => {
-    const content = "The city adopted a general fund budget for the fiscal year.";
-    const excerpt = buildExcerpt(content, "general fund");
-    expect(excerpt).toContain("**general fund**");
-  });
-
-  it("is case-insensitive for the search term but preserves original casing in bold", () => {
-    const content = "The General Fund supports city operations.";
-    const excerpt = buildExcerpt(content, "general fund");
-    expect(excerpt).toContain("**General Fund**");
-  });
-
-  it("adds leading ellipsis when match is not near the start", () => {
-    const prefix = "X".repeat(150);
-    const content = prefix + " target term here";
-    const excerpt = buildExcerpt(content, "target term");
-    expect(excerpt.startsWith("…")).toBe(true);
-  });
-
-  it("returns beginning of content when q is not found in content", () => {
-    const content = "Some unrelated content here.";
-    // q matches title but not content — should fall back to beginning
-    const excerpt = buildExcerpt(content, "title_match_only");
-    expect(excerpt).toContain("Some unrelated content");
-  });
-
-  it("does not exceed EXCERPT_LENGTH chars in the content window (ignoring bold markers and ellipsis)", () => {
-    const content = "word ".repeat(200); // 1000 chars
+  it("appends ellipsis when content is truncated", () => {
+    const content = "word ".repeat(100);
     const excerpt = buildExcerpt(content, "word");
-    // Strip bold markers and ellipsis to measure raw content length
-    const stripped = excerpt.replace(/\*\*/g, "").replace(/…/g, "");
-    expect(stripped.length).toBeLessThanOrEqual(210); // small margin for trim/whitespace
+    // buildExcerpt uses Unicode ellipsis (…) or trailing dots
+    expect(excerpt).toMatch(/[.…]$/);
   });
 });

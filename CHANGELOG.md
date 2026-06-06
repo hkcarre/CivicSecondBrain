@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.2](https://github.com/xozai/CivicSecondBrain/compare/v1.11.1...v1.11.2) (2026-06-06)
+
+
+### Bug Fixes
+
+* populate assistant bubble with error text when stream body is null ([#77](https://github.com/xozai/CivicSecondBrain/issues/77)) ([f803a8e](https://github.com/xozai/CivicSecondBrain/commit/f803a8e8ffb4e2cdd82a3754ccb56ff61ba549bf))
+
 ## [1.11.1](https://github.com/xozai/CivicSecondBrain/compare/v1.11.0...v1.11.1) (2026-06-05)
 
 

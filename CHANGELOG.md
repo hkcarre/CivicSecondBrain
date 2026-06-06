@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.15.0](https://github.com/xozai/CivicSecondBrain/compare/v1.14.0...v1.15.0) (2026-06-06)
+
+
+### Features
+
+* replace keyword page selection with TF-IDF cosine similarity scorer ([#117](https://github.com/xozai/CivicSecondBrain/issues/117)) ([ade357d](https://github.com/xozai/CivicSecondBrain/commit/ade357d4809784711d2222579927510d31c549e9))
+
 ## [1.14.0](https://github.com/xozai/CivicSecondBrain/compare/v1.13.1...v1.14.0) (2026-06-06)
 
 

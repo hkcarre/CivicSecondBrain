@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.4](https://github.com/xozai/CivicSecondBrain/compare/v1.11.3...v1.11.4) (2026-06-06)
+
+
+### Bug Fixes
+
+* race condition — save manifest once after loop not per-document ([#76](https://github.com/xozai/CivicSecondBrain/issues/76)) ([b6c00f1](https://github.com/xozai/CivicSecondBrain/commit/b6c00f16c491a353a0ac1ddd11d2a0906dba8775))
+
 ## [1.11.3](https://github.com/xozai/CivicSecondBrain/compare/v1.11.2...v1.11.3) (2026-06-06)
 
 

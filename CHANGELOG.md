@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.18.0](https://github.com/xozai/CivicSecondBrain/compare/v1.17.0...v1.18.0) (2026-06-06)
+
+
+### Features
+
+* multi-city support — replace Schertz hardcoding with env-var config ([#123](https://github.com/xozai/CivicSecondBrain/issues/123)) ([b53285c](https://github.com/xozai/CivicSecondBrain/commit/b53285c52887e8168edeb80f20e128bdfd6ccabe))
+
 ## [1.17.0](https://github.com/xozai/CivicSecondBrain/compare/v1.16.0...v1.17.0) (2026-06-06)
 
 

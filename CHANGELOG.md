@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.11.3](https://github.com/xozai/CivicSecondBrain/compare/v1.11.2...v1.11.3) (2026-06-06)
+
+
+### Bug Fixes
+
+* **ingest:** move checksum dedup after download so localPath is available ([#75](https://github.com/xozai/CivicSecondBrain/issues/75)) ([e1b3896](https://github.com/xozai/CivicSecondBrain/commit/e1b38969e545e60ecbe76e8cdf3c7dd6eb91e17a))
+
 ## [1.11.2](https://github.com/xozai/CivicSecondBrain/compare/v1.11.1...v1.11.2) (2026-06-06)
 
 

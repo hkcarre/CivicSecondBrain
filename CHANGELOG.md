@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.16.0](https://github.com/xozai/CivicSecondBrain/compare/v1.15.0...v1.16.0) (2026-06-06)
+
+
+### Features
+
+* responsive UI — mobile sidebar drawer, adaptive grids, touch targets ([#119](https://github.com/xozai/CivicSecondBrain/issues/119)) ([409ed05](https://github.com/xozai/CivicSecondBrain/commit/409ed05c3a2bf6c48f83044845df6714c461ab6c))
+
 ## [1.15.0](https://github.com/xozai/CivicSecondBrain/compare/v1.14.0...v1.15.0) (2026-06-06)
 
 

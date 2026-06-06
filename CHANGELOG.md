@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.0](https://github.com/xozai/CivicSecondBrain/compare/v1.12.0...v1.13.0) (2026-06-06)
+
+
+### Features
+
+* admin panel authentication via ADMIN_PASSWORD + signed session cookie ([#109](https://github.com/xozai/CivicSecondBrain/issues/109)) ([c0b32bc](https://github.com/xozai/CivicSecondBrain/commit/c0b32bcf7edf64ae15659bbcb0725747e2c6bc0a))
+
 ## [1.12.0](https://github.com/xozai/CivicSecondBrain/compare/v1.11.4...v1.12.0) (2026-06-06)
 
 

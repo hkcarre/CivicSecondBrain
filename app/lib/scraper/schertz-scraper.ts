@@ -18,6 +18,7 @@ import path from "path";
 import crypto from "crypto";
 import type { CivicDocument, DocumentType, BoardName } from "@/types";
 import { discoverLaserficheDocs } from "./laserfiche-scraper";
+import { docId } from "@/lib/manifest";
 
 const BASE_URL = "https://www.schertz.com";
 const RAW_SOURCES_PATH = process.env.RAW_SOURCES_PATH ?? "./raw-sources";
@@ -311,9 +312,22 @@ export async function downloadDocument(doc: DiscoveredDocument): Promise<string 
     }
 
     const contentType: string = (response.headers["content-type"] as string) ?? "";
-    const ext = contentTypeToExt(contentType) ?? getExtension(doc.url);
-    const filename = sanitizeFilename(doc.title) + ext;
+    // Derive extension from Content-Type first, then fall back to URL pathname.
+    // Use URL-parsed pathname so that query strings and fragments are stripped
+    // before path.extname, preventing crafted URLs from injecting path separators.
+    const urlExt = path.extname(new URL(doc.url).pathname);
+    const ext = contentTypeToExt(contentType) ?? (urlExt || ".html");
+    // Use the URL-hash-based docId as the filename so that crafted titles or
+    // URL paths containing "../" cannot escape the destination directory.
+    const filename = docId(doc.url) + ext;
     const localPath = path.join(dir, filename);
+
+    // Path-traversal guard: assert the resolved path stays inside RAW_SOURCES_PATH.
+    const resolvedPath = path.resolve(localPath);
+    if (!resolvedPath.startsWith(path.resolve(RAW_SOURCES_PATH) + path.sep) &&
+        resolvedPath !== path.resolve(RAW_SOURCES_PATH)) {
+      throw new Error(`Path traversal attempt blocked: ${resolvedPath}`);
+    }
 
     // Capture server's change signal for manifest (used to detect updates on future runs)
     const serverModified =

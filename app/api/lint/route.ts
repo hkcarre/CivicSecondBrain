@@ -9,10 +9,15 @@ import { claude, MODELS, LINT_SYSTEM_PROMPT, CITY_FULL } from "@/lib/claude/clie
 import { readFullWiki, buildWikiContext } from "@/lib/wiki/reader";
 import { writeRecommendationPage, updateWikiIndex, appendToLog } from "@/lib/wiki/writer";
 import type { Recommendation } from "@/types";
+import { verifySecret } from "@/lib/auth";
 
 export const maxDuration = 300; // 5 minutes
 
-export async function POST() {
+export async function POST(req: Request) {
+  if (!verifySecret(req)) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   const today = new Date().toISOString().split("T")[0];
 
   try {

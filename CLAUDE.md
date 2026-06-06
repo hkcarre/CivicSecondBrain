@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY`. The `WIKI_PATH` and `RAW_SOURCES_PATH` vars default to `./wiki` and `./raw-sources` for local dev.
 
+`INGEST_SECRET` protects the `/api/ingest` and `/api/lint` POST routes. Callers must include `Authorization: Bearer <secret>` in the request. If `INGEST_SECRET` is not set, the routes are open (dev-mode convenience; always set this in production).
+
 ## Commands
 
 ```bash

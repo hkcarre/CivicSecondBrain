@@ -19,6 +19,7 @@ import {
   markIngested,
 } from "@/lib/manifest";
 import { appendToLog } from "@/lib/wiki/writer";
+import { verifySecret } from "@/lib/auth";
 
 export const maxDuration = 300;
 
@@ -26,6 +27,10 @@ export const maxDuration = 300;
 let ingestInProgress = false;
 
 export async function POST(req: Request) {
+  if (!verifySecret(req)) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   if (ingestInProgress) {
     return NextResponse.json(
       { message: "Ingest already in progress." },

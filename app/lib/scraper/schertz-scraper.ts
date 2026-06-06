@@ -18,6 +18,7 @@ import path from "path";
 import crypto from "crypto";
 import type { CivicDocument, DocumentType, BoardName } from "@/types";
 import { discoverLaserficheDocs } from "./laserfiche-scraper";
+import { discoverMunicodeDocs } from "./municode-scraper";
 import { docId } from "@/lib/manifest";
 
 // Base URL for the city's government website.
@@ -50,12 +51,13 @@ export interface DiscoveredDocument {
 export async function discoverDocuments(): Promise<DiscoveredDocument[]> {
   console.log(`🔍 Scraping ${CITY_NAME} government documents (parallel)...`);
 
-  // All four scrapers are independent — run them concurrently
-  const [dcResult, financeResult, noticesResult, lfResult] = await Promise.allSettled([
+  // All scrapers are independent — run them concurrently
+  const [dcResult, financeResult, noticesResult, lfResult, municodeResult] = await Promise.allSettled([
     scrapeDocumentCenter(),
     scrapeFinanceSubpages(),
     scrapePublicNotices(),
     discoverLaserficheDocs(),
+    discoverMunicodeDocs(),
   ]);
 
   const discovered: DiscoveredDocument[] = [];
@@ -90,6 +92,15 @@ export async function discoverDocuments(): Promise<DiscoveredDocument[]> {
   } else {
     console.error(`  ✗ Laserfiche FAILED: ${lfResult.reason?.message}`);
     console.error("    This accounts for ~6,800 missing documents. Check Railway outbound network access.");
+  }
+
+  if (municodeResult.status === "fulfilled") {
+    discovered.push(...municodeResult.value);
+    if (municodeResult.value.length > 0) {
+      console.log(`  ✓ MuniCode: ${municodeResult.value.length} ordinance sections found`);
+    }
+  } else {
+    console.warn(`  ⚠ MuniCode: ${municodeResult.reason?.message}`);
   }
 
   console.log(`\n📋 Total documents discovered: ${discovered.length}`);

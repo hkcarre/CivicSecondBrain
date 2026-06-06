@@ -20,7 +20,16 @@ import type { CivicDocument, DocumentType, BoardName } from "@/types";
 import { discoverLaserficheDocs } from "./laserfiche-scraper";
 import { docId } from "@/lib/manifest";
 
-const BASE_URL = "https://www.schertz.com";
+// Base URL for the city's government website.
+// Override via GOV_BASE_URL env var for non-Schertz deployments.
+// Falls back to the SCHERTZ_GOV_URL env var for backward compatibility,
+// then to the Schertz default.
+const BASE_URL =
+  process.env.GOV_BASE_URL ??
+  process.env.SCHERTZ_GOV_URL?.replace(/\/\d+\/.*$/, "") ?? // strip path
+  "https://www.schertz.com";
+
+const CITY_NAME = process.env.CITY_NAME ?? process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz";
 const RAW_SOURCES_PATH = process.env.RAW_SOURCES_PATH ?? "./raw-sources";
 const SKIP_DOC_IDS = new Set(["8101"]); // City Building Map — not a civic document
 
@@ -39,7 +48,7 @@ export interface DiscoveredDocument {
 // ─── Main scraper entry point ──────────────────────────────────────────────
 
 export async function discoverDocuments(): Promise<DiscoveredDocument[]> {
-  console.log("🔍 Scraping Schertz government documents (parallel)...");
+  console.log(`🔍 Scraping ${CITY_NAME} government documents (parallel)...`);
 
   // All four scrapers are independent — run them concurrently
   const [dcResult, financeResult, noticesResult, lfResult] = await Promise.allSettled([
@@ -282,7 +291,7 @@ export async function downloadDocument(doc: DiscoveredDocument): Promise<string 
     fs.mkdirSync(dir, { recursive: true });
 
     const HEADERS = {
-      "User-Agent": "CivicSecondBrain/1.0 (City Council Research Tool; contact@schertz.com)",
+      "User-Agent": `CivicSecondBrain/1.0 (City Council Research Tool; ${BASE_URL})`,
       "Accept": "application/pdf,*/*",
     };
 

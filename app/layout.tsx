@@ -6,8 +6,8 @@ import { Sidebar } from "./components/Sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CivicSecondBrain — Schertz, TX",
-  description: "AI-powered city knowledge base for the Schertz City Council",
+  title: `CivicSecondBrain — ${process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, ${process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"}`,
+  description: `AI-powered city knowledge base for the ${process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"} City Council`,
 };
 
 export default function RootLayout({

@@ -90,7 +90,7 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
           <ActionButton
             icon={RefreshCw}
             label="Check for new documents"
-            description="Scrape schertz.com, no ingest"
+            description="Scrape city website, no ingest"
             active={activeAction === "scrape-check" && status === "running"}
             onClick={() => run("scrape-check")}
             disabled={status === "running"}

@@ -26,7 +26,8 @@ export type BoardName =
   | "animal-services"
   | "senior-center"
   | "investment-advisory"
-  | "keep-schertz-beautiful"
+  | "keep-city-beautiful"   // formerly keep-schertz-beautiful; configurable per city
+  | "keep-schertz-beautiful" // legacy alias — retained for backward compat with existing manifests
   | "sslgc"
   | "housing-authority"
   | "tirz";

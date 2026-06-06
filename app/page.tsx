@@ -203,7 +203,7 @@ export default function ChatPage() {
           <div>
             <h1 className="text-lg font-semibold text-city-navy">Ask the City</h1>
             <p className="text-xs text-gray-400 mt-0.5">
-              Answers grounded in official Schertz city documents
+              Answers grounded in official {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"} city documents
             </p>
           </div>
           {messages.length > 0 && (

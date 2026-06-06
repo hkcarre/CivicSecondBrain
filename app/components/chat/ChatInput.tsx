@@ -17,7 +17,7 @@ export function ChatInput({
   onChange,
   onSubmit,
   isLoading,
-  placeholder = "Ask anything about Schertz, TX…",
+  placeholder = `Ask anything about ${process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, ${process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"}…`,
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -78,7 +78,7 @@ export function ChatInput({
           </button>
         </div>
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 text-center">
-          Answers cite official Schertz city documents · Press Enter to send
+          Answers cite official {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"} city documents · Press Enter to send
         </p>
       </div>
     </div>

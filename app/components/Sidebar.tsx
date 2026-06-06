@@ -89,7 +89,9 @@ export function Sidebar() {
             <p className="text-white font-semibold text-sm leading-tight">
               CivicSecondBrain
             </p>
-            <p className="text-white/50 text-xs">Schertz, TX</p>
+            <p className="text-white/50 text-xs">
+              {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, {process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"}
+            </p>
           </div>
         </div>
       </div>
@@ -146,7 +148,7 @@ export function Sidebar() {
           )}
         </button>
         <div className="text-xs text-white/40 space-y-1">
-          <p>Data: schertz.com/27/Government</p>
+          <p>Data: {process.env.NEXT_PUBLIC_CITY_NAME?.toLowerCase().replace(/\s+/g, "") ?? "schertz"}.com</p>
           <p>Powered by Claude AI</p>
         </div>
       </div>

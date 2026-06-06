@@ -29,7 +29,7 @@ export function SuggestedQuestions({ onSelect }: SuggestedQuestionsProps) {
           Ask the City
         </h1>
         <p className="text-gray-500 dark:text-gray-400 text-sm max-w-md mx-auto">
-          Ask anything about Schertz, TX — city finances, ordinances, meeting
+          Ask anything about {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, {process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"} — city finances, ordinances, meeting
           decisions, strategic goals. Every answer is cited from official documents.
         </p>
       </div>

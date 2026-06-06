@@ -11,9 +11,15 @@ interface AdminIngestPanelProps {
     lastLint: string | null;
   };
   logSummary: string;
+  schedule?: {
+    nextIngest: string;
+    nextLint: string;
+    ingestCron: string;
+    lintCron: string;
+  };
 }
 
-export function AdminIngestPanel({ stats, logSummary }: AdminIngestPanelProps) {
+export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPanelProps) {
   const [status, setStatus] = useState<
     "idle" | "running" | "done" | "error"
   >("idle");
@@ -47,8 +53,8 @@ export function AdminIngestPanel({ stats, logSummary }: AdminIngestPanelProps) {
   return (
     <div className="space-y-4">
       {/* Stats */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <h2 className="font-semibold text-gray-900 mb-3">Knowledge Base</h2>
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Knowledge Base</h2>
         <div className="space-y-2 text-sm">
           <Row label="Wiki pages" value={stats.pagesTotal} />
           <Row
@@ -61,6 +67,21 @@ export function AdminIngestPanel({ stats, logSummary }: AdminIngestPanelProps) {
           />
         </div>
       </div>
+
+      {/* Schedule */}
+      {schedule && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+          <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Schedule</h2>
+          <div className="space-y-2 text-sm">
+            <Row label="Next ingest" value={schedule.nextIngest} />
+            <Row label="Next lint"   value={schedule.nextLint} />
+            <div className="pt-1 text-xs text-gray-400 dark:text-gray-500 font-mono space-y-0.5">
+              <p>Ingest: <span className="text-gray-500">{schedule.ingestCron}</span></p>
+              <p>Lint: <span className="text-gray-500">{schedule.lintCron}</span></p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="bg-white rounded-xl border border-gray-200 p-4">

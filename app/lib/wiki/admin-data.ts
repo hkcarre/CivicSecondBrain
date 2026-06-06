@@ -14,6 +14,12 @@ export interface AdminData {
     lastLint: string | null;
   };
   logSummary: string;
+  schedule: {
+    nextIngest: string;   // human-readable
+    nextLint: string;     // human-readable
+    ingestCron: string;
+    lintCron: string;
+  };
 }
 
 export async function getAdminData(): Promise<AdminData> {
@@ -39,6 +45,34 @@ export async function getAdminData(): Promise<AdminData> {
 
   const logSummary = readRecentLog(8);
 
+  // Schedule info (mirrors railway.toml [[cron]] entries)
+  const INGEST_CRON = "0 8 * * *";   // nightly 2am CT
+  const LINT_CRON   = "0 9 * * 0";   // Sunday 3am CT
+
+  function nextCronRun(cron: string): string {
+    // Simple: parse hour/dow and compute next occurrence from now (UTC)
+    const [, hour, , , dow] = cron.split(" ");
+    const now = new Date();
+    const next = new Date(now);
+    next.setUTCMinutes(0, 0, 0);
+    next.setUTCHours(parseInt(hour));
+    if (dow === "*") {
+      // daily — advance to tomorrow if today's run has passed
+      if (next <= now) next.setUTCDate(next.getUTCDate() + 1);
+    } else {
+      // weekly — advance to next matching day-of-week
+      const targetDow = parseInt(dow); // 0=Sun
+      let daysAhead = (targetDow - now.getUTCDay() + 7) % 7;
+      if (daysAhead === 0 && next <= now) daysAhead = 7;
+      next.setUTCDate(next.getUTCDate() + daysAhead);
+    }
+    return next.toLocaleString("en-US", {
+      timeZone: "America/Chicago",
+      weekday: "short", month: "short", day: "numeric",
+      hour: "numeric", minute: "2-digit", timeZoneName: "short",
+    });
+  }
+
   return {
     manifest,
     wikiStats: {
@@ -47,5 +81,11 @@ export async function getAdminData(): Promise<AdminData> {
       lastLint: lintDates.at(-1) ?? null,
     },
     logSummary,
+    schedule: {
+      nextIngest: nextCronRun(INGEST_CRON),
+      nextLint:   nextCronRun(LINT_CRON),
+      ingestCron: INGEST_CRON,
+      lintCron:   LINT_CRON,
+    },
   };
 }

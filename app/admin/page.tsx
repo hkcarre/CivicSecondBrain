@@ -6,7 +6,7 @@ import { AdminLogoutButton } from "../components/admin/AdminLogoutButton";
 export const revalidate = 60;
 
 export default async function AdminPage() {
-  const { manifest, wikiStats, logSummary } = await getAdminData();
+  const { manifest, wikiStats, logSummary, schedule } = await getAdminData();
 
   return (
     <div className="h-full overflow-y-auto">
@@ -25,7 +25,7 @@ export default async function AdminPage() {
         <div className="grid grid-cols-3 gap-5">
           {/* Left: ingest panel + stats */}
           <div className="col-span-1 space-y-4">
-            <AdminIngestPanel stats={wikiStats} logSummary={logSummary} />
+            <AdminIngestPanel stats={wikiStats} logSummary={logSummary} schedule={schedule} />
           </div>
 
           {/* Right: manifest table */}

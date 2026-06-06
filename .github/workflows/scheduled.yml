@@ -1,0 +1,90 @@
+name: Scheduled Ingest & Lint
+
+# Runs nightly ingest and weekly lint against the deployed app.
+# Requires these repository secrets:
+#   APP_URL        — e.g. https://civic-second-brain.up.railway.app
+#   INGEST_SECRET  — must match the INGEST_SECRET env var on the deployed app
+#
+# Disable this workflow if you are using Railway cron jobs instead
+# (railway.toml [[cron]] entries) to avoid running both.
+
+on:
+  schedule:
+    # Nightly ingest: 2:15am CT (08:15 UTC) — offset 15 min from Railway cron
+    - cron: "15 8 * * *"
+    # Weekly lint: Sunday 3:15am CT (09:15 UTC)
+    - cron: "15 9 * * 0"
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Which job to run"
+        required: true
+        default: "ingest"
+        type: choice
+        options:
+          - ingest
+          - lint
+
+jobs:
+  ingest:
+    name: Nightly Ingest
+    runs-on: ubuntu-latest
+    # Run on the nightly schedule OR manual trigger with job=ingest
+    if: |
+      (github.event_name == 'schedule' && github.event.schedule == '15 8 * * *') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'ingest')
+    steps:
+      - name: Trigger ingest via API
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$INGEST_SECRET" ]; then
+            echo "ERROR: APP_URL and INGEST_SECRET secrets must be set."
+            exit 1
+          fi
+          echo "Triggering ingest on $APP_URL ..."
+          response=$(curl -s -w "\n%{http_code}" -X POST "$APP_URL/api/ingest" \
+            -H "Authorization: Bearer $INGEST_SECRET" \
+            -H "Content-Type: application/json" \
+            -d '{"limit": 50}' \
+            --max-time 280)
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+          echo "HTTP $http_code"
+          echo "$body"
+          if [ "$http_code" != "200" ]; then
+            echo "Ingest failed with HTTP $http_code"
+            exit 1
+          fi
+
+  lint:
+    name: Weekly Lint
+    runs-on: ubuntu-latest
+    # Run on the weekly schedule OR manual trigger with job=lint
+    if: |
+      (github.event_name == 'schedule' && github.event.schedule == '15 9 * * 0') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.job == 'lint')
+    steps:
+      - name: Trigger lint via API
+        env:
+          APP_URL: ${{ secrets.APP_URL }}
+          INGEST_SECRET: ${{ secrets.INGEST_SECRET }}
+        run: |
+          if [ -z "$APP_URL" ] || [ -z "$INGEST_SECRET" ]; then
+            echo "ERROR: APP_URL and INGEST_SECRET secrets must be set."
+            exit 1
+          fi
+          echo "Triggering lint on $APP_URL ..."
+          response=$(curl -s -w "\n%{http_code}" -X POST "$APP_URL/api/lint" \
+            -H "Authorization: Bearer $INGEST_SECRET" \
+            -H "Content-Type: application/json" \
+            --max-time 280)
+          http_code=$(echo "$response" | tail -1)
+          body=$(echo "$response" | head -n -1)
+          echo "HTTP $http_code"
+          echo "$body"
+          if [ "$http_code" != "200" ]; then
+            echo "Lint failed with HTTP $http_code"
+            exit 1
+          fi

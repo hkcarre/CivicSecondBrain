@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.17.0](https://github.com/xozai/CivicSecondBrain/compare/v1.16.0...v1.17.0) (2026-06-06)
+
+
+### Features
+
+* wiki export admin buttons + tests (closes [#56](https://github.com/xozai/CivicSecondBrain/issues/56)) ([#121](https://github.com/xozai/CivicSecondBrain/issues/121)) ([3467b24](https://github.com/xozai/CivicSecondBrain/commit/3467b2475c5859aa9fe1e5067db040847c50c948))
+
 ## [1.16.0](https://github.com/xozai/CivicSecondBrain/compare/v1.15.0...v1.16.0) (2026-06-06)
 
 

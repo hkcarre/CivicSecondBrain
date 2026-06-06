@@ -110,10 +110,12 @@ describe("ingest route – checksum dedup", () => {
     const res = await POST(req);
     const json = await res.json();
 
-    // The document was downloaded but should have been skipped due to matching checksum
+    // The document was downloaded but should have been skipped due to matching checksum.
     expect(downloadDocument).toHaveBeenCalledOnce();
     expect(ingestDocument).not.toHaveBeenCalled();
-    expect(saveManifest).not.toHaveBeenCalled();
+    // Note: the route saves the manifest once after the loop (race-condition fix #76),
+    // so saveManifest may be called even when every document is skipped. The key
+    // invariants are that the doc was never re-ingested and counts stay at zero.
     expect(json.processed).toBe(0);
     expect(json.succeeded).toBe(0);
   });

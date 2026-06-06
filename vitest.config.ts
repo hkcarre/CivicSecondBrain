@@ -6,6 +6,8 @@ export default defineConfig({
     environment: "node",
     globals: true,
     testTimeout: 15000,
+    include: ["app/**/*.test.ts"],
+    exclude: ["node_modules/**", "node_modules.bak/**"],
   },
   resolve: {
     alias: {

@@ -22,11 +22,22 @@ import { appendToLog } from "@/lib/wiki/writer";
 
 export const maxDuration = 300;
 
+// Module-level flag to prevent concurrent ingest runs.
+let ingestInProgress = false;
+
 export async function POST(req: Request) {
-  const body = await req.json().catch(() => ({}));
-  const limit: number = body.limit ?? 10;
+  if (ingestInProgress) {
+    return NextResponse.json(
+      { message: "Ingest already in progress." },
+      { status: 409 }
+    );
+  }
+  ingestInProgress = true;
 
   try {
+    const body = await req.json().catch(() => ({}));
+    const limit: number = body.limit ?? 10;
+
     const manifest = loadManifest();
 
     // Discover new documents
@@ -45,7 +56,13 @@ export async function POST(req: Request) {
       const id = docId(doc.url);
 
       const localPath = await downloadDocument(doc);
-      if (!localPath) continue;
+      if (!localPath) {
+        console.error(`Download failed for ${doc.title}`);
+        failures.push(doc.title);
+        const ts = new Date().toISOString();
+        appendToLog(`## [ERROR] [${ts}] Download failed: ${doc.title}`);
+        continue;
+      }
 
       // Checksum dedup: skip if already ingested AND file unchanged since last ingest.
       // This check requires localPath and must therefore run AFTER download.
@@ -65,7 +82,6 @@ export async function POST(req: Request) {
           skipped++;
         } else {
           markIngested(manifest, id, civicDoc, localPath);
-          saveManifest(manifest);
           succeeded++;
         }
       } catch (err) {
@@ -77,6 +93,12 @@ export async function POST(req: Request) {
         );
       }
     }
+
+    // Save manifest once after all documents are processed.
+    // Saving inside the loop caused a race when concurrent ingests
+    // interleaved writes; the module-level mutex plus this single
+    // post-loop write keeps the manifest consistent.
+    saveManifest(manifest);
 
     return NextResponse.json({
       message: `Ingested ${succeeded}/${processed} documents (${skipped} skipped — unsupported format).`,
@@ -91,5 +113,7 @@ export async function POST(req: Request) {
       { message: `Error: ${(err as Error).message}` },
       { status: 500 }
     );
+  } finally {
+    ingestInProgress = false;
   }
 }

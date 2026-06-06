@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.19.0](https://github.com/xozai/CivicSecondBrain/compare/v1.18.0...v1.19.0) (2026-06-06)
+
+
+### Features
+
+* multi-model support — Anthropic, OpenAI, and Gemini via AI_PROVIDER env var ([#125](https://github.com/xozai/CivicSecondBrain/issues/125)) ([98e7467](https://github.com/xozai/CivicSecondBrain/commit/98e7467cf733624bbb483d6514d757b34de0b78e))
+
 ## [1.18.0](https://github.com/xozai/CivicSecondBrain/compare/v1.17.0...v1.18.0) (2026-06-06)
 
 

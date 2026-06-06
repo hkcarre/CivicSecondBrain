@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.12.0](https://github.com/xozai/CivicSecondBrain/compare/v1.11.4...v1.12.0) (2026-06-06)
+
+
+### Features
+
+* add DOCX and XLSX parsing with mammoth and SheetJS ([#73](https://github.com/xozai/CivicSecondBrain/issues/73)) ([6fe36ae](https://github.com/xozai/CivicSecondBrain/commit/6fe36ae7f333bb0145b80e1efdd6cfcf6615a7c2))
+
 ## [1.11.4](https://github.com/xozai/CivicSecondBrain/compare/v1.11.3...v1.11.4) (2026-06-06)
 
 

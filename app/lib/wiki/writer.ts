@@ -179,7 +179,10 @@ export function updateWikiIndex(
       query: "## Queries Filed",
     };
     const section = sectionMap[entry.category] ?? "## Topics";
-    const row = `| [[${entry.path}]] | ${entry.summary.slice(0, 80)} | ${entry.date} | ${entry.sourceCount} |\n`;
+    // Escape pipe characters in path and summary so they don't break markdown table parsing.
+    const safePath = entry.path.replace(/\|/g, "&#124;");
+    const safeSummary = entry.summary.slice(0, 80).replace(/\|/g, "&#124;");
+    const row = `| [[${safePath}]] | ${safeSummary} | ${entry.date} | ${entry.sourceCount} |\n`;
     content = content.replace(section, `${section}\n${row}`);
   }
 

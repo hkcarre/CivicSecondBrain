@@ -71,11 +71,11 @@ export function readWikiIndex(): WikiIndexEntry[] {
   let match;
   while ((match = tableRowRegex.exec(raw)) !== null) {
     entries.push({
-      path: match[1].trim(),
-      summary: match[2].trim(),
+      path: match[1].trim().replace(/&#124;/g, "|"),
+      summary: match[2].trim().replace(/&#124;/g, "|"),
       lastUpdated: match[3].trim(),
       sourceCount: parseInt(match[4].trim(), 10),
-      category: inferCategory(match[1].trim()),
+      category: inferCategory(match[1].trim().replace(/&#124;/g, "|")),
     });
   }
 

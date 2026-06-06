@@ -116,6 +116,19 @@ describe("readWikiIndex", () => {
 
     expect(readWikiIndex()).toHaveLength(2);
   });
+
+  it("decodes &#124; escape in path and summary containing pipe characters", async () => {
+    writeFixture(
+      "index.md",
+      "## Topics\n| [[topics/budget&#124;overview.md]] | Revenue&#124;Expenditure summary | 2024-01-01 | 3 |\n"
+    );
+    const { readWikiIndex } = await importReader();
+
+    const entries = readWikiIndex();
+    expect(entries).toHaveLength(1);
+    expect(entries[0].path).toBe("topics/budget|overview.md");
+    expect(entries[0].summary).toBe("Revenue|Expenditure summary");
+  });
 });
 
 describe("readRelevantPages", () => {

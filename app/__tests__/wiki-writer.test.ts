@@ -277,4 +277,28 @@ describe("updateWikiIndex", () => {
     expect(occurrences).toBe(1);
     expect(raw).toContain("Pages: 1");
   });
+
+  it("escapes pipe characters in path and summary with &#124;", async () => {
+    fs.writeFileSync(
+      path.join(tmpDir, "index.md"),
+      `# Wiki Index\n> Last updated: 2024-01-01 | Pages: 0\n\n## Topics\n`,
+      "utf-8"
+    );
+    const { updateWikiIndex } = await importWriter();
+
+    updateWikiIndex([{
+      path: "topics/budget|overview.md",
+      summary: "Revenue|Expenditure breakdown",
+      date: "2024-01-01",
+      sourceCount: 2,
+      category: "topic",
+    }]);
+
+    const raw = fs.readFileSync(path.join(tmpDir, "index.md"), "utf-8");
+    // Raw table must not have unescaped pipes inside the cell values
+    expect(raw).toContain("[[topics/budget&#124;overview.md]]");
+    expect(raw).toContain("Revenue&#124;Expenditure breakdown");
+    // Must NOT contain a raw pipe within the wikilink path
+    expect(raw).not.toMatch(/\[\[topics\/budget\|/);
+  });
 });

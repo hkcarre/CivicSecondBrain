@@ -242,37 +242,211 @@ openssl rand -hex 32
 
 ## Environment Variables
 
+Copy `.env.example` to `.env.local` for local development. In production set these in the Railway dashboard.
+
+**Legend:** ★ Required in production &nbsp;|&nbsp; ○ Optional — has a safe default for local dev
+
+---
+
+### AI Provider
+
+| Variable | ★/○ | Allowed values / format | Default |
+|---|---|---|---|
+| `AI_PROVIDER` | ○ | `anthropic` \| `openai` \| `gemini` | `anthropic` |
+| `AI_MODEL` | ○ | Any valid model name string (leave blank for provider default) | *(see table below)* |
+| `ANTHROPIC_API_KEY` | ★ if anthropic | `sk-ant-api03-...` | — |
+| `OPENAI_API_KEY` | ★ if openai | `sk-proj-...` or `sk-...` | — |
+| `OPENAI_BASE_URL` | ○ | Full URL, no trailing slash. e.g. `https://my-resource.openai.azure.com/openai/deployments/gpt-4o` | OpenAI default |
+| `GEMINI_API_KEY` | ★ if gemini | `AIzaSy...` | — |
+
+**Default model per provider:**
+
+| `AI_PROVIDER` | Default `AI_MODEL` | When to override |
+|---|---|---|
+| `anthropic` | `claude-sonnet-4-5` | Use `claude-haiku-4-5` to reduce cost on large ingests |
+| `openai` | `gpt-4o` | Use `gpt-4o-mini` for a lighter-weight / lower-cost option |
+| `gemini` | `gemini-2.0-flash` | Use `gemini-1.5-pro` for longer context windows |
+
 ```bash
-# ── AI Provider ────────────────────────────────────────────────────────────
-AI_PROVIDER=anthropic          # anthropic | openai | gemini (default: anthropic)
-AI_MODEL=                      # optional model name override
+# Anthropic (default) — get key at console.anthropic.com
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-api03-...YOUR_KEY_HERE...AA
 
-ANTHROPIC_API_KEY=sk-ant-...   # required for anthropic provider
-OPENAI_API_KEY=                # required for openai provider
-OPENAI_BASE_URL=               # optional: for Azure OpenAI, proxies, etc.
-GEMINI_API_KEY=                # required for gemini provider
+# OpenAI — get key at platform.openai.com/api-keys
+AI_PROVIDER=openai
+AI_MODEL=gpt-4o
+OPENAI_API_KEY=sk-proj-...YOUR_KEY_HERE...
 
-# ── City identity ──────────────────────────────────────────────────────────
-NEXT_PUBLIC_CITY_NAME="Schertz"
-NEXT_PUBLIC_CITY_STATE="TX"
-CITY_NAME="Schertz"           # server-side (used in AI prompts)
-CITY_STATE="TX"
-
-# ── Scraper config ─────────────────────────────────────────────────────────
-GOV_BASE_URL=                  # root URL of city website (default: https://www.schertz.com)
-MUNICODE_URL=                  # MuniCode URL to enable ordinance scraping (opt-in)
-
-# ── Auth ───────────────────────────────────────────────────────────────────
-ADMIN_PASSWORD=                # protects /admin (unset = open in dev)
-INGEST_SECRET=                 # protects /api/ingest and /api/lint (unset = open in dev)
-
-# ── Storage paths ──────────────────────────────────────────────────────────
-WIKI_PATH=/data/wiki           # default: ./wiki
-RAW_SOURCES_PATH=/data/raw-sources  # default: ./raw-sources
-MAX_FILE_SIZE_MB=25            # skip PDFs larger than this (default: 25)
+# Google Gemini — get key at aistudio.google.com/app/apikey
+AI_PROVIDER=gemini
+AI_MODEL=gemini-2.0-flash
+GEMINI_API_KEY=AIzaSy...YOUR_KEY_HERE...
 ```
 
 ---
+
+### City Identity
+
+All UI strings, page titles, and AI system prompts read from these variables — no code changes required when deploying for a different city.
+
+| Variable | ★/○ | Format / Example | Default |
+|---|---|---|---|
+| `NEXT_PUBLIC_CITY_NAME` | ○ | `"Schertz"` \| `"New Braunfels"` \| `"Austin"` | `"Schertz"` |
+| `NEXT_PUBLIC_CITY_STATE` | ○ | Two-letter abbreviation: `"TX"` \| `"CA"` \| `"FL"` | `"TX"` |
+| `CITY_NAME` | ○ | Same as `NEXT_PUBLIC_CITY_NAME` — used server-side in AI prompts | `"Schertz"` |
+| `CITY_STATE` | ○ | Same as `NEXT_PUBLIC_CITY_STATE` — used server-side in AI prompts | `"TX"` |
+
+```bash
+# Schertz (default — no changes needed)
+NEXT_PUBLIC_CITY_NAME="Schertz"
+NEXT_PUBLIC_CITY_STATE="TX"
+CITY_NAME="Schertz"
+CITY_STATE="TX"
+
+# Example: deploy for New Braunfels, TX
+NEXT_PUBLIC_CITY_NAME="New Braunfels"
+NEXT_PUBLIC_CITY_STATE="TX"
+CITY_NAME="New Braunfels"
+CITY_STATE="TX"
+```
+
+---
+
+### Scraper Configuration
+
+| Variable | ★/○ | Format / Example | Default |
+|---|---|---|---|
+| `GOV_BASE_URL` | ○ | Root URL of city website, no trailing slash. e.g. `https://www.newbraunfels.gov` | `https://www.schertz.com` |
+| `SCHERTZ_GOV_URL` | ○ | Full CivicPlus section URL. Format: `https://{city}/{folder-id}/Government` | `https://www.schertz.com/27/Government` |
+| `SCHERTZ_LASERFICHE_URL` | ○ | Full Laserfiche AgendaCenter URL | `https://www.schertz.com/AgendaCenter` |
+| `MUNICODE_URL` | ○ | Full MuniCode URL including code slug (see below). Leave blank to disable | *(disabled)* |
+| `MAX_FILE_SIZE_MB` | ○ | Integer: `25` \| `50` \| `100` | `25` |
+
+**`MUNICODE_URL`** — enables the MuniCode ordinance scraper. Leave blank to skip gracefully (other scrapers continue). The URL must include the full path with the code slug:
+
+```bash
+# Schertz, TX
+MUNICODE_URL=https://library.municode.com/tx/schertz/codes/code_of_ordinances
+
+# URL format for other cities:
+# https://library.municode.com/{state-abbrev}/{city-slug}/codes/{code-slug}
+#
+# Examples:
+# New Braunfels, TX: https://library.municode.com/tx/new_braunfels/codes/code_of_ordinances
+# Cedar Park, TX:    https://library.municode.com/tx/cedar_park/codes/code_of_ordinances
+# Round Rock, TX:    https://library.municode.com/tx/round_rock/codes/code_of_ordinances
+```
+
+**`MAX_FILE_SIZE_MB`** — PDFs larger than this are skipped before download (checked via HTTP HEAD, no wasted bandwidth). Tune to your Railway plan:
+
+```bash
+MAX_FILE_SIZE_MB=25    # 512 MB RAM — default
+MAX_FILE_SIZE_MB=50    # 1 GB RAM
+MAX_FILE_SIZE_MB=100   # 2 GB RAM
+```
+
+---
+
+### Security
+
+Both secrets **must be set in production**. Without them `/admin` and the ingest API are publicly accessible to anyone who knows the URL.
+
+| Variable | ★/○ | Format / How to generate | Default (dev) |
+|---|---|---|---|
+| `ADMIN_PASSWORD` | ★ production | Any string — use a strong random value. `openssl rand -base64 24` | Open — no auth |
+| `INGEST_SECRET` | ★ production | Any string — use a strong random value. `openssl rand -hex 32` | Open — no auth |
+
+```bash
+# Generate in your terminal and paste into Railway dashboard:
+openssl rand -base64 24   # use this as ADMIN_PASSWORD
+openssl rand -hex 32      # use this as INGEST_SECRET
+
+# Example (generate your own — never reuse these):
+ADMIN_PASSWORD=Jk9mPqR2vXnL4sYw8tBcDe3A
+INGEST_SECRET=a3f1c8e2d9b04765f2a8c1e3d6b90f4e2c7a1d5b8e3f6c9a2d4b7e0f1c3a6d9
+```
+
+**`ADMIN_PASSWORD`** protects `/admin` with a login page. The session cookie is HMAC-SHA256 signed, HttpOnly, SameSite=Lax, and expires after 8 hours. Changing the password immediately invalidates all existing sessions.
+
+**`INGEST_SECRET`** — callers must send `Authorization: Bearer <secret>` to `POST /api/ingest` and `POST /api/lint`. The GitHub Actions scheduled workflow reads this from repository secrets.
+
+---
+
+### Storage Paths
+
+| Variable | ★/○ | Format / Example | Default |
+|---|---|---|---|
+| `WIKI_PATH` | ○ | Absolute path. Railway: `/data/wiki` | `./wiki` |
+| `RAW_SOURCES_PATH` | ○ | Absolute path. Railway: `/data/raw-sources` | `./raw-sources` |
+
+```bash
+# Railway production (volume mounted at /data)
+WIKI_PATH=/data/wiki
+RAW_SOURCES_PATH=/data/raw-sources
+
+# Local development — defaults work, no need to set these
+```
+
+---
+
+### Complete Setup Examples
+
+**Schertz, TX — Anthropic Claude (production)**
+
+```bash
+# AI
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-api03-...YOUR_KEY_HERE...AA
+
+# City
+NEXT_PUBLIC_CITY_NAME="Schertz"
+NEXT_PUBLIC_CITY_STATE="TX"
+CITY_NAME="Schertz"
+CITY_STATE="TX"
+
+# Scrapers
+MUNICODE_URL=https://library.municode.com/tx/schertz/codes/code_of_ordinances
+MAX_FILE_SIZE_MB=25
+
+# Security (generate your own values)
+ADMIN_PASSWORD=<output of: openssl rand -base64 24>
+INGEST_SECRET=<output of: openssl rand -hex 32>
+
+# Storage (Railway volume)
+WIKI_PATH=/data/wiki
+RAW_SOURCES_PATH=/data/raw-sources
+```
+
+**Another City — OpenAI GPT-4o (production)**
+
+```bash
+# AI
+AI_PROVIDER=openai
+AI_MODEL=gpt-4o
+OPENAI_API_KEY=sk-proj-...YOUR_KEY_HERE...
+
+# City
+NEXT_PUBLIC_CITY_NAME="New Braunfels"
+NEXT_PUBLIC_CITY_STATE="TX"
+CITY_NAME="New Braunfels"
+CITY_STATE="TX"
+
+# Scrapers
+GOV_BASE_URL=https://www.newbraunfels.gov
+MUNICODE_URL=https://library.municode.com/tx/new_braunfels/codes/code_of_ordinances
+MAX_FILE_SIZE_MB=50
+
+# Security (generate your own values)
+ADMIN_PASSWORD=<output of: openssl rand -base64 24>
+INGEST_SECRET=<output of: openssl rand -hex 32>
+
+# Storage (Railway volume)
+WIKI_PATH=/data/wiki
+RAW_SOURCES_PATH=/data/raw-sources
+```
+
+---
+
 
 ## Multi-City Deployment
 

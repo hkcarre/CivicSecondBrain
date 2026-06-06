@@ -22,13 +22,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Guard: ANTHROPIC_API_KEY must never be prefixed NEXT_PUBLIC_ (would ship to browser)
+      - name: Lint — no NEXT_PUBLIC_ANTHROPIC leaks
+        run: |
+          if grep -r "NEXT_PUBLIC_ANTHROPIC" --include="*.ts" --include="*.tsx" --include="*.js" --include="*.env*" .; then
+            echo "ERROR: ANTHROPIC_API_KEY must not be prefixed NEXT_PUBLIC_ — it would be shipped in the browser bundle."
+            exit 1
+          fi
+          echo "OK: no NEXT_PUBLIC_ANTHROPIC references found."
+
       - name: Run tests
         run: npm test
 
+      # Build does NOT receive ANTHROPIC_API_KEY.
+      # The Anthropic SDK client is instantiated at module-load time but makes
+      # no network calls during a Next.js build — the key is only needed at
+      # runtime (API routes). Passing it here was unnecessary and risked
+      # exposing it in verbose build logs or error traces.
       - name: Build
         run: npm run build
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           NEXT_PUBLIC_APP_NAME: CivicSecondBrain
           NEXT_PUBLIC_CITY_NAME: Schertz
           NEXT_PUBLIC_CITY_STATE: TX

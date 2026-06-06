@@ -36,7 +36,7 @@ export function WikiHealthPanel({ report }: WikiHealthPanelProps) {
       </div>
 
       {/* Summary row */}
-      <div className="grid grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <Stat
           label="Pages"
           value={report.pagesAnalyzed}

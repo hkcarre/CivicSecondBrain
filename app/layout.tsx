@@ -30,7 +30,8 @@ export default function RootLayout({
       >
         <div className="flex h-full">
           <Sidebar />
-          <main className="flex-1 overflow-auto">{children}</main>
+          {/* pt-14 on mobile offsets the fixed top header bar; md:pt-0 removes it on desktop */}
+          <main className="flex-1 overflow-auto pt-14 md:pt-0">{children}</main>
         </div>
       </body>
     </html>

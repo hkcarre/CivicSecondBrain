@@ -10,7 +10,7 @@ export default async function AdminPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-6 py-6">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-6">
         {/* Header */}
         <div className="mb-6 flex items-start justify-between">
           <div>
@@ -22,14 +22,15 @@ export default async function AdminPage() {
           {process.env.ADMIN_PASSWORD && <AdminLogoutButton />}
         </div>
 
-        <div className="grid grid-cols-3 gap-5">
+        {/* Main grid — stacked on mobile, 3-col on lg+ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Left: ingest panel + stats */}
-          <div className="col-span-1 space-y-4">
+          <div className="lg:col-span-1 space-y-4">
             <AdminIngestPanel stats={wikiStats} logSummary={logSummary} schedule={schedule} />
           </div>
 
           {/* Right: manifest table */}
-          <div className="col-span-2">
+          <div className="lg:col-span-2 min-w-0">
             <ManifestTable documents={manifest} />
           </div>
         </div>

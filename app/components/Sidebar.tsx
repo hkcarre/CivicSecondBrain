@@ -11,6 +11,8 @@ import {
   ChevronRight,
   Sun,
   Moon,
+  Menu,
+  X,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useEffect, useState } from "react";
@@ -45,11 +47,23 @@ const NAV_ITEMS = [
 export function Sidebar() {
   const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  // Sync state with the class already applied by the inline script
+  // Sync dark state with class already applied by the inline script
   useEffect(() => {
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
+
+  // Close mobile drawer on route change
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
+
+  // Prevent body scroll when mobile drawer is open
+  useEffect(() => {
+    document.body.style.overflow = mobileOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [mobileOpen]);
 
   function toggleTheme() {
     const next = !isDark;
@@ -63,8 +77,8 @@ export function Sidebar() {
     }
   }
 
-  return (
-    <aside className="w-64 bg-city-navy dark:bg-gray-900 flex flex-col h-full flex-shrink-0 border-r border-white/10 dark:border-gray-700">
+  const navContent = (
+    <>
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10 dark:border-gray-700">
         <div className="flex items-center gap-2.5">
@@ -114,7 +128,6 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="px-4 py-4 border-t border-white/10 dark:border-gray-700">
-        {/* Dark mode toggle */}
         <button
           onClick={toggleTheme}
           aria-label="Toggle dark mode"
@@ -137,6 +150,61 @@ export function Sidebar() {
           <p>Powered by Claude AI</p>
         </div>
       </div>
-    </aside>
+    </>
+  );
+
+  return (
+    <>
+      {/* ── Desktop sidebar (md+) ─────────────────────────────────────── */}
+      <aside className="hidden md:flex w-64 bg-city-navy dark:bg-gray-900 flex-col h-full flex-shrink-0 border-r border-white/10 dark:border-gray-700">
+        {navContent}
+      </aside>
+
+      {/* ── Mobile: top header bar ───────────────────────────────────── */}
+      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-city-navy dark:bg-gray-900 border-b border-white/10">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-lg bg-city-gold flex items-center justify-center flex-shrink-0">
+            <span className="text-city-navy font-bold text-xs">🏛</span>
+          </div>
+          <p className="text-white font-semibold text-sm">CivicSecondBrain</p>
+        </div>
+        <button
+          onClick={() => setMobileOpen(true)}
+          aria-label="Open navigation menu"
+          className="p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+        >
+          <Menu size={20} />
+        </button>
+      </div>
+
+      {/* ── Mobile drawer overlay ─────────────────────────────────────── */}
+      {mobileOpen && (
+        <div
+          className="md:hidden fixed inset-0 z-50 flex"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation menu"
+        >
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+
+          {/* Drawer panel */}
+          <aside className="relative w-72 max-w-[85vw] bg-city-navy dark:bg-gray-900 flex flex-col h-full shadow-2xl">
+            {/* Close button */}
+            <button
+              onClick={() => setMobileOpen(false)}
+              aria-label="Close navigation menu"
+              className="absolute top-3 right-3 p-1.5 rounded-lg text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+            >
+              <X size={18} />
+            </button>
+            {navContent}
+          </aside>
+        </div>
+      )}
+    </>
   );
 }

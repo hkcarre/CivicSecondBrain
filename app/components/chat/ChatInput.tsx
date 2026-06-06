@@ -62,8 +62,9 @@ export function ChatInput({
           <button
             onClick={onSubmit}
             disabled={isLoading || !value.trim()}
+            aria-label="Send message"
             className={clsx(
-              "flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+              "flex-shrink-0 w-9 h-9 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-all",
               !isLoading && value.trim()
                 ? "bg-city-navy dark:bg-city-gold text-white dark:text-city-navy hover:bg-city-navy-light dark:hover:opacity-90"
                 : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"

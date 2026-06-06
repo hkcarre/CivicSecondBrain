@@ -30,7 +30,7 @@ export default async function WikiDetailPage({ params }: Props) {
   if (!page) {
     return (
       <div className="h-full overflow-y-auto">
-        <div className="max-w-4xl mx-auto px-6 py-12 text-center">
+        <div className="max-w-4xl mx-auto px-4 md:px-6 py-12 text-center">
           <p className="text-5xl mb-4">📭</p>
           <h1 className="text-xl font-bold text-city-navy mb-2">Wiki page not found</h1>
           <p className="text-gray-500 text-sm mb-1">
@@ -68,7 +68,7 @@ export default async function WikiDetailPage({ params }: Props) {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-6 py-6">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 py-6">
         {/* Back nav */}
         <Link
           href="/wiki"

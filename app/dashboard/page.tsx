@@ -12,7 +12,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-6 py-6">
+      <div className="max-w-5xl mx-auto px-4 md:px-6 py-6">
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-city-navy dark:text-city-gold">City Health</h1>
@@ -24,17 +24,18 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Stats bar */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
+        {/* Stats bar — 2 cols on mobile, 4 on md+ */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
           <StatCard label="Documents Ingested" value={stats.sourcesIngested} />
           <StatCard label="Wiki Pages" value={stats.wikiPages} />
           <StatCard label="Decisions Logged" value={stats.decisionsLogged} />
           <StatCard label="AI Recommendations" value={recommendations.length} />
         </div>
 
-        <div className="grid grid-cols-3 gap-5">
-          {/* Recommendations — 2/3 width */}
-          <div className="col-span-2 space-y-4">
+        {/* Main grid — stacked on mobile, 3-col on lg+ */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Recommendations — full width on mobile, 2/3 on lg */}
+          <div className="lg:col-span-2 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-gray-900 dark:text-gray-100">
                 AI Recommendations

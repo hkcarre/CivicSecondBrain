@@ -198,7 +198,7 @@ export default function ChatPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Page header */}
-      <header className="bg-white border-b border-gray-200 px-6 py-4 flex-shrink-0">
+      <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 md:py-4 flex-shrink-0">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-lg font-semibold text-city-navy">Ask the City</h1>

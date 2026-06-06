@@ -128,6 +128,13 @@ export default function ChatPage() {
       const decoder = new TextDecoder();
 
       if (!reader) {
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId
+              ? { ...m, content: "Sorry, the response failed. Please try again." }
+              : m
+          )
+        );
         setIsLoading(false);
         setStreamingId(null);
         return;

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.13.1](https://github.com/xozai/CivicSecondBrain/compare/v1.13.0...v1.13.1) (2026-06-06)
+
+
+### Bug Fixes
+
+* escape pipe chars in wiki/index.md at write time, decode on read ([#111](https://github.com/xozai/CivicSecondBrain/issues/111)) ([02dd376](https://github.com/xozai/CivicSecondBrain/commit/02dd37621b117a299b7b08f90ecfb93ab62a205a))
+
 ## [1.13.0](https://github.com/xozai/CivicSecondBrain/compare/v1.12.0...v1.13.0) (2026-06-06)
 
 

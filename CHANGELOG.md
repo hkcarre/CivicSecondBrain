@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.20.0](https://github.com/xozai/CivicSecondBrain/compare/v1.19.0...v1.20.0) (2026-06-06)
+
+
+### Features
+
+* MuniCode ordinance scraper — crawl city code via public content API ([#127](https://github.com/xozai/CivicSecondBrain/issues/127)) ([cfaeec2](https://github.com/xozai/CivicSecondBrain/commit/cfaeec29ed5bfdde19513858a81a65313acd3a14))
+
 ## [1.19.0](https://github.com/xozai/CivicSecondBrain/compare/v1.18.0...v1.19.0) (2026-06-06)
 
 

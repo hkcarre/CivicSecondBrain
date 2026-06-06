@@ -31,11 +31,8 @@ export async function POST(req: Request) {
 
     // Discover new documents
     const discovered = await discoverDocuments();
-    const pending = discovered.filter((d) =>
-      needsIngestion(manifest, d.url)
-    );
 
-    if (pending.length === 0) {
+    if (discovered.length === 0) {
       return NextResponse.json({ message: "No pending documents to ingest." });
     }
 
@@ -44,19 +41,20 @@ export async function POST(req: Request) {
     let skipped = 0;
     const failures: string[] = [];
 
-    for (const doc of pending.slice(0, limit)) {
-      processed++;
+    for (const doc of discovered.slice(0, limit)) {
       const id = docId(doc.url);
 
       const localPath = await downloadDocument(doc);
       if (!localPath) continue;
 
-      // Checksum dedup: skip if file unchanged since last ingest
+      // Checksum dedup: skip if already ingested AND file unchanged since last ingest.
+      // This check requires localPath and must therefore run AFTER download.
       if (!needsIngestion(manifest, doc.url, localPath)) {
         console.log(`↩ Skipped (checksum unchanged): ${doc.title}`);
         continue;
       }
 
+      processed++;
       const civicDoc = toCivicDocument(doc, localPath, id);
 
       try {

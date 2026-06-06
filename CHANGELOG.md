@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.14.0](https://github.com/xozai/CivicSecondBrain/compare/v1.13.1...v1.14.0) (2026-06-06)
+
+
+### Features
+
+* scheduled ingest + lint via Railway cron and GitHub Actions workflow ([#113](https://github.com/xozai/CivicSecondBrain/issues/113)) ([9cd3b66](https://github.com/xozai/CivicSecondBrain/commit/9cd3b66b6e73cfdfd43a991d183462b7d36ccb35))
+
 ## [1.13.1](https://github.com/xozai/CivicSecondBrain/compare/v1.13.0...v1.13.1) (2026-06-06)
 
 

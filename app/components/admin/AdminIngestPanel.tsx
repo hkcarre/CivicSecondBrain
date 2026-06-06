@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { RefreshCw, Play, FileSearch, CheckCircle, Loader2 } from "lucide-react";
+import { RefreshCw, Play, FileSearch, CheckCircle, Loader2, FileText } from "lucide-react";
 import { clsx } from "clsx";
 
 interface AdminIngestPanelProps {
@@ -144,10 +144,38 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
         )}
       </div>
 
+      {/* Exports */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-3">Export</h2>
+        <div className="space-y-2">
+          <ExportLink
+            href="/api/export/recommendations?format=md"
+            label="Recommendations (.md)"
+            description="All current AI recommendations as markdown"
+          />
+          <ExportLink
+            href="/api/export/recommendations?format=pdf"
+            label="Recommendations (print PDF)"
+            description="Opens print-ready HTML for Save as PDF"
+            newTab
+          />
+          <ExportLink
+            href="/api/export/wiki?format=md"
+            label="Full wiki (.md)"
+            description="All wiki pages concatenated as one document"
+          />
+          <ExportLink
+            href="/api/export/wiki?format=zip"
+            label="Full wiki (.zip)"
+            description="All individual wiki markdown files as a ZIP"
+          />
+        </div>
+      </div>
+
       {/* Log preview */}
-      <div className="bg-white rounded-xl border border-gray-200 p-4">
-        <h2 className="font-semibold text-gray-900 mb-2">Recent Log</h2>
-        <pre className="text-xs text-gray-500 whitespace-pre-wrap font-mono leading-relaxed overflow-auto max-h-48">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+        <h2 className="font-semibold text-gray-900 dark:text-white mb-2">Recent Log</h2>
+        <pre className="text-xs text-gray-500 dark:text-gray-400 whitespace-pre-wrap font-mono leading-relaxed overflow-auto max-h-48">
           {logSummary || "No log entries yet."}
         </pre>
       </div>
@@ -158,9 +186,39 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
 function Row({ label, value }: { label: string; value: string | number }) {
   return (
     <div className="flex justify-between items-center">
-      <span className="text-gray-500">{label}</span>
-      <span className="font-medium text-gray-900">{value}</span>
+      <span className="text-gray-500 dark:text-gray-400">{label}</span>
+      <span className="font-medium text-gray-900 dark:text-gray-100">{value}</span>
     </div>
+  );
+}
+
+function ExportLink({
+  href,
+  label,
+  description,
+  newTab = false,
+}: {
+  href: string;
+  label: string;
+  description: string;
+  newTab?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      target={newTab ? "_blank" : undefined}
+      rel={newTab ? "noopener noreferrer" : undefined}
+      className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200
+                 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200
+                 hover:border-city-navy/40 hover:bg-gray-50 dark:hover:bg-gray-600
+                 transition-all group"
+    >
+      <FileText size={15} className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-city-navy dark:group-hover:text-city-gold" />
+      <div className="min-w-0">
+        <p className="text-sm font-medium truncate">{label}</p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{description}</p>
+      </div>
+    </a>
   );
 }
 

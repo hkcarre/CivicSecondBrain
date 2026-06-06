@@ -1,5 +1,5 @@
 /**
- * PDF and HTML text extraction for civic documents.
+ * PDF, HTML, DOCX, and XLSX text extraction for civic documents.
  * Extracts clean text from downloaded files before sending to Claude.
  */
 
@@ -7,6 +7,8 @@ import fs from "fs";
 import path from "path";
 import pdfParse from "pdf-parse";
 import * as cheerio from "cheerio";
+import mammoth from "mammoth";
+import * as XLSX from "xlsx";
 
 export interface ParsedDocument {
   text: string;
@@ -40,13 +42,12 @@ export async function parseDocument(
       return parseHtml(localPath);
     case ".txt":
       return parseTxt(localPath);
-    case ".xlsx":
-    case ".xls":
     case ".docx":
     case ".doc":
-      // Return a skip marker — these formats need a dedicated parser.
-      // The caller must check `skipped` and bail out before calling Claude.
-      return { text: "", pageCount: 0, title: path.basename(localPath), skipped: true };
+      return parseDocx(localPath);
+    case ".xlsx":
+    case ".xls":
+      return parseXlsx(localPath);
     default:
       throw new Error(`Unsupported file type: ${ext}`);
   }
@@ -101,6 +102,36 @@ async function parseHtml(filePath: string): Promise<ParsedDocument> {
 async function parseTxt(filePath: string): Promise<ParsedDocument> {
   const text = fs.readFileSync(filePath, "utf-8");
   return { text: cleanText(text).slice(0, MAX_TEXT_CHARS) };
+}
+
+// ─── DOCX parser (mammoth) ─────────────────────────────────────────────────
+
+async function parseDocx(filePath: string): Promise<ParsedDocument> {
+  const result = await mammoth.extractRawText({ path: filePath });
+  const text = cleanText(result.value).slice(0, MAX_TEXT_CHARS);
+  return { text, title: path.basename(filePath) };
+}
+
+// ─── XLSX / XLS parser (SheetJS) ──────────────────────────────────────────
+
+async function parseXlsx(filePath: string): Promise<ParsedDocument> {
+  const workbook = XLSX.readFile(filePath);
+  const parts: string[] = [];
+
+  for (const sheetName of workbook.SheetNames) {
+    const sheet = workbook.Sheets[sheetName];
+    const rows = XLSX.utils.sheet_to_json<string[]>(sheet, {
+      header: 1,
+      defval: "",
+    });
+    parts.push(`=== ${sheetName} ===`);
+    for (const row of rows) {
+      parts.push((row as string[]).join("\t"));
+    }
+  }
+
+  const text = cleanText(parts.join("\n")).slice(0, MAX_TEXT_CHARS);
+  return { text, title: path.basename(filePath) };
 }
 
 // ─── Text cleaning ─────────────────────────────────────────────────────────

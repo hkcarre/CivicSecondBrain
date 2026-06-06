@@ -1,59 +1,108 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { chunkDocument, parseDocument } from "../lib/parser/pdf-parser";
-import fs from "fs";
+import { describe, it, expect } from "vitest";
 import path from "path";
+import fs from "fs";
 import os from "os";
+import { chunkDocument, parseDocument } from "../lib/parser/pdf-parser";
 
-// ─── parseDocument — skipped-format tests ─────────────────────────────────
+const FIXTURES = path.join(__dirname, "fixtures");
 
-describe("parseDocument — unsupported formats", () => {
+// ─── parseDocument — DOCX ──────────────────────────────────────────────────
+
+describe("parseDocument — .docx", () => {
+  it("returns non-empty text from a valid DOCX file", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.docx"));
+    expect(result.text.length).toBeGreaterThan(0);
+  });
+
+  it("extracts expected paragraph text from DOCX", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.docx"));
+    expect(result.text).toContain("Hello from DOCX fixture.");
+    expect(result.text).toContain("Second paragraph with more text.");
+  });
+
+  it("sets title to the file basename for DOCX", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.docx"));
+    expect(result.title).toBe("test.docx");
+  });
+
+  it("handles .doc extension (dispatches to parseDocx)", async () => {
+    const fakePath = path.join(FIXTURES, "test.docx").replace(/\.docx$/, ".doc");
+    fs.copyFileSync(path.join(FIXTURES, "test.docx"), fakePath);
+    try {
+      const result = await parseDocument(fakePath);
+      expect(result.text).toContain("Hello from DOCX fixture.");
+    } finally {
+      fs.unlinkSync(fakePath);
+    }
+  });
+
+  it("does NOT return skipped=true for .docx (now has a real parser)", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.docx"));
+    expect(result.skipped).toBeFalsy();
+  });
+});
+
+// ─── parseDocument — XLSX ──────────────────────────────────────────────────
+
+describe("parseDocument — .xlsx", () => {
+  it("returns non-empty text from a valid XLSX file", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.xlsx"));
+    expect(result.text.length).toBeGreaterThan(0);
+  });
+
+  it("includes sheet name headers in extracted text", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.xlsx"));
+    expect(result.text).toContain("=== Budget ===");
+    expect(result.text).toContain("=== Notes ===");
+  });
+
+  it("includes cell data from all sheets", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.xlsx"));
+    expect(result.text).toContain("Department");
+    expect(result.text).toContain("Police");
+    expect(result.text).toContain("City council approved measure A");
+  });
+
+  it("sets title to the file basename for XLSX", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.xlsx"));
+    expect(result.title).toBe("test.xlsx");
+  });
+
+  it("handles .xls extension via the same parseXlsx path", async () => {
+    const fakePath = path.join(FIXTURES, "test.xlsx").replace(/\.xlsx$/, ".xls");
+    fs.copyFileSync(path.join(FIXTURES, "test.xlsx"), fakePath);
+    try {
+      const result = await parseDocument(fakePath);
+      expect(result.text).toContain("Department");
+    } finally {
+      fs.unlinkSync(fakePath);
+    }
+  });
+
+  it("does NOT return skipped=true for .xlsx (now has a real parser)", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.xlsx"));
+    expect(result.skipped).toBeFalsy();
+  });
+});
+
+// ─── parseDocument — other formats ────────────────────────────────────────
+
+describe("parseDocument — other formats", () => {
   const tmpDir = os.tmpdir();
-
-  const makeFile = (name: string) => {
+  const makeFile = (name: string, content = "dummy") => {
     const p = path.join(tmpDir, name);
-    fs.writeFileSync(p, "dummy");
+    fs.writeFileSync(p, content);
     return p;
   };
 
-  it("returns skipped=true for .docx", async () => {
-    const filePath = makeFile("test.docx");
-    const result = await parseDocument(filePath);
-    expect(result.skipped).toBe(true);
-    expect(result.text).toBe("");
-    expect(result.pageCount).toBe(0);
-  });
-
-  it("returns skipped=true for .doc", async () => {
-    const filePath = makeFile("test.doc");
-    const result = await parseDocument(filePath);
-    expect(result.skipped).toBe(true);
-    expect(result.text).toBe("");
-  });
-
-  it("returns skipped=true for .xlsx", async () => {
-    const filePath = makeFile("test.xlsx");
-    const result = await parseDocument(filePath);
-    expect(result.skipped).toBe(true);
-    expect(result.text).toBe("");
-    expect(result.pageCount).toBe(0);
-  });
-
-  it("returns skipped=true for .xls", async () => {
-    const filePath = makeFile("test.xls");
-    const result = await parseDocument(filePath);
-    expect(result.skipped).toBe(true);
-    expect(result.text).toBe("");
-  });
-
   it("does NOT set skipped for .txt files", async () => {
-    const filePath = makeFile("test.txt");
-    fs.writeFileSync(filePath, "hello world");
+    const filePath = makeFile("test.txt", "hello world");
     const result = await parseDocument(filePath);
     expect(result.skipped).toBeFalsy();
     expect(result.text).toContain("hello world");
   });
 
-  it("throws for truly unknown extensions", async () => {
+  it("throws for unsupported extensions", async () => {
     const filePath = makeFile("test.pptx");
     await expect(parseDocument(filePath)).rejects.toThrow("Unsupported file type");
   });
@@ -70,22 +119,17 @@ describe("chunkDocument", () => {
   });
 
   it("splits text that exceeds maxTokensPerChunk", () => {
-    // 80000 tokens * 4 chars/token = 320000 chars — use a tiny limit to force splitting
     const text = "A".repeat(100) + "\n\n" + "B".repeat(100);
     const chunks = chunkDocument(text, 25); // 25 tokens = 100 chars per chunk
     expect(chunks.length).toBeGreaterThan(1);
   });
 
   it("prefers paragraph boundaries when splitting", () => {
-    // Build a text with a clear paragraph break near the 70% mark of a chunk
     const para1 = "X".repeat(70);
     const para2 = "Y".repeat(30);
     const para3 = "Z".repeat(100);
     const text = `${para1}\n\n${para2}\n\n${para3}`;
-
-    // maxChars ≈ 100 tokens * 4 = 400 chars — paragraph break should be found
     const chunks = chunkDocument(text, 25);
-    // Each chunk should not start with whitespace (trimmed)
     chunks.forEach((chunk) => {
       expect(chunk).toBe(chunk.trim());
     });
@@ -99,10 +143,9 @@ describe("chunkDocument", () => {
 
   it("handles text with no paragraph breaks", () => {
     const text = "word ".repeat(200).trim();
-    const chunks = chunkDocument(text, 10); // force split
+    const chunks = chunkDocument(text, 10);
     expect(chunks.length).toBeGreaterThanOrEqual(1);
     const rejoined = chunks.join("");
-    // All original content is preserved (whitespace may differ at boundaries)
     expect(rejoined.replace(/\s/g, "")).toBe(text.replace(/\s/g, ""));
   });
 });

@@ -28,6 +28,7 @@
     "marked": "^12.0.0",
     "nanoid": "^5.0.7",
     "next": "16.2.7",
+    "openai": "^6.42.0",
     "pdf-parse": "^1.1.1",
     "react": "^18",
     "react-dom": "^18",

@@ -2,11 +2,12 @@
  * POST /api/chat
  *
  * Streaming chat endpoint for council member Q&A.
- * Reads wiki index → selects relevant pages → streams Claude response.
+ * Reads wiki index → selects relevant pages → streams AI response.
+ * Provider is controlled by AI_PROVIDER env var (anthropic | openai | gemini).
  */
 
-// ai v6 dropped StreamingTextResponse — we use the Anthropic SDK stream directly.
-import { claude, MODELS, QUERY_SYSTEM_PROMPT } from "@/lib/claude/client";
+import { QUERY_SYSTEM_PROMPT } from "@/lib/claude/client";
+import { getAIProvider } from "@/lib/ai/provider";
 import {
   readWikiIndex,
   readRelevantPages,
@@ -41,21 +42,21 @@ export async function POST(req: Request) {
         : "\n\n## WIKI KNOWLEDGE BASE\n\nNo wiki pages have been ingested yet. " +
           "Run `npm run ingest:seed` to populate the knowledge base.";
 
-    // ── 3. Stream response ───────────────────────────────────────────────────
+    // ── 3. Stream response via provider-agnostic AI client ───────────────────
 
-    const stream = await claude.messages.stream({
-      model: MODELS.sonnet,
-      max_tokens: 2048,
+    const ai = getAIProvider();
+    const aiStream = ai.stream({
       system: systemPrompt + contextBlock,
+      maxTokens: 2048,
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as "user" | "assistant",
         content: m.content,
       })),
     });
 
-    // ── 4. Log the query (async, non-blocking, non-fatal) ────────────────────
+    // ── 4. Log the query async after stream completes ────────────────────────
 
-    stream.finalMessage().then(() => {
+    const logQuery = () => {
       try {
         const truncatedQ = userMessage.slice(0, 50);
         const logEntry = `## [${today}] QUERY | ${truncatedQ}
@@ -65,25 +66,20 @@ export async function POST(req: Request) {
 **Gap noted:** ${wikiPages.length === 0 ? "No wiki pages ingested — run ingest:seed" : "none"}`;
         appendToLog(logEntry);
       } catch {
-        // Log write failures are non-fatal — don't interrupt the response
+        // Log write failures are non-fatal
       }
-    }).catch(() => {});
+    };
 
-    // Pipe only the text delta content — not the raw Anthropic SSE event objects
+    // Pipe text chunks from the provider into a ReadableStream
     const encoder = new TextEncoder();
     const body = new ReadableStream({
       async start(controller) {
         try {
-          for await (const event of stream) {
-            if (
-              event.type === "content_block_delta" &&
-              event.delta.type === "text_delta"
-            ) {
-              controller.enqueue(encoder.encode(event.delta.text));
-            }
+          for await (const chunk of aiStream) {
+            controller.enqueue(encoder.encode(chunk));
           }
+          logQuery();
         } catch (err) {
-          // Stream error mid-response — emit a readable error message
           controller.enqueue(
             encoder.encode(`\n\n[Error: ${(err as Error).message}]`)
           );

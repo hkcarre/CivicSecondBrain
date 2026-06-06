@@ -5,7 +5,8 @@
  */
 
 import { NextResponse } from "next/server";
-import { claude, MODELS, LINT_SYSTEM_PROMPT, CITY_FULL } from "@/lib/claude/client";
+import { LINT_SYSTEM_PROMPT, CITY_FULL } from "@/lib/claude/client";
+import { getAIProvider } from "@/lib/ai/provider";
 import { readFullWiki, buildWikiContext } from "@/lib/wiki/reader";
 import { writeRecommendationPage, updateWikiIndex, appendToLog } from "@/lib/wiki/writer";
 import type { Recommendation } from "@/types";
@@ -33,15 +34,12 @@ export async function POST(req: Request) {
     const wikiContext = buildWikiContext(pages, 80_000);
     const systemPrompt = LINT_SYSTEM_PROMPT.replace("{DATE}", today);
 
-    // 2. Ask Claude to analyze and generate recommendations
-    const response = await claude.messages.create({
-      model: MODELS.sonnet,
-      max_tokens: 8192,
+    // 2. Use AI provider to analyze and generate recommendations
+    const ai = getAIProvider();
+    const text = await ai.complete({
       system: systemPrompt,
-      messages: [
-        {
-          role: "user",
-          content: `Analyze the following ${CITY_FULL} wiki and generate civic recommendations.
+      maxTokens: 8192,
+      prompt: `Analyze the following ${CITY_FULL} wiki and generate civic recommendations.
 
 Return a JSON object with:
 {
@@ -67,12 +65,8 @@ ${wikiContext}
 ---
 
 Return ONLY valid JSON.`,
-        },
-      ],
     });
 
-    const text =
-      response.content[0].type === "text" ? response.content[0].text : "";
     const jsonMatch =
       text.match(/```json\n?([\s\S]+?)\n?```/) ?? text.match(/\{[\s\S]+\}/);
 

@@ -5,7 +5,8 @@
  * and writes/updates the appropriate wiki pages.
  */
 
-import { claude, MODELS, INGEST_SYSTEM_PROMPT } from "./client";
+import { INGEST_SYSTEM_PROMPT } from "./client";
+import { getAIProvider } from "../ai/provider";
 import { readWikiPage, readWikiIndex } from "../wiki/reader";
 import {
   writeWikiPage,
@@ -217,14 +218,11 @@ async function extractKnowledge(
   const chunkNote =
     totalChunks > 1 ? ` (chunk ${chunkNum} of ${totalChunks})` : "";
 
-  const message = await claude.messages.create({
-    model: MODELS.sonnet,
-    max_tokens: 4096,
+  const ai = getAIProvider();
+  const responseText = await ai.complete({
     system: INGEST_SYSTEM_PROMPT,
-    messages: [
-      {
-        role: "user",
-        content: `Process this city document${chunkNote} and extract structured knowledge as JSON.
+    maxTokens: 4096,
+    prompt: `Process this city document${chunkNote} and extract structured knowledge as JSON.
 
 Document metadata:
 - Title: ${doc.title}
@@ -239,12 +237,7 @@ ${text}
 ---
 
 Return ONLY valid JSON matching the extraction schema. No prose.`,
-      },
-    ],
   });
-
-  const responseText =
-    message.content[0].type === "text" ? message.content[0].text : "";
 
   // Extract JSON from response (may be wrapped in code fences)
   const jsonMatch =

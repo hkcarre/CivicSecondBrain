@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.21.0](https://github.com/xozai/CivicSecondBrain/compare/v1.20.0...v1.21.0) (2026-06-22)
+
+
+### Features
+
+* add manual document ingest ([#131](https://github.com/xozai/CivicSecondBrain/issues/131)) ([41a6558](https://github.com/xozai/CivicSecondBrain/commit/41a65581a713897a203c2d33d83de61bbbbc43aa))
+
 ## [1.20.0](https://github.com/xozai/CivicSecondBrain/compare/v1.19.0...v1.20.0) (2026-06-06)
 
 

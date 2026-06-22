@@ -16,7 +16,7 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 |---|---|
 | **Chat Q&A** | Ask anything about the city in plain English — get cited answers from real city documents |
 | **Persistent Wiki** | AI builds and maintains a structured wiki from every ingested document |
-| **Smart Ingestion** | Parallel scrape of DocumentCenter, Laserfiche, Finance sub-pages, and MuniCode (~8,000+ documents) |
+| **Smart Ingestion** | Parallel scrape of DocumentCenter, Laserfiche, Finance sub-pages, and MuniCode (~8,000+ documents), plus manual single-document ingest |
 | **Proactive Recommendations** | AI analysis surfaces budget trends, strategic plan gaps, and improvement opportunities |
 | **City Health Dashboard** | At-a-glance view of civic KPIs and pending AI alerts |
 | **Wiki Browser** | Browse all ingested wiki pages at `/wiki`, grouped by category |
@@ -24,7 +24,7 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 | **Multi-model AI** | Swap between Anthropic Claude, OpenAI GPT, or Google Gemini via a single env var |
 | **Responsive UI** | Works on desktop, tablet, and phone — collapsible sidebar drawer on mobile |
 | **Scheduled Automation** | Nightly ingest and weekly lint via Railway cron or GitHub Actions |
-| **Admin Panel** | Password-protected ingestion management, export buttons, and schedule info |
+| **Admin Panel** | Password-protected ingestion management, manual document ingest, export buttons, and schedule info |
 
 ---
 
@@ -119,7 +119,7 @@ Open [http://localhost:3000](http://localhost:3000)
 | `npm run dev` | Start development server |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
-| `npm test` | Run unit tests (Vitest, 157 tests) |
+| `npm test` | Run unit tests (Vitest, 164 tests) |
 | `npm run ingest:seed` | Full parallel ingestion from all sources (~8,000+ documents, 3 workers) |
 | `npm run ingest:seed -- --limit 10` | Ingest first 10 documents (fast, no live scrape) |
 | `npm run ingest:seed -- --type budget` | Ingest only budget documents |
@@ -200,11 +200,12 @@ All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `la
 | `/` | Chat Q&A interface with suggested questions |
 | `/wiki` | Browse all wiki pages by category |
 | `/dashboard` | City health dashboard — KPIs and AI recommendations |
-| `/admin` | Password-protected ingestion management and export |
+| `/admin` | Password-protected ingestion management, single-document ingest, and export |
 | `/admin/login` | Admin login page |
 | `GET /api/health` | Health check with live AI API probe |
 | `POST /api/chat` | Streaming chat endpoint |
-| `POST /api/ingest` | Trigger document ingestion (requires `INGEST_SECRET`) |
+| `POST /api/ingest` | Trigger discovery ingest (requires `INGEST_SECRET`) |
+| `POST /api/ingest/document` | Ingest one specific document URL without running discovery (requires `INGEST_SECRET`) |
 | `POST /api/lint` | Trigger wiki analysis (requires `INGEST_SECRET`) |
 | `GET /api/wiki/search` | Full-text wiki search (`?q=query&category=topic`) |
 | `GET /api/export/recommendations` | Export recommendations as `.md` or print-PDF HTML |
@@ -226,13 +227,29 @@ openssl rand -base64 24
 
 Without `ADMIN_PASSWORD`, the admin panel is open (dev mode only — always set in production).
 
+The Admin panel supports both scheduled-style ingestion and manual single-document ingestion. Use **Single Document** to paste an `http` or `https` document URL and optionally provide title, type, date, and board metadata. Manual ingestion downloads only that document; it does not run the full discovery scrape.
+
 ### API route auth
-`/api/ingest` and `/api/lint` require an `Authorization: Bearer <secret>` header matching `INGEST_SECRET`. Without `INGEST_SECRET`, requests are accepted in dev mode.
+`/api/ingest`, `/api/ingest/document`, and `/api/lint` require an `Authorization: Bearer <ingest-secret>` header matching `INGEST_SECRET`. Without `INGEST_SECRET`, requests are accepted in dev mode.
 
 ```bash
 # Generate a secret
 openssl rand -hex 32
 ```
+
+`POST /api/ingest/document` accepts a manual single-document payload:
+
+```json
+{
+  "url": "https://example.gov/document.pdf",
+  "title": "Optional title",
+  "type": "public-notice",
+  "board": "city-council",
+  "date": "2026-06-21"
+}
+```
+
+The route accepts only `http` and `https` URLs. It validates the metadata, downloads that one document, runs the standard ingest engine, and saves the manifest only after a successful ingest. Download failures, unsupported formats, and AI ingest errors return JSON failure responses without updating the manifest.
 
 ### CI security
 - `ANTHROPIC_API_KEY` is **not** passed to the CI build step (build confirmed clean without it)
@@ -368,7 +385,7 @@ INGEST_SECRET=a3f1c8e2d9b04765f2a8c1e3d6b90f4e2c7a1d5b8e3f6c9a2d4b7e0f1c3a6d9
 
 **`ADMIN_PASSWORD`** protects `/admin` with a login page. The session cookie is HMAC-SHA256 signed, HttpOnly, SameSite=Lax, and expires after 8 hours. Changing the password immediately invalidates all existing sessions.
 
-**`INGEST_SECRET`** — callers must send `Authorization: Bearer <secret>` to `POST /api/ingest` and `POST /api/lint`. The GitHub Actions scheduled workflow reads this from repository secrets.
+**`INGEST_SECRET`** — callers must send `Authorization: Bearer <ingest-secret>` to `POST /api/ingest`, `POST /api/ingest/document`, and `POST /api/lint`. The GitHub Actions scheduled workflow reads this from repository secrets.
 
 ---
 

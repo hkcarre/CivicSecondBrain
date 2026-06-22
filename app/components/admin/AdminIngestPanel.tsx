@@ -1,8 +1,43 @@
 "use client";
 
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { RefreshCw, Play, FileSearch, CheckCircle, Loader2, FileText } from "lucide-react";
 import { clsx } from "clsx";
+
+const DOCUMENT_TYPE_OPTIONS = [
+  "meeting-minutes",
+  "agenda",
+  "budget",
+  "ordinance",
+  "charter",
+  "strategic-plan",
+  "financial-report",
+  "public-notice",
+  "open-records",
+  "state-of-city",
+  "board-minutes",
+  "resolution",
+] as const;
+
+const BOARD_OPTIONS = [
+  "city-council",
+  "planning-zoning",
+  "board-of-adjustment",
+  "parks-recreation",
+  "historical-preservation",
+  "edc",
+  "tsac",
+  "library-advisory",
+  "animal-services",
+  "senior-center",
+  "investment-advisory",
+  "keep-city-beautiful",
+  "keep-schertz-beautiful",
+  "sslgc",
+  "housing-authority",
+  "tirz",
+] as const;
 
 interface AdminIngestPanelProps {
   stats: {
@@ -19,6 +54,41 @@ interface AdminIngestPanelProps {
   };
 }
 
+interface ManualIngestFormState {
+  url: string;
+  title: string;
+  type: string;
+  board: string;
+  date: string;
+}
+
+export interface ManualIngestPayload {
+  url: string;
+  title?: string;
+  type?: string;
+  board?: string;
+  date?: string;
+}
+
+export function buildManualIngestPayload(
+  form: ManualIngestFormState
+): ManualIngestPayload {
+  const payload: ManualIngestPayload = {
+    url: form.url.trim(),
+  };
+  const title = form.title.trim();
+  const type = form.type.trim();
+  const board = form.board.trim();
+  const date = form.date.trim();
+
+  if (title) payload.title = title;
+  if (type) payload.type = type;
+  if (board) payload.board = board;
+  if (date) payload.date = date;
+
+  return payload;
+}
+
 export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPanelProps) {
   const [status, setStatus] = useState<
     "idle" | "running" | "done" | "error"
@@ -27,6 +97,13 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
   const [failureCount, setFailureCount] = useState<number>(0);
   const [failedDocuments, setFailedDocuments] = useState<string[]>([]);
   const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [manualForm, setManualForm] = useState<ManualIngestFormState>({
+    url: "",
+    title: "",
+    type: "",
+    board: "",
+    date: "",
+  });
 
   const run = async (action: "ingest" | "lint" | "scrape-check") => {
     setStatus("running");
@@ -45,6 +122,29 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
         setFailedDocuments(data.failedDocuments ?? []);
       }
     } catch (err) {
+      setStatus("error");
+      setResult("Error — check server logs.");
+    }
+  };
+
+  const ingestManualDocument = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatus("running");
+    setActiveAction("manual-ingest");
+    setResult(null);
+    setFailureCount(0);
+    setFailedDocuments([]);
+
+    try {
+      const res = await fetch("/api/ingest/document", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(buildManualIngestPayload(manualForm)),
+      });
+      const data = await res.json();
+      setStatus(res.ok ? "done" : "error");
+      setResult(data.message ?? (res.ok ? "Complete." : "Error — check server logs."));
+    } catch {
       setStatus("error");
       setResult("Error — check server logs.");
     }
@@ -113,6 +213,81 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
             disabled={status === "running"}
           />
         </div>
+
+        <form onSubmit={ingestManualDocument} className="mt-4 border-t border-gray-200 pt-4 space-y-3">
+          <h3 className="text-sm font-semibold text-gray-900">Single Document</h3>
+          <input
+            type="url"
+            required
+            value={manualForm.url}
+            onChange={(event) =>
+              setManualForm((form) => ({ ...form, url: event.target.value }))
+            }
+            placeholder="https://example.gov/document.pdf"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-city-navy focus:outline-none"
+          />
+          <input
+            type="text"
+            value={manualForm.title}
+            onChange={(event) =>
+              setManualForm((form) => ({ ...form, title: event.target.value }))
+            }
+            placeholder="Optional title"
+            className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-city-navy focus:outline-none"
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <select
+              value={manualForm.type}
+              onChange={(event) =>
+                setManualForm((form) => ({ ...form, type: event.target.value }))
+              }
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-city-navy focus:outline-none"
+            >
+              <option value="">Infer type</option>
+              {DOCUMENT_TYPE_OPTIONS.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+            <select
+              value={manualForm.board}
+              onChange={(event) =>
+                setManualForm((form) => ({ ...form, board: event.target.value }))
+              }
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-city-navy focus:outline-none"
+            >
+              <option value="">No board</option>
+              {BOARD_OPTIONS.map((board) => (
+                <option key={board} value={board}>
+                  {board}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <input
+              type="date"
+              value={manualForm.date}
+              onChange={(event) =>
+                setManualForm((form) => ({ ...form, date: event.target.value }))
+              }
+              className="min-w-0 flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-city-navy focus:outline-none"
+            />
+            <button
+              type="submit"
+              disabled={status === "running" || !manualForm.url.trim()}
+              className="inline-flex items-center gap-2 rounded-lg bg-city-navy px-3 py-2 text-sm font-medium text-white hover:bg-city-navy-light disabled:opacity-50"
+            >
+              {activeAction === "manual-ingest" && status === "running" ? (
+                <Loader2 size={15} className="animate-spin" />
+              ) : (
+                <FileText size={15} />
+              )}
+              Ingest Document
+            </button>
+          </div>
+        </form>
 
         {/* Result */}
         {result && (

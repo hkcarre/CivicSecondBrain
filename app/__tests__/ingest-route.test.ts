@@ -11,6 +11,7 @@
  * filesystem or the Anthropic API.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import type { CivicDocument, IngestResult } from "@/types";
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
 
@@ -327,5 +328,184 @@ describe("POST /api/ingest — manifest persistence & concurrency (#76)", () => 
     expect(body).toHaveProperty("failed");
     expect(body.failed).toBeGreaterThanOrEqual(1);
     expect(body.failedDocuments).toContain("Doc 2");
+  });
+});
+
+describe("POST /api/ingest/document — manual single-document ingest", () => {
+  beforeEach(async () => {
+    vi.clearAllMocks();
+    delete process.env.INGEST_SECRET;
+    const { needsIngestion } = await import("@/lib/manifest");
+    vi.mocked(needsIngestion).mockReturnValue(true);
+  });
+
+  it("requires INGEST_SECRET auth for manual requests when configured", async () => {
+    vi.resetModules();
+    process.env.INGEST_SECRET = "test-secret";
+
+    const { POST } = await import("@/api/ingest/document/route");
+
+    const res = await POST(makeRequest({ url: "https://example.com/doc.pdf" }));
+
+    expect(res.status).toBe(401);
+    delete process.env.INGEST_SECRET;
+  });
+
+  it("rejects empty, malformed, and non-http URLs with 400", async () => {
+    for (const url of ["", "not a url", "ftp://example.com/doc.pdf"]) {
+      vi.resetModules();
+      const { discoverDocuments } = await import("@/lib/scraper/schertz-scraper");
+      const { POST } = await import("@/api/ingest/document/route");
+
+      const res = await POST(makeRequest({ url }));
+      const data = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(data.message).toMatch(/url/i);
+      expect(vi.mocked(discoverDocuments)).not.toHaveBeenCalled();
+    }
+  });
+
+  it("ingests one provided document without running discovery", async () => {
+    vi.resetModules();
+
+    const {
+      discoverDocuments,
+      downloadDocument,
+      toCivicDocument,
+    } = await import("@/lib/scraper/schertz-scraper");
+    const { ingestDocument } = await import("@/lib/claude/ingest-engine");
+    const { saveManifest, markIngested } = await import("@/lib/manifest");
+
+    const civicDoc: CivicDocument = {
+      id: "doc-1",
+      title: "Manual Notice",
+      type: "public-notice",
+      board: "city-council",
+      date: "2026-06-20",
+      sourceUrl: "https://example.com/notice.pdf",
+      localPath: "/tmp/notice.pdf",
+    };
+    vi.mocked(downloadDocument).mockResolvedValue("/tmp/notice.pdf");
+    vi.mocked(toCivicDocument).mockReturnValue(civicDoc);
+    const ingestResult: IngestResult = {
+      success: true,
+      document: civicDoc,
+      pagesUpdated: ["topics/budget.md"],
+      pagesCreated: ["topics/notice.md"],
+      keyFacts: "",
+      ordinancesReferenced: [],
+      dollarAmounts: [],
+      votesRecorded: 0,
+    };
+    vi.mocked(ingestDocument).mockResolvedValue(ingestResult);
+
+    const { POST } = await import("@/api/ingest/document/route");
+
+    const res = await POST(
+      makeRequest({
+        url: "https://example.com/notice.pdf",
+        title: "Manual Notice",
+        type: "public-notice",
+        board: "city-council",
+        date: "2026-06-20",
+      })
+    );
+    const data = await res.json();
+
+    expect(res.status).toBe(200);
+    expect(vi.mocked(discoverDocuments)).not.toHaveBeenCalled();
+    expect(vi.mocked(downloadDocument)).toHaveBeenCalledWith({
+      url: "https://example.com/notice.pdf",
+      title: "Manual Notice",
+      type: "public-notice",
+      board: "city-council",
+      date: "2026-06-20",
+    });
+    expect(vi.mocked(ingestDocument)).toHaveBeenCalledWith(civicDoc);
+    expect(vi.mocked(markIngested)).toHaveBeenCalledOnce();
+    expect(vi.mocked(saveManifest)).toHaveBeenCalledOnce();
+    expect(data).toMatchObject({
+      success: true,
+      message: "Document ingested successfully.",
+      pagesUpdated: ["topics/budget.md"],
+      pagesCreated: ["topics/notice.md"],
+    });
+    expect(data.document).toEqual(civicDoc);
+  });
+
+  it("does not save the manifest when manual ingest is skipped as unsupported", async () => {
+    vi.resetModules();
+
+    const { downloadDocument, toCivicDocument } = await import(
+      "@/lib/scraper/schertz-scraper"
+    );
+    const { ingestDocument } = await import("@/lib/claude/ingest-engine");
+    const { saveManifest, markIngested } = await import("@/lib/manifest");
+
+    const civicDoc: CivicDocument = {
+      id: "doc-xlsx",
+      title: "Spreadsheet",
+      type: "financial-report",
+      date: "2026-06-21",
+      sourceUrl: "https://example.com/report.xlsx",
+      localPath: "/tmp/report.xlsx",
+    };
+    vi.mocked(downloadDocument).mockResolvedValue("/tmp/report.xlsx");
+    vi.mocked(toCivicDocument).mockReturnValue(civicDoc);
+    const ingestResult: IngestResult = {
+      success: false,
+      document: civicDoc,
+      pagesUpdated: [],
+      pagesCreated: [],
+      keyFacts: "",
+      ordinancesReferenced: [],
+      dollarAmounts: [],
+      votesRecorded: 0,
+      skipped: true,
+    };
+    vi.mocked(ingestDocument).mockResolvedValue(ingestResult);
+
+    const { POST } = await import("@/api/ingest/document/route");
+
+    const res = await POST(makeRequest({ url: "https://example.com/report.xlsx" }));
+    const data = await res.json();
+
+    expect(res.status).toBe(422);
+    expect(data.success).toBe(false);
+    expect(data.message).toMatch(/unsupported/i);
+    expect(vi.mocked(markIngested)).not.toHaveBeenCalled();
+    expect(vi.mocked(saveManifest)).not.toHaveBeenCalled();
+  });
+
+  it("returns a clean error and leaves manifest untouched when manual ingest fails", async () => {
+    vi.resetModules();
+
+    const { downloadDocument, toCivicDocument } = await import(
+      "@/lib/scraper/schertz-scraper"
+    );
+    const { ingestDocument } = await import("@/lib/claude/ingest-engine");
+    const { saveManifest } = await import("@/lib/manifest");
+
+    vi.mocked(downloadDocument).mockResolvedValue("/tmp/fail.pdf");
+    vi.mocked(toCivicDocument).mockReturnValue({
+      id: "fail",
+      title: "Fail",
+      type: "public-notice",
+      date: "2026-06-21",
+      sourceUrl: "https://example.com/fail.pdf",
+      localPath: "/tmp/fail.pdf",
+    });
+    vi.mocked(ingestDocument).mockRejectedValue(new Error("AI provider failed"));
+
+    const { POST } = await import("@/api/ingest/document/route");
+
+    const res = await POST(makeRequest({ url: "https://example.com/fail.pdf" }));
+    const data = await res.json();
+
+    expect(res.status).toBe(500);
+    expect(data.success).toBe(false);
+    expect(data.message).toContain("AI provider failed");
+    expect(vi.mocked(saveManifest)).not.toHaveBeenCalled();
   });
 });

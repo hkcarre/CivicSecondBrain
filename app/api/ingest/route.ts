@@ -26,10 +26,12 @@ export const maxDuration = 300;
 // Module-level flag to prevent concurrent ingest runs.
 let ingestInProgress = false;
 
-export async function POST(req: Request) {
+export async function POST(req: Request): Promise<NextResponse> {
   if (!verifySecret(req)) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
+
+  const body = await req.json().catch(() => ({}));
 
   if (ingestInProgress) {
     return NextResponse.json(
@@ -40,8 +42,7 @@ export async function POST(req: Request) {
   ingestInProgress = true;
 
   try {
-    const body = await req.json().catch(() => ({}));
-    const limit: number = body.limit ?? 10;
+    const limit = readLimit(body);
 
     const manifest = loadManifest();
 
@@ -121,4 +122,13 @@ export async function POST(req: Request) {
   } finally {
     ingestInProgress = false;
   }
+}
+
+function readLimit(body: unknown): number {
+  if (typeof body !== "object" || body === null || !("limit" in body)) {
+    return 10;
+  }
+
+  const limit = (body as { limit?: unknown }).limit;
+  return typeof limit === "number" ? limit : 10;
 }

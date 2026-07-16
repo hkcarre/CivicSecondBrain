@@ -9,6 +9,8 @@
  *   npm run ingest:seed
  *   npm run ingest:seed -- --dry-run              # discover only, no download
  *   npm run ingest:seed -- --type budget          # specific doc type only (skips scrape)
+ *   npm run ingest:seed -- --type budget,charter  # multiple types (comma-separated)
+ *   npm run ingest:seed -- --since 2024-01-01     # only docs dated on or after this date
  *   npm run ingest:seed -- --limit 5              # process first N docs
  *   npm run ingest:seed -- --concurrency 5        # parallel workers (default 3)
  *
@@ -46,8 +48,15 @@ const BOARD_FILTER = (() => {
   const idx = args.indexOf("--board");
   return idx >= 0 ? args[idx + 1] : null;
 })();
-const TYPE_FILTER = (() => {
+// --type budget,charter: comma-separated list of types to include
+const TYPE_FILTERS = (() => {
   const idx = args.indexOf("--type");
+  if (idx < 0) return null;
+  return args[idx + 1].split(",").map((t) => t.trim()).filter(Boolean);
+})();
+// --since YYYY-MM-DD: skip docs with a date earlier than this
+const SINCE_DATE = (() => {
+  const idx = args.indexOf("--since");
   return idx >= 0 ? args[idx + 1] : null;
 })();
 // --concurrency N: how many documents to ingest in parallel (default 3)
@@ -165,7 +174,7 @@ async function main() {
   //
   // Full scrape runs only when neither flag is set (i.e. unattended bulk ingest).
 
-  const USE_PRIORITY_ONLY = !!(TYPE_FILTER || BOARD_FILTER || LIMIT < Infinity);
+  const USE_PRIORITY_ONLY = !!(TYPE_FILTERS || BOARD_FILTER || SINCE_DATE || LIMIT < Infinity);
 
   const priorityDocs: DiscoveredDocument[] = PRIORITY_SEED_URLS.map((d) => ({
     ...d,
@@ -175,7 +184,7 @@ async function main() {
   let discovered: DiscoveredDocument[] = [];
 
   if (USE_PRIORITY_ONLY) {
-    console.log("STEP 1 — Using priority seed list (skipping full scrape due to --type/--limit/--board flag)...\n");
+    console.log("STEP 1 — Using priority seed list (skipping full scrape due to --type/--limit/--board/--since flag)...\n");
   } else {
     console.log("STEP 1 — Discovering documents from all sources (full scrape)...\n");
     try {
@@ -205,9 +214,13 @@ async function main() {
     filteredDocs = filteredDocs.filter((d) => d.board === BOARD_FILTER);
     console.log(`  Filtered to board: ${BOARD_FILTER}`);
   }
-  if (TYPE_FILTER) {
-    filteredDocs = filteredDocs.filter((d) => d.type === TYPE_FILTER);
-    console.log(`  Filtered to type: ${TYPE_FILTER}`);
+  if (TYPE_FILTERS) {
+    filteredDocs = filteredDocs.filter((d) => TYPE_FILTERS.includes(d.type));
+    console.log(`  Filtered to types: ${TYPE_FILTERS.join(", ")}`);
+  }
+  if (SINCE_DATE) {
+    filteredDocs = filteredDocs.filter((d) => !d.date || d.date >= SINCE_DATE);
+    console.log(`  Filtered to docs since: ${SINCE_DATE}`);
   }
 
   // Skip already-ingested docs unless the source has changed since last ingest.

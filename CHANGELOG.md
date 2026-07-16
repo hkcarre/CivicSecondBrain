@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.22.0](https://github.com/xozai/CivicSecondBrain/compare/v1.21.0...v1.22.0) (2026-07-16)
+
+
+### Features
+
+* **ingest:** multiple --type values and --since date filter ([#157](https://github.com/xozai/CivicSecondBrain/issues/157)) ([9ff8336](https://github.com/xozai/CivicSecondBrain/commit/9ff8336019a41d51f269dc4a0a3b7380df6009f0))
+
+
+### Bug Fixes
+
+* Railway deployment health + clean wiki seed ([#156](https://github.com/xozai/CivicSecondBrain/issues/156)) ([f115706](https://github.com/xozai/CivicSecondBrain/commit/f115706863c0a24c168bc0637bc22835bf728a86))
+
 ## [1.21.0](https://github.com/xozai/CivicSecondBrain/compare/v1.20.0...v1.21.0) (2026-06-22)
 
 

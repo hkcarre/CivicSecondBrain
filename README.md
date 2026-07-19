@@ -121,7 +121,7 @@ Open [http://localhost:3000](http://localhost:3000)
 | `npm run dev` | Start development server |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
-| `npm test` | Run unit tests (Vitest, 264 tests) |
+| `npm test` | Run unit tests (Vitest) |
 | `npm run test:e2e` | Run Playwright e2e smoke tests (requires `npx playwright install chromium` once) |
 | `npm run ingest:seed` | Full parallel ingestion from all sources (~8,000+ documents, 3 workers) |
 | `npm run ingest:seed -- --limit 10` | Ingest first 10 documents (fast, no live scrape) |
@@ -621,9 +621,10 @@ Export buttons are available in the Admin panel under the **Export** card. The r
 ## CI/CD
 
 GitHub Actions runs on every push to `main` and every PR:
-- `npm test` — 157 Vitest unit tests across 16 test files
+- `npm run lint` — ESLint (flat config, eslint-config-next presets)
+- `npm test` — Vitest unit test suite
 - `npm run build` — validates the Next.js production build
-- Lint check — fails if `NEXT_PUBLIC_ANTHROPIC` appears anywhere in source
+- Secret guard — fails if `NEXT_PUBLIC_ANTHROPIC` appears anywhere in source
 - `npm run test:e2e` (separate **E2E** workflow) — Playwright smoke tests against a real production build: `/`, `/wiki`, `/dashboard`, the `/admin` auth-gate redirect, and `GET /api/health/live`. No AI calls — runs entirely without `ANTHROPIC_API_KEY`.
 
 `ANTHROPIC_API_KEY` is intentionally **not** passed to the build step — the build is confirmed clean without it.
@@ -640,7 +641,7 @@ Railway's **"Wait for CI"** setting ensures deploys only happen after tests pass
 - **Document Parsing:** pdf-parse (PDF), mammoth (DOCX), SheetJS (XLSX), cheerio (HTML)
 - **Page Selection:** TF-IDF cosine similarity scorer (zero deps, replaces hardcoded keyword map)
 - **Styling:** Tailwind CSS (dark mode, responsive)
-- **Testing:** Vitest (157 unit tests — wiki, parser, scraper, AI provider, admin auth, export)
+- **Testing:** Vitest unit tests (wiki, parser, scraper, AI provider, admin auth, export) + Playwright e2e smoke
 - **Auth:** HMAC-SHA256 signed session cookie (admin panel), Bearer token (API routes)
 - **Deployment:** Docker on Railway with persistent volume + cron jobs
 - **CI:** GitHub Actions

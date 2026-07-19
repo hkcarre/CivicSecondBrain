@@ -21,7 +21,7 @@
     "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
     "clsx": "^2.1.1",
-    "dotenv": "^16.4.5",
+    "dotenv": "^17.4.2",
     "gray-matter": "^4.0.3",
     "lucide-react": "^0.395.0",
     "mammoth": "^1.12.0",

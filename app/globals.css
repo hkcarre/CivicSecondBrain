@@ -1,6 +1,8 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* v4 no longer auto-loads JS configs — required for the city-* theme colors
+   and class-based dark mode defined in tailwind.config.ts */
+@config "../tailwind.config.ts";
 
 :root {
   /* Schertz brand colors — navy + gold */

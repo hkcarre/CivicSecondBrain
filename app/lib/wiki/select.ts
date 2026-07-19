@@ -109,12 +109,11 @@ export function selectRelevantPages(
 
   if (isTemporalQuery) {
     const decisionBoost = 0.3;
-    for (const s of scored) {
-      if (s.entry.path.startsWith("decisions/")) {
-        s.score += decisionBoost;
-      }
-    }
-    // Sort decisions by recency and apply diminishing boost to older ones
+    // Sort decisions by recency and apply a diminishing boost to older ones:
+    // 0.3 for the newest, −0.05 per step, floor 0 from the 7th onward. The
+    // boost is applied exactly once — a flat boost for all decision pages
+    // would keep stale, topically-irrelevant decisions above the score
+    // threshold on every temporal query (#233).
     const decisionEntries = scored
       .filter((s) => s.entry.path.startsWith("decisions/"))
       .sort((a, b) =>

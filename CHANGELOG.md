@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.24.0](https://github.com/xozai/CivicSecondBrain/compare/v1.23.2...v1.24.0) (2026-07-19)
+
+
+### Features
+
+* **docker:** add HEALTHCHECK and drop redundant libc6-compat from builder ([#166](https://github.com/xozai/CivicSecondBrain/issues/166)) ([5dadc85](https://github.com/xozai/CivicSecondBrain/commit/5dadc856ffffa9efa6dc61eae694952a3a0f98b0)), closes [#136](https://github.com/xozai/CivicSecondBrain/issues/136) [#144](https://github.com/xozai/CivicSecondBrain/issues/144)
+
 ## [1.23.2](https://github.com/xozai/CivicSecondBrain/compare/v1.23.1...v1.23.2) (2026-07-19)
 
 

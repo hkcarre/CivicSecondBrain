@@ -1,12 +1,12 @@
 name: Scheduled Ingest & Lint
 
-# Runs nightly ingest and weekly lint against the deployed app.
+# Runs nightly ingest and weekly lint against the deployed app. This is the
+# primary scheduling mechanism: Railway config-as-code has no per-command cron
+# array, and a separate Railway cron service could not share the web service's
+# volume — so scheduled work goes through the app's own API instead.
 # Requires these repository secrets:
-#   APP_URL        — e.g. https://civic-second-brain.up.railway.app
+#   APP_URL        — e.g. https://demo.stratacivicsolutions.com
 #   INGEST_SECRET  — must match the INGEST_SECRET env var on the deployed app
-#
-# Disable this workflow if you are using Railway cron jobs instead
-# (railway.toml [[cron]] entries) to avoid running both.
 
 on:
   schedule:

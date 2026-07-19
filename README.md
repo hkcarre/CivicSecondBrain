@@ -8,6 +8,8 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 > **Multi-city ready.** Every city name, scraper URL, and AI prompt is driven by
 > environment variables — deploy for your municipality without touching the code.
 
+**Live demo:** [demo.stratacivicsolutions.com](https://demo.stratacivicsolutions.com)
+
 ---
 
 ## What It Does
@@ -25,7 +27,7 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 | **Public-Records Audit Log** | Every chat Q&A is appended to a monthly audit log (no client IPs) and exportable as JSONL/CSV for public-records requests |
 | **Multi-model AI** | Swap between Anthropic Claude, OpenAI GPT, or Google Gemini via a single env var |
 | **Responsive UI** | Works on desktop, tablet, and phone — collapsible sidebar drawer on mobile |
-| **Scheduled Automation** | Nightly ingest and weekly lint via Railway cron or GitHub Actions |
+| **Scheduled Automation** | Nightly ingest and weekly lint via scheduled GitHub Actions calling the ingest/lint APIs |
 | **Admin Panel** | Password-protected ingestion management, manual document ingest (by URL or local file upload), export buttons, and schedule info |
 | **Local File Upload** | Drag-and-drop or file-picker upload in the Admin panel — ingest PDFs, DOCX, XLSX, HTML, and TXT from your local machine without hosting them first |
 
@@ -546,25 +548,22 @@ railway login && railway init
 | App hosting | Railway (Dockerfile, persistent `/data` volume) |
 | Wiki storage | Railway volume at `/data/wiki` |
 | Raw sources | Railway volume at `/data/raw-sources` |
-| Nightly ingest | Railway cron: `node ... scripts/ingest-seed.ts --limit 50` at `0 8 * * *` (UTC) |
-| Weekly lint | Railway cron: `node ... scripts/lint-wiki.ts` at `0 9 * * 0` (UTC) |
+| Nightly ingest | GitHub Actions (`scheduled.yml`): `POST /api/ingest` at `15 8 * * *` (UTC) |
+| Weekly lint | GitHub Actions (`scheduled.yml`): `POST /api/lint` at `15 9 * * 0` (UTC) |
 | Healthcheck | `GET /api/health/live` (liveness, always 200) + `GET /api/health` (readiness, 503 on degraded) |
 
 ### Scheduled Automation
 
-Railway cron jobs are defined in `railway.toml` and run inside the container (no HTTP server dependency):
+Scheduled jobs run via the GitHub Actions workflow `.github/workflows/scheduled.yml`, which calls the deployed app's API on a cron schedule — nightly ingest (`POST /api/ingest`, 08:15 UTC) and weekly lint (`POST /api/lint`, Sunday 09:15 UTC). The web service does the work itself, so the jobs have full access to the mounted volume. Both jobs can also be triggered manually from the Actions tab (`workflow_dispatch`).
 
-```toml
-[[cron]]
-schedule = "0 8 * * *"    # nightly 2am CT
-command  = "node ... scripts/ingest-seed.ts --limit 50"
+Setup — two repository secrets:
 
-[[cron]]
-schedule = "0 9 * * 0"    # Sunday 3am CT
-command  = "node ... scripts/lint-wiki.ts"
+```bash
+gh secret set APP_URL --body "https://demo.stratacivicsolutions.com"
+gh secret set INGEST_SECRET --body "<same value as the INGEST_SECRET env var on Railway>"
 ```
 
-A GitHub Actions fallback (`.github/workflows/scheduled.yml`) is also provided for non-Railway deployments. It calls the API endpoints on the same schedule using repository secrets `APP_URL` and `INGEST_SECRET`.
+> **Why not Railway cron?** Railway's config-as-code supports a single `cronSchedule` per *service* (the whole service starts on schedule and must exit) — there is no per-command `[[cron]]` array, so blocks of that shape in `railway.toml` are ignored. A dedicated cron service also could not share the web service's volume (Railway volumes attach to exactly one service), so in-container scheduled jobs would require external storage first. Calling the HTTP API from GitHub Actions sidesteps both limitations.
 
 ### First Boot
 

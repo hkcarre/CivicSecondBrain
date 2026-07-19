@@ -5,6 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { LINT_SYSTEM_PROMPT, CITY_FULL } from "@/lib/claude/client";
 import { getAIProvider } from "@/lib/ai/provider";
 import { readFullWiki, buildWikiContext } from "@/lib/wiki/reader";
@@ -116,6 +117,9 @@ ${(result.topActions ?? [])
   .slice(0, 3)
   .map((a: string, i: number) => `  ${i + 1}. ${a}`)
   .join("\n")}`);
+
+    // Bust the dashboard ISR cache so recommendations appear immediately
+    revalidatePath("/dashboard");
 
     return NextResponse.json({
       message: `LINT complete. ${recs.length} recommendations generated.`,

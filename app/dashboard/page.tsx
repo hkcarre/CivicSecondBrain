@@ -4,7 +4,7 @@ import { RecentActivity } from "../components/dashboard/RecentActivity";
 import { RunAnalysisButton } from "../components/dashboard/RunAnalysisButton";
 import { getDashboardData } from "../lib/wiki/dashboard-data";
 
-export const revalidate = 300; // Revalidate every 5 minutes
+export const revalidate = 60; // Revalidate every 60 seconds
 
 export default async function DashboardPage() {
   const { recommendations, healthReport, recentLog, stats } =

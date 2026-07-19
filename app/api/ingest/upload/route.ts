@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import crypto from "crypto";
+import { revalidatePath } from "next/cache";
 import { verifySecret } from "@/lib/auth";
 import { ingestDocument } from "@/lib/claude/ingest-engine";
 import { appendToLog } from "@/lib/wiki/writer";
@@ -101,6 +102,9 @@ export async function POST(req: Request) {
 
   try {
     const result = await ingestDocument(civicDoc);
+
+    revalidatePath("/dashboard");
+
 
     appendToLog(`## [${date}] UPLOAD | ${title}
 **File:** ${file.name} (${(bytes / 1024 / 1024).toFixed(1)} MB)

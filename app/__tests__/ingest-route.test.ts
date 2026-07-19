@@ -15,6 +15,8 @@ import type { CivicDocument, IngestResult } from "@/types";
 
 // ─── Module mocks ────────────────────────────────────────────────────────────
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 vi.mock("@/lib/scraper/schertz-scraper", () => ({
   discoverDocuments: vi.fn(),
   downloadDocument: vi.fn(),

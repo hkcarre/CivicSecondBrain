@@ -5,6 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import {
   discoverDocuments,
   downloadDocument,
@@ -105,6 +106,7 @@ export async function POST(req: Request): Promise<NextResponse> {
     // interleaved writes; the module-level mutex plus this single
     // post-loop write keeps the manifest consistent.
     saveManifest(manifest);
+    revalidatePath("/dashboard");
 
     return NextResponse.json({
       message: `Ingested ${succeeded}/${processed} documents (${skipped} skipped — unsupported format).`,

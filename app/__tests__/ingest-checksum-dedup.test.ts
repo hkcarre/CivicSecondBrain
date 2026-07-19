@@ -26,6 +26,8 @@ function md5(content: string): string {
 // We need to mock at the module level so the route picks up mocks.
 // Vitest supports top-level vi.mock hoisting.
 
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
+
 vi.mock("@/lib/scraper/schertz-scraper", () => ({
   discoverDocuments: vi.fn(),
   downloadDocument: vi.fn(),

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.4](https://github.com/xozai/CivicSecondBrain/compare/v1.31.3...v1.31.4) (2026-07-19)
+
+
+### Bug Fixes
+
+* topic relevance filter no-op and dead unsupported-format skip path (closes [#235](https://github.com/xozai/CivicSecondBrain/issues/235), closes [#236](https://github.com/xozai/CivicSecondBrain/issues/236)) ([#237](https://github.com/xozai/CivicSecondBrain/issues/237)) ([2aaa053](https://github.com/xozai/CivicSecondBrain/commit/2aaa05393bd7c39c7d8f4193aa0b8c6cac632e89))
+
 ## [1.31.3](https://github.com/xozai/CivicSecondBrain/compare/v1.31.2...v1.31.3) (2026-07-19)
 
 

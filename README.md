@@ -24,7 +24,8 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 | **Multi-model AI** | Swap between Anthropic Claude, OpenAI GPT, or Google Gemini via a single env var |
 | **Responsive UI** | Works on desktop, tablet, and phone — collapsible sidebar drawer on mobile |
 | **Scheduled Automation** | Nightly ingest and weekly lint via Railway cron or GitHub Actions |
-| **Admin Panel** | Password-protected ingestion management, manual document ingest, export buttons, and schedule info |
+| **Admin Panel** | Password-protected ingestion management, manual document ingest (by URL or local file upload), export buttons, and schedule info |
+| **Local File Upload** | Drag-and-drop or file-picker upload in the Admin panel — ingest PDFs, DOCX, XLSX, HTML, and TXT from your local machine without hosting them first |
 
 ---
 
@@ -122,13 +123,16 @@ Open [http://localhost:3000](http://localhost:3000)
 | `npm test` | Run unit tests (Vitest, 164 tests) |
 | `npm run ingest:seed` | Full parallel ingestion from all sources (~8,000+ documents, 3 workers) |
 | `npm run ingest:seed -- --limit 10` | Ingest first 10 documents (fast, no live scrape) |
-| `npm run ingest:seed -- --type budget` | Ingest only budget documents |
+| `npm run ingest:seed -- --type budget` | Ingest only budget documents (comma-separated for multiple: `--type budget,charter`) |
+| `npm run ingest:seed -- --type budget,charter --since 2024-01-01` | Multiple types AND a date floor — only docs on or after the given date |
 | `npm run ingest:seed -- --concurrency 5` | Use 5 parallel ingest workers (default 3) |
 | `npm run ingest:doc -- --url <url>` | Ingest a single document by URL |
 | `npm run lint:wiki` | Analyze wiki, generate AI recommendations for dashboard |
 | `npm run scrape:check` | Check for new documents without ingesting |
 
-> **Note:** When `--type`, `--limit`, or `--board` flags are used, the full live scrape is skipped and only the curated priority seed list is used. Full scraping only runs with no flags.
+> **Note:** When `--type`, `--limit`, `--board`, or `--since` flags are used, the full live scrape is skipped and only the curated priority seed list is used. Full scraping only runs with no flags.
+>
+> **Multiple types:** `--type` accepts a comma-separated list: `--type budget,charter,financial-report`. Pass `--since YYYY-MM-DD` to skip documents dated before that date.
 >
 > **Parallelism:** Discovery runs all scrapers concurrently. Ingest uses a configurable worker pool (`--concurrency N`, default 3). Tune to Railway memory: 512MB → 2 workers, 1GB → 3, 2GB → 5.
 >
@@ -202,10 +206,12 @@ All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `la
 | `/dashboard` | City health dashboard — KPIs and AI recommendations |
 | `/admin` | Password-protected ingestion management, single-document ingest, and export |
 | `/admin/login` | Admin login page |
-| `GET /api/health` | Health check with live AI API probe |
+| `GET /api/health` | Readiness check — returns 503 if API key is missing/invalid or wiki index not found |
+| `GET /api/health/live` | Liveness probe — always returns 200 if the process is running (used by Railway healthcheck) |
 | `POST /api/chat` | Streaming chat endpoint |
 | `POST /api/ingest` | Trigger discovery ingest (requires `INGEST_SECRET`) |
 | `POST /api/ingest/document` | Ingest one specific document URL without running discovery (requires `INGEST_SECRET`) |
+| `POST /api/ingest/upload` | Ingest a local file uploaded as `multipart/form-data` — same pipeline as URL ingest (requires `INGEST_SECRET`) |
 | `POST /api/lint` | Trigger wiki analysis (requires `INGEST_SECRET`) |
 | `GET /api/wiki/search` | Full-text wiki search (`?q=query&category=topic`) |
 | `GET /api/export/recommendations` | Export recommendations as `.md` or print-PDF HTML |
@@ -227,7 +233,10 @@ openssl rand -base64 24
 
 Without `ADMIN_PASSWORD`, the admin panel is open (dev mode only — always set in production).
 
-The Admin panel supports both scheduled-style ingestion and manual single-document ingestion. Use **Single Document** to paste an `http` or `https` document URL and optionally provide title, type, date, and board metadata. Manual ingestion downloads only that document; it does not run the full discovery scrape.
+The Admin panel supports scheduled ingestion and two manual single-document modes:
+
+- **By URL** — paste an `http` or `https` document URL and optionally provide title, type, date, and board metadata. Downloads and ingests that one document without running the full discovery scrape.
+- **Upload File** — drag-and-drop or browse (Finder/Explorer) to upload a local file directly. Accepts `.pdf`, `.html`, `.htm`, `.txt`, `.docx`, `.doc`, `.xlsx`, `.xls`. Files larger than `MAX_FILE_SIZE_MB` are rejected before saving. The file is saved to `RAW_SOURCES_PATH`, run through the same ingest engine, then deleted.
 
 ### API route auth
 `/api/ingest`, `/api/ingest/document`, and `/api/lint` require an `Authorization: Bearer <ingest-secret>` header matching `INGEST_SECRET`. Without `INGEST_SECRET`, requests are accepted in dev mode.
@@ -385,7 +394,7 @@ INGEST_SECRET=a3f1c8e2d9b04765f2a8c1e3d6b90f4e2c7a1d5b8e3f6c9a2d4b7e0f1c3a6d9
 
 **`ADMIN_PASSWORD`** protects `/admin` with a login page. The session cookie is HMAC-SHA256 signed, HttpOnly, SameSite=Lax, and expires after 8 hours. Changing the password immediately invalidates all existing sessions.
 
-**`INGEST_SECRET`** — callers must send `Authorization: Bearer <ingest-secret>` to `POST /api/ingest`, `POST /api/ingest/document`, and `POST /api/lint`. The GitHub Actions scheduled workflow reads this from repository secrets.
+**`INGEST_SECRET`** — callers must send `Authorization: Bearer <ingest-secret>` to `POST /api/ingest`, `POST /api/ingest/document`, `POST /api/ingest/upload`, and `POST /api/lint`. The GitHub Actions scheduled workflow reads this from repository secrets.
 
 ---
 
@@ -503,7 +512,7 @@ railway login && railway init
 | Raw sources | Railway volume at `/data/raw-sources` |
 | Nightly ingest | Railway cron: `node ... scripts/ingest-seed.ts --limit 50` at `0 8 * * *` (UTC) |
 | Weekly lint | Railway cron: `node ... scripts/lint-wiki.ts` at `0 9 * * 0` (UTC) |
-| Healthcheck | `GET /api/health` with 120s timeout and live AI API probe |
+| Healthcheck | `GET /api/health/live` (liveness, always 200) + `GET /api/health` (readiness, 503 on degraded) |
 
 ### Scheduled Automation
 

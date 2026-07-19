@@ -49,7 +49,16 @@ export async function parseDocument(
     case ".xls":
       return parseXlsx(localPath);
     default:
-      throw new Error(`Unsupported file type: ${ext}`);
+      // Graceful skip, not an error: the ingest engine, /api/ingest's
+      // skipped counter, and manual-ingest's ManualIngestUnsupportedError
+      // all key off this stub (#236). Throwing here would report every
+      // unsupported discovery as an ingest FAILURE.
+      console.warn(`  ⚠ Unsupported file type ${ext} — skipping: ${path.basename(localPath)}`);
+      return {
+        text: "",
+        title: path.basename(localPath),
+        skipped: true,
+      };
   }
 }
 

@@ -328,9 +328,15 @@ function buildTopicUpdate(
   doc: CivicDocument,
   topic: string
 ): string {
-  const relevantFacts = k.keyFacts.filter(
-    (f) => f.toLowerCase().includes(topic.replace("-", " ")) || true
+  // Match facts against the topic name with hyphens normalized to spaces
+  // ("public-safety" → "public safety"). Facts that never mention the topic
+  // belong on their own topic's page, not this one (#235). If nothing
+  // matches, fall back to the leading facts so an update is never empty.
+  const topicPhrase = topic.replaceAll("-", " ");
+  const matchingFacts = k.keyFacts.filter((f) =>
+    f.toLowerCase().includes(topicPhrase)
   );
+  const relevantFacts = matchingFacts.length > 0 ? matchingFacts : k.keyFacts;
 
   const lines: string[] = [];
 
@@ -341,7 +347,7 @@ function buildTopicUpdate(
   }
 
   const relevantDollars = k.dollarAmounts.filter((d) =>
-    d.context.toLowerCase().includes(topic.replace("-", " "))
+    d.context.toLowerCase().includes(topicPhrase)
   );
   for (const d of relevantDollars) {
     const fy = d.fiscalYear ? ` (${d.fiscalYear})` : "";

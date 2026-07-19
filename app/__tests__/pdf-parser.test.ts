@@ -132,9 +132,15 @@ describe("parseDocument — other formats", () => {
     expect(result.text).toContain("hello world");
   });
 
-  it("throws for unsupported extensions", async () => {
+  it("returns a skipped:true stub for unsupported extensions (#236)", async () => {
+    // Graceful skip, not a throw: the ingest engine's skip guard, the
+    // /api/ingest skipped counter, and ManualIngestUnsupportedError all
+    // depend on this stub contract.
     const filePath = makeFile("test.pptx");
-    await expect(parseDocument(filePath)).rejects.toThrow("Unsupported file type");
+    const result = await parseDocument(filePath);
+    expect(result.skipped).toBe(true);
+    expect(result.text).toBe("");
+    expect(result.title).toBe("test.pptx");
   });
 });
 

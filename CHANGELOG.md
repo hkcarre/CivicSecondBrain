@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.0](https://github.com/xozai/CivicSecondBrain/compare/v1.24.0...v1.25.0) (2026-07-19)
+
+
+### Features
+
+* add IP rate limiting to /api/chat ([#170](https://github.com/xozai/CivicSecondBrain/issues/170)) ([ff0c171](https://github.com/xozai/CivicSecondBrain/commit/ff0c1714dd8dfe93a1bcf11d5fd11bd908654a66)), closes [#134](https://github.com/xozai/CivicSecondBrain/issues/134)
+
 ## [1.24.0](https://github.com/xozai/CivicSecondBrain/compare/v1.23.2...v1.24.0) (2026-07-19)
 
 

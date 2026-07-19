@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.3](https://github.com/xozai/CivicSecondBrain/compare/v1.27.2...v1.27.3) (2026-07-19)
+
+
+### Bug Fixes
+
+* **export:** make /api/export/recommendations intentionally public ([#191](https://github.com/xozai/CivicSecondBrain/issues/191)) ([dc4d5d7](https://github.com/xozai/CivicSecondBrain/commit/dc4d5d79af2c989cdaaddee501e0e36826da1a66))
+
 ## [1.27.2](https://github.com/xozai/CivicSecondBrain/compare/v1.27.1...v1.27.2) (2026-07-19)
 
 

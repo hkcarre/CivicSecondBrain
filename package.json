@@ -17,7 +17,7 @@
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.112.3",
-    "ai": "^6.0.195",
+    "ai": "^7.0.31",
     "axios": "^1.7.2",
     "cheerio": "^1.0.0-rc.12",
     "clsx": "^2.1.1",

@@ -27,7 +27,7 @@
     "lucide-react": "^1.25.0",
     "mammoth": "^1.12.0",
     "marked": "^18.0.6",
-    "nanoid": "^5.0.7",
+    "nanoid": "^6.0.0",
     "next": "16.2.10",
     "openai": "^6.48.0",
     "pdf-parse": "^1.1.1",

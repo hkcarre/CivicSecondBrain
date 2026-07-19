@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.26.0](https://github.com/xozai/CivicSecondBrain/compare/v1.25.1...v1.26.0) (2026-07-19)
+
+
+### Features
+
+* audit log for chat Q&A with public-records export ([#180](https://github.com/xozai/CivicSecondBrain/issues/180)) ([3b30e87](https://github.com/xozai/CivicSecondBrain/commit/3b30e87fd9ba886d0d9b8e1ba39df5db66090d5b)), closes [#146](https://github.com/xozai/CivicSecondBrain/issues/146)
+
 ## [1.25.1](https://github.com/xozai/CivicSecondBrain/compare/v1.25.0...v1.25.1) (2026-07-19)
 
 

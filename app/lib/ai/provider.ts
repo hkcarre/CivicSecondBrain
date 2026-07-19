@@ -23,6 +23,7 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
+import { withRetry } from "./retry";
 
 export interface AICompleteOptions {
   system: string;
@@ -45,6 +46,14 @@ export interface AIProvider {
   model: string;
 }
 
+/** Logs each transient-error retry so backoff activity is visible in server logs. */
+function logRetry(label: string) {
+  return (err: unknown, attempt: number, delayMs: number): void => {
+    const detail = err instanceof Error ? err.message : String(err);
+    console.warn(`[ai] ${label}: transient error (retry ${attempt}, waiting ${delayMs}ms): ${detail}`);
+  };
+}
+
 // ─── Provider: Anthropic ─────────────────────────────────────────────────
 
 function buildAnthropicProvider(): AIProvider {
@@ -55,23 +64,35 @@ function buildAnthropicProvider(): AIProvider {
     model,
 
     async complete({ system, prompt, maxTokens = 4096 }: AICompleteOptions): Promise<string> {
-      const msg = await client.messages.create({
-        model,
-        max_tokens: maxTokens,
-        system,
-        messages: [{ role: "user", content: prompt }],
-      });
+      const msg = await withRetry(
+        () =>
+          client.messages.create({
+            model,
+            max_tokens: maxTokens,
+            system,
+            messages: [{ role: "user", content: prompt }],
+          }),
+        { onRetry: logRetry("anthropic complete") }
+      );
       const block = msg.content[0];
       return block.type === "text" ? block.text : "";
     },
 
     async *stream({ system, messages, maxTokens = 2048 }: AIStreamOptions): AsyncIterable<string> {
-      const stream = client.messages.stream({
-        model,
-        max_tokens: maxTokens,
-        system,
-        messages,
-      });
+      // Retry covers stream ESTABLISHMENT only (429/529/network errors reject
+      // the create() promise before any token arrives). Mid-stream failures
+      // are not retried — the partial response has already been forwarded.
+      const stream = await withRetry(
+        () =>
+          client.messages.create({
+            model,
+            max_tokens: maxTokens,
+            system,
+            messages,
+            stream: true,
+          }),
+        { onRetry: logRetry("anthropic stream") }
+      );
       for await (const event of stream) {
         if (
           event.type === "content_block_delta" &&
@@ -104,27 +125,36 @@ function buildOpenAIProvider(isGemini = false): AIProvider {
     model,
 
     async complete({ system, prompt, maxTokens = 4096 }: AICompleteOptions): Promise<string> {
-      const res = await client.chat.completions.create({
-        model,
-        max_tokens: maxTokens,
-        messages: [
-          { role: "system", content: system },
-          { role: "user", content: prompt },
-        ],
-      });
+      const res = await withRetry(
+        () =>
+          client.chat.completions.create({
+            model,
+            max_tokens: maxTokens,
+            messages: [
+              { role: "system", content: system },
+              { role: "user", content: prompt },
+            ],
+          }),
+        { onRetry: logRetry(`${isGemini ? "gemini" : "openai"} complete`) }
+      );
       return res.choices[0]?.message?.content ?? "";
     },
 
     async *stream({ system, messages, maxTokens = 2048 }: AIStreamOptions): AsyncIterable<string> {
-      const stream = await client.chat.completions.create({
-        model,
-        max_tokens: maxTokens,
-        stream: true,
-        messages: [
-          { role: "system", content: system },
-          ...messages,
-        ],
-      });
+      // Retry covers stream ESTABLISHMENT only — see the anthropic adapter.
+      const stream = await withRetry(
+        () =>
+          client.chat.completions.create({
+            model,
+            max_tokens: maxTokens,
+            stream: true,
+            messages: [
+              { role: "system", content: system },
+              ...messages,
+            ],
+          }),
+        { onRetry: logRetry(`${isGemini ? "gemini" : "openai"} stream`) }
+      );
       for await (const chunk of stream) {
         const delta = chunk.choices[0]?.delta?.content;
         if (delta) yield delta;
@@ -134,32 +164,61 @@ function buildOpenAIProvider(isGemini = false): AIProvider {
 }
 
 // ─── Factory ──────────────────────────────────────────────────────────────
+//
+// The cached instance lives on `globalThis` (the standard Next.js pattern for
+// dev-mode singletons): HMR re-executes this module while the process — and
+// globalThis — persists, so a module-level `let` would be reset on every hot
+// reload while a plain module-level cache from a PREVIOUS evaluation would go
+// stale. The cache is additionally keyed by the config that defines the
+// provider (provider name + model + base URL), so editing .env.local (e.g.
+// switching AI_PROVIDER) invalidates the cached instance instead of returning
+// a stale one.
 
-let _provider: AIProvider | null = null;
+interface AIProviderCacheEntry {
+  key: string;
+  provider: AIProvider;
+}
+
+const globalForAIProvider = globalThis as typeof globalThis & {
+  __civicAIProviderCache?: AIProviderCacheEntry;
+};
+
+/** Cache key derived from every env var that determines which provider/client is built. */
+function providerConfigKey(providerName: string): string {
+  return [
+    providerName,
+    process.env.AI_MODEL ?? "",
+    process.env.OPENAI_BASE_URL ?? "",
+  ].join("|");
+}
 
 export function getAIProvider(): AIProvider {
-  if (_provider) return _provider;
-
   const providerName = (process.env.AI_PROVIDER ?? "anthropic").toLowerCase();
+  const key = providerConfigKey(providerName);
 
+  const cached = globalForAIProvider.__civicAIProviderCache;
+  if (cached && cached.key === key) return cached.provider;
+
+  let provider: AIProvider;
   switch (providerName) {
     case "openai":
-      _provider = buildOpenAIProvider(false);
+      provider = buildOpenAIProvider(false);
       break;
     case "gemini":
-      _provider = buildOpenAIProvider(true);
+      provider = buildOpenAIProvider(true);
       break;
     case "anthropic":
     default:
-      _provider = buildAnthropicProvider();
+      provider = buildAnthropicProvider();
       break;
   }
 
-  console.log(`[ai] Provider: ${providerName}, model: ${_provider.model}`);
-  return _provider;
+  globalForAIProvider.__civicAIProviderCache = { key, provider };
+  console.log(`[ai] Provider: ${providerName}, model: ${provider.model}`);
+  return provider;
 }
 
-/** Reset the singleton (useful in tests to switch providers between cases). */
+/** Reset the cached provider (useful in tests to switch providers between cases). */
 export function resetAIProvider(): void {
-  _provider = null;
+  globalForAIProvider.__civicAIProviderCache = undefined;
 }

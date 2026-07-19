@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.25.1](https://github.com/xozai/CivicSecondBrain/compare/v1.25.0...v1.25.1) (2026-07-19)
+
+
+### Bug Fixes
+
+* retry transient AI errors with backoff; HMR-safe provider singleton ([#183](https://github.com/xozai/CivicSecondBrain/issues/183)) ([16628b6](https://github.com/xozai/CivicSecondBrain/commit/16628b6a47779593d4c28d8ad7f910f304ddcf24))
+
 ## [1.25.0](https://github.com/xozai/CivicSecondBrain/compare/v1.24.0...v1.25.0) (2026-07-19)
 
 

@@ -10,11 +10,12 @@
  *                 (falls back to md if @react-pdf/renderer is not installed)
  */
 
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import type { Recommendation } from "@/types";
+import { verifyExportAccess } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -166,6 +167,10 @@ function toMarkdown(recommendations: Recommendation[]): string {
 // ─── Route handler ───────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  if (!(await verifyExportAccess(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const format = searchParams.get("format") ?? "md";
 

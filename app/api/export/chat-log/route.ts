@@ -9,13 +9,12 @@
  *   format=jsonl    (default) — raw JSONL file, served verbatim
  *   format=csv      — CSV with RFC 4180 escaping (quotes/newlines in Q&A text)
  *
- * Auth: mirrors the other /api/export/* routes — no route-level auth.
- * These endpoints are linked from the password-protected /admin panel, but
- * the middleware only gates /admin/* paths, so the export URLs themselves
- * are open. Flagged in the PR for a follow-up if gating is desired.
+ * Auth: mirrors the other /api/export/* routes — requires a valid admin
+ * session cookie or an Authorization: Bearer INGEST_SECRET header.
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { verifyExportAccess } from "@/lib/auth";
 import {
   chatLogToCsv,
   isValidMonth,
@@ -26,6 +25,10 @@ import {
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
+  if (!(await verifyExportAccess(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const month =
     searchParams.get("month") ?? new Date().toISOString().slice(0, 7);

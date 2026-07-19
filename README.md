@@ -217,9 +217,9 @@ All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `la
 | `POST /api/lint` | Trigger wiki analysis (requires `INGEST_SECRET`) |
 | `POST /api/briefing` | Generate a meeting briefing packet from an agenda URL (requires `INGEST_SECRET`) |
 | `GET /api/wiki/search` | Full-text wiki search (`?q=query&category=topic&limit=50&offset=0` — `limit` defaults to 50, capped at 200; response includes `total`) |
-| `GET /api/export/recommendations` | Export recommendations as `.md` or print-PDF HTML |
-| `GET /api/export/wiki` | Export full wiki as `.md` or `.zip` |
-| `GET /api/export/chat-log` | Export the chat Q&A audit log (`?month=YYYY-MM&format=jsonl\|csv`) for public-records requests |
+| `GET /api/export/recommendations` | Export recommendations as `.md` or print-PDF HTML (requires admin session or `INGEST_SECRET`) |
+| `GET /api/export/wiki` | Export full wiki as `.md` or `.zip` (requires admin session or `INGEST_SECRET`) |
+| `GET /api/export/chat-log` | Export the chat Q&A audit log (`?month=YYYY-MM&format=jsonl\|csv`) for public-records requests (requires admin session or `INGEST_SECRET`) |
 | `POST /api/admin/login` | Verify admin password, set session cookie |
 | `POST /api/admin/logout` | Clear admin session cookie |
 
@@ -244,6 +244,18 @@ The Admin panel supports scheduled ingestion and two manual single-document mode
 
 ### API route auth
 `/api/ingest`, `/api/ingest/document`, `/api/lint`, and `/api/briefing` require an `Authorization: Bearer <ingest-secret>` header matching `INGEST_SECRET`. Without `INGEST_SECRET`, requests are accepted in dev mode.
+
+The export routes (`GET /api/export/wiki`, `GET /api/export/recommendations`) also require auth. They accept **either**:
+
+- a valid `admin_session` cookie (log in at `/admin/login` — the admin panel's export links work automatically), **or**
+- an `Authorization: Bearer <ingest-secret>` header matching `INGEST_SECRET`, for scripted exports:
+
+```bash
+curl -H "Authorization: Bearer $INGEST_SECRET" \
+  "https://your-app.up.railway.app/api/export/wiki?format=zip" -o wiki.zip
+```
+
+If neither `ADMIN_PASSWORD` nor `INGEST_SECRET` is set, the export routes are open (dev mode only — always set both in production).
 
 ```bash
 # Generate a secret

@@ -35,6 +35,9 @@ function makeGet(format?: string) {
 beforeEach(() => {
   tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "wiki-export-test-"));
   process.env.WIKI_PATH = tmpDir;
+  // Keep the route in open dev mode — auth behavior is covered in export-auth.test.ts
+  delete process.env.ADMIN_PASSWORD;
+  delete process.env.INGEST_SECRET;
 });
 
 afterEach(() => {

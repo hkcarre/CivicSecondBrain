@@ -16,6 +16,7 @@ import path from "path";
 import matter from "gray-matter";
 import zlib from "zlib";
 import { promisify } from "util";
+import { verifyExportAccess } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -233,6 +234,10 @@ async function buildZip(files: WikiFile[]): Promise<Buffer> {
 // ─── Route handler ────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
+  if (!(await verifyExportAccess(req))) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const format = searchParams.get("format") ?? "md";
 

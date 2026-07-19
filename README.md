@@ -217,6 +217,7 @@ All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `la
 | `GET /api/wiki/search` | Full-text wiki search (`?q=query&category=topic&limit=50&offset=0` — `limit` defaults to 50, capped at 200; response includes `total`) |
 | `GET /api/export/recommendations` | Export recommendations as `.md` or print-PDF HTML |
 | `GET /api/export/wiki` | Export full wiki as `.md` or `.zip` |
+| `GET /api/export/chat-log` | Export the chat Q&A audit log (`?month=YYYY-MM&format=jsonl\|csv`) for public-records requests |
 | `POST /api/admin/login` | Verify admin password, set session cookie |
 | `POST /api/admin/logout` | Clear admin session cookie |
 
@@ -408,6 +409,7 @@ INGEST_SECRET=a3f1c8e2d9b04765f2a8c1e3d6b90f4e2c7a1d5b8e3f6c9a2d4b7e0f1c3a6d9
 |---|---|---|---|
 | `WIKI_PATH` | ○ | Absolute path. Railway: `/data/wiki` | `./wiki` |
 | `RAW_SOURCES_PATH` | ○ | Absolute path. Railway: `/data/raw-sources` | `./raw-sources` |
+| `CHAT_LOG_PATH` | ○ | Absolute path. Railway: `/data/chat-log` | Sibling of `WIKI_PATH` (`./chat-log`) |
 
 ```bash
 # Railway production (volume mounted at /data)
@@ -416,6 +418,8 @@ RAW_SOURCES_PATH=/data/raw-sources
 
 # Local development — defaults work, no need to set these
 ```
+
+**`CHAT_LOG_PATH`** — directory for the chat Q&A audit log (public-records compliance). Every `POST /api/chat` turn is appended to a monthly `YYYY-MM.jsonl` file recording the timestamp, question, full answer, wiki pages used as context, provider/model, and latency. Raw client IPs are never logged. Defaults to a sibling of the wiki directory, so on Railway (`WIKI_PATH=/data/wiki`) it lands on the persistent volume at `/data/chat-log` with no extra configuration. Export it from the admin panel's Export card or directly via `GET /api/export/chat-log?month=YYYY-MM&format=jsonl|csv`.
 
 ---
 

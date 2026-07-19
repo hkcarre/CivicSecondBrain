@@ -57,6 +57,7 @@ TypeScript scripts run via `tsx` with env loaded from `.env.local` through `scri
 - `app/lib/scraper/laserfiche-scraper.ts` — Laserfiche WebLink scraper using `FolderListingService.aspx` cookie-authenticated JSON API
 - `app/lib/parser/pdf-parser.ts` — `pdf-parse` wrapper. Skips PDFs over `MAX_FILE_SIZE_MB` (env var, default 25MB); returns a `skipped: true` stub for xlsx/docx.
 - `app/lib/manifest.ts` — Shared manifest helpers: `loadManifest`, `saveManifest`, `needsIngestion`, `markIngested`, `fileChecksum`
+- `app/lib/chat-log.ts` — Chat Q&A audit log (public records): monthly JSONL files in `CHAT_LOG_PATH` (default: sibling of `WIKI_PATH`), exported via `GET /api/export/chat-log`
 
 ### Ingest pipeline detail
 

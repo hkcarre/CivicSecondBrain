@@ -18,6 +18,11 @@ vi.mock("@/lib/wiki/writer", () => ({
   appendToLog: vi.fn(),
 }));
 
+// Prevent audit-log writes to ./chat-log during test runs
+vi.mock("@/lib/chat-log", () => ({
+  appendChatTurn: vi.fn(async () => {}),
+}));
+
 vi.mock("@/lib/claude/client", () => ({
   claude: {
     messages: {

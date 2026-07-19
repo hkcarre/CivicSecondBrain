@@ -8,6 +8,7 @@
 
 import { QUERY_SYSTEM_PROMPT } from "@/lib/claude/client";
 import { getAIProvider } from "@/lib/ai/provider";
+import { appendChatTurn } from "@/lib/chat-log";
 import { checkChatRateLimit, getClientIp } from "@/lib/rate-limit";
 import {
   readWikiIndex,
@@ -70,6 +71,7 @@ export async function POST(req: Request) {
 
     // ── 3. Stream response via provider-agnostic AI client ───────────────────
 
+    const startedAt = Date.now();
     const ai = getAIProvider();
     const aiStream = ai.stream({
       system: systemPrompt + contextBlock,
@@ -96,22 +98,62 @@ export async function POST(req: Request) {
       }
     };
 
+    // ── 5. Audit log (public-records compliance, issue #146) ─────────────────
+    //
+    // Every Q&A turn is appended to a monthly JSONL file via appendChatTurn()
+    // (fire-and-forget; never throws into the request path). The answer text
+    // is accumulated as it is streamed to the client. If the client aborts or
+    // disconnects mid-stream, we log the PARTIAL answer that was generated —
+    // for records purposes, what was actually shown to the user matters more
+    // than whether the stream ran to completion. `auditLogged` guards against
+    // double-logging when both the error and cancel paths fire.
+
+    const answerParts: string[] = [];
+    let auditLogged = false;
+    const logAudit = () => {
+      if (auditLogged) return;
+      auditLogged = true;
+      void appendChatTurn({
+        timestamp: new Date().toISOString(),
+        question: userMessage,
+        answer: answerParts.join(""),
+        pagesUsed: relevantPaths,
+        provider: `${process.env.AI_PROVIDER ?? "anthropic"}/${ai.model}`,
+        latencyMs: Date.now() - startedAt,
+      });
+    };
+
     // Pipe text chunks from the provider into a ReadableStream
     const encoder = new TextEncoder();
     const body = new ReadableStream({
       async start(controller) {
         try {
           for await (const chunk of aiStream) {
+            answerParts.push(chunk);
             controller.enqueue(encoder.encode(chunk));
           }
           logQuery();
+          logAudit();
         } catch (err) {
-          controller.enqueue(
-            encoder.encode(`\n\n[Error: ${(err as Error).message}]`)
-          );
+          logAudit();
+          try {
+            controller.enqueue(
+              encoder.encode(`\n\n[Error: ${(err as Error).message}]`)
+            );
+          } catch {
+            // Controller already closed (client disconnected) — nothing to send
+          }
         } finally {
-          controller.close();
+          try {
+            controller.close();
+          } catch {
+            // Already closed/cancelled
+          }
         }
+      },
+      cancel() {
+        // Client disconnected — log the partial answer generated so far
+        logAudit();
       },
     });
 

@@ -500,6 +500,16 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
             label="Full wiki (.zip)"
             description="All individual wiki markdown files as a ZIP"
           />
+          <ExportLink
+            href="/api/export/chat-log?format=jsonl"
+            label="Chat audit log (.jsonl)"
+            description="This month's chat Q&A audit log for public-records requests"
+          />
+          <ExportLink
+            href="/api/export/chat-log?format=csv"
+            label="Chat audit log (.csv)"
+            description="This month's chat Q&A audit log as a spreadsheet-friendly CSV"
+          />
         </div>
       </div>
 

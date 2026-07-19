@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.5](https://github.com/xozai/CivicSecondBrain/compare/v1.31.4...v1.31.5) (2026-07-19)
+
+
+### Bug Fixes
+
+* fail-safe MAX_FILE_SIZE_MB parsing across all three size guards (closes [#240](https://github.com/xozai/CivicSecondBrain/issues/240)) ([#241](https://github.com/xozai/CivicSecondBrain/issues/241)) ([c8d2000](https://github.com/xozai/CivicSecondBrain/commit/c8d20000704dc8c190c1f6e0b46d983f1b4c358a))
+
 ## [1.31.4](https://github.com/xozai/CivicSecondBrain/compare/v1.31.3...v1.31.4) (2026-07-19)
 
 

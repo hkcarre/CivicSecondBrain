@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.0](https://github.com/xozai/CivicSecondBrain/compare/v1.22.0...v1.23.0) (2026-07-19)
+
+
+### Features
+
+* **admin:** local file upload for ingest panel ([#159](https://github.com/xozai/CivicSecondBrain/issues/159)) ([60682b9](https://github.com/xozai/CivicSecondBrain/commit/60682b94f740e7dcac6c9f83154e1dbecf19376d))
+
 ## [1.22.0](https://github.com/xozai/CivicSecondBrain/compare/v1.21.0...v1.22.0) (2026-07-16)
 
 

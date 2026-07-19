@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.28.0](https://github.com/xozai/CivicSecondBrain/compare/v1.27.4...v1.28.0) (2026-07-19)
+
+
+### Features
+
+* upgrade React 18 to React 19 ([#207](https://github.com/xozai/CivicSecondBrain/issues/207)) ([739470a](https://github.com/xozai/CivicSecondBrain/commit/739470a2c88598aaf4a770df52b8f2cd02ecad66))
+
 ## [1.27.4](https://github.com/xozai/CivicSecondBrain/compare/v1.27.3...v1.27.4) (2026-07-19)
 
 

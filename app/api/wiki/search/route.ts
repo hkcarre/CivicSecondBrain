@@ -1,25 +1,31 @@
 /**
- * GET /api/wiki/search?q=budget&category=topic&limit=20&offset=0
+ * GET /api/wiki/search?q=budget&category=topic&limit=50&offset=0
  *
  * Full-text search over all wiki pages.
  *
  * Query params:
  *   q        — search string (case-insensitive, title + content match)
  *   category — optional WikiCategory filter (topic | decision | person | recommendation | query)
- *   limit    — max results returned (default 20)
+ *   limit    — max results returned (default 50, clamped to 200)
  *   offset   — pagination offset (default 0)
+ *
+ * Results are sorted by relevance (title matches weigh more than content
+ * matches) BEFORE pagination is applied, so page 1 always holds the best
+ * matches. Invalid limit/offset values are clamped, never rejected.
  *
  * Response:
  *   { results: SearchResult[], total: number, limit: number, offset: number }
+ *   `total` is the match count before pagination.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { readFullWiki } from "@/lib/wiki/reader";
 import type { WikiPage, WikiCategory } from "@/types";
 
-const DEFAULT_LIMIT = 20;
-const MAX_LIMIT = 100;
+const DEFAULT_LIMIT = 50;
+const MAX_LIMIT = 200;
 const EXCERPT_LENGTH = 200;
+const TITLE_MATCH_WEIGHT = 10;
 
 export interface SearchResult {
   path: string;
@@ -69,7 +75,21 @@ export function buildExcerpt(content: string, q: string): string {
   return excerpt.trim();
 }
 
-/** Filter and score wiki pages against query `q` and optional `category`. */
+/** Count non-overlapping occurrences of `needle` in `haystack` (both pre-lowercased). */
+function countOccurrences(haystack: string, needle: string): number {
+  if (!needle) return 0;
+  let count = 0;
+  let idx = haystack.indexOf(needle);
+  while (idx !== -1) {
+    count++;
+    idx = haystack.indexOf(needle, idx + needle.length);
+  }
+  return count;
+}
+
+/** Filter and score wiki pages against query `q` and optional `category`.
+ *  Results are sorted by relevance (descending) — title occurrences weigh
+ *  TITLE_MATCH_WEIGHT× more than content occurrences. Ties keep wiki order. */
 export function searchWikiPages(
   pages: WikiPage[],
   q: string,
@@ -77,7 +97,7 @@ export function searchWikiPages(
 ): WikiPage[] {
   const qLower = q.toLowerCase().trim();
 
-  return pages.filter((page) => {
+  const filtered = pages.filter((page) => {
     // Category filter
     if (category && page.category !== category) return false;
 
@@ -90,6 +110,20 @@ export function searchWikiPages(
       page.content.toLowerCase().includes(qLower)
     );
   });
+
+  // No query — nothing to rank; keep wiki order
+  if (!qLower) return filtered;
+
+  const scored = filtered.map((page) => ({
+    page,
+    score:
+      countOccurrences(page.title.toLowerCase(), qLower) * TITLE_MATCH_WEIGHT +
+      countOccurrences(page.content.toLowerCase(), qLower),
+  }));
+
+  // Array.prototype.sort is stable — equal scores keep their original order
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map((s) => s.page);
 }
 
 export async function GET(req: NextRequest) {

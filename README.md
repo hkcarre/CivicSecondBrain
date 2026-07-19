@@ -213,7 +213,7 @@ All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `la
 | `POST /api/ingest/document` | Ingest one specific document URL without running discovery (requires `INGEST_SECRET`) |
 | `POST /api/ingest/upload` | Ingest a local file uploaded as `multipart/form-data` — same pipeline as URL ingest (requires `INGEST_SECRET`) |
 | `POST /api/lint` | Trigger wiki analysis (requires `INGEST_SECRET`) |
-| `GET /api/wiki/search` | Full-text wiki search (`?q=query&category=topic`) |
+| `GET /api/wiki/search` | Full-text wiki search (`?q=query&category=topic&limit=50&offset=0` — `limit` defaults to 50, capped at 200; response includes `total`) |
 | `GET /api/export/recommendations` | Export recommendations as `.md` or print-PDF HTML |
 | `GET /api/export/wiki` | Export full wiki as `.md` or `.zip` |
 | `POST /api/admin/login` | Verify admin password, set session cookie |

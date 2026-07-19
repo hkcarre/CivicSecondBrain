@@ -178,6 +178,24 @@ describe("searchWikiPages", () => {
     const results = searchWikiPages(pages, "water");
     expect(results.map((r) => r.path)).toEqual(["topics/a.md", "topics/b.md"]);
   });
+
+  it("reorders when a lower-scoring page appears first in the input", () => {
+    const pages = [
+      makePage({ path: "topics/weak.md", content: "water" }),
+      makePage({ path: "topics/strong.md", content: "water water water" }),
+    ];
+    const results = searchWikiPages(pages, "water");
+    expect(results.map((r) => r.path)).toEqual(["topics/strong.md", "topics/weak.md"]);
+  });
+
+  it("ranks a title match above a single content match", () => {
+    const pages = [
+      makePage({ path: "topics/content-hit.md", title: "Misc", content: "water usage" }),
+      makePage({ path: "topics/title-hit.md", title: "Water Utility", content: "no term here" }),
+    ];
+    const results = searchWikiPages(pages, "water");
+    expect(results[0].path).toBe("topics/title-hit.md");
+  });
 });
 
 describe("buildExcerpt", () => {

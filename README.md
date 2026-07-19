@@ -670,7 +670,7 @@ Railway's **"Wait for CI"** setting ensures deploys only happen after tests pass
 
 ## License
 
-Copyright (c) 2024 Jose Leos. All rights reserved.
+Copyright (c) 2026 Strata Civic Solutions. All Rights Reserved.
 
 This software is proprietary and confidential. Unauthorized use, copying,
 distribution, or modification is strictly prohibited. See [LICENSE](LICENSE) for details.

@@ -9,12 +9,13 @@
  *   format=jsonl    (default) — raw JSONL file, served verbatim
  *   format=csv      — CSV with RFC 4180 escaping (quotes/newlines in Q&A text)
  *
- * Auth: mirrors the other /api/export/* routes — requires a valid admin
- * session cookie or an Authorization: Bearer INGEST_SECRET header.
+ * Auth: intentionally public — this is the public-records (TPIA) export.
+ * Entries never contain client IPs or user identifiers (see ChatLogEntry
+ * in @/lib/chat-log), so the monthly files are safe to publish as-is.
+ * Unlike /api/export/wiki, no admin session or INGEST_SECRET is required.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { verifyExportAccess } from "@/lib/auth";
 import {
   chatLogToCsv,
   isValidMonth,
@@ -25,10 +26,6 @@ import {
 export const runtime = "nodejs";
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyExportAccess(req))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { searchParams } = new URL(req.url);
   const month =
     searchParams.get("month") ?? new Date().toISOString().slice(0, 7);

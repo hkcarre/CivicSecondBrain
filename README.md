@@ -219,7 +219,7 @@ All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `la
 | `GET /api/wiki/search` | Full-text wiki search (`?q=query&category=topic&limit=50&offset=0` — `limit` defaults to 50, capped at 200; response includes `total`) |
 | `GET /api/export/recommendations` | Export recommendations as `.md` or print-PDF HTML (public) |
 | `GET /api/export/wiki` | Export full wiki as `.md` or `.zip` (requires admin session or `INGEST_SECRET`) |
-| `GET /api/export/chat-log` | Export the chat Q&A audit log (`?month=YYYY-MM&format=jsonl\|csv`) for public-records requests (requires admin session or `INGEST_SECRET`) |
+| `GET /api/export/chat-log` | Export the chat Q&A audit log (`?month=YYYY-MM&format=jsonl\|csv`) for public-records requests (public) |
 | `POST /api/admin/login` | Verify admin password, set session cookie |
 | `POST /api/admin/logout` | Clear admin session cookie |
 
@@ -245,7 +245,7 @@ The Admin panel supports scheduled ingestion and two manual single-document mode
 ### API route auth
 `/api/ingest`, `/api/ingest/document`, `/api/lint`, and `/api/briefing` require an `Authorization: Bearer <ingest-secret>` header matching `INGEST_SECRET`. Without `INGEST_SECRET`, requests are accepted in dev mode.
 
-The export routes `GET /api/export/wiki` and `GET /api/export/chat-log` also require auth. They accept **either**:
+The wiki export route `GET /api/export/wiki` also requires auth. It accepts **either**:
 
 - a valid `admin_session` cookie (log in at `/admin/login` — the admin panel's export links work automatically), **or**
 - an `Authorization: Bearer <ingest-secret>` header matching `INGEST_SECRET`, for scripted exports:
@@ -255,9 +255,9 @@ curl -H "Authorization: Bearer $INGEST_SECRET" \
   "https://your-app.up.railway.app/api/export/wiki?format=zip" -o wiki.zip
 ```
 
-If neither `ADMIN_PASSWORD` nor `INGEST_SECRET` is set, these routes are open (dev mode only — always set both in production).
+If neither `ADMIN_PASSWORD` nor `INGEST_SECRET` is set, the route is open (dev mode only — always set both in production).
 
-`GET /api/export/recommendations` is **intentionally public**: recommendations feed the public dashboard (including its Export button) and are meant for open council review.
+`GET /api/export/recommendations` and `GET /api/export/chat-log` are **intentionally public**: recommendations feed the public dashboard (including its Export button) and are meant for open council review, and the chat log is the public-records (TPIA) export — anyone can download the monthly log without filing a records request. Chat-log entries never contain client IPs or user identifiers.
 
 ```bash
 # Generate a secret
@@ -614,7 +614,7 @@ Wiki pages with unquoted colons or pipe characters in their YAML frontmatter are
 | Full wiki (ZIP) | `GET /api/export/wiki?format=zip` | All wiki `.md` files in a DEFLATE-compressed ZIP archive |
 | Chat audit log (JSONL/CSV) | `GET /api/export/chat-log?month=YYYY-MM&format=jsonl\|csv` | Monthly chat Q&A audit log for public-records requests |
 
-Export buttons are available in the Admin panel under the **Export** card. The recommendations export is public; the wiki and chat-log exports require an admin session or `INGEST_SECRET` (see [API route auth](#api-route-auth)).
+Export buttons are available in the Admin panel under the **Export** card. The recommendations and chat-log exports are public; the wiki export requires an admin session or `INGEST_SECRET` (see [API route auth](#api-route-auth)).
 
 ---
 

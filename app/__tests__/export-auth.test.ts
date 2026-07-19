@@ -3,13 +3,13 @@
  *
  * Auth tests for the /api/export/* routes.
  *
- * GET /api/export/wiki and GET /api/export/chat-log accept EITHER a valid
- * admin_session cookie OR an Authorization: Bearer INGEST_SECRET header.
- * With neither ADMIN_PASSWORD nor INGEST_SECRET configured, they stay
- * open (dev mode).
+ * GET /api/export/wiki accepts EITHER a valid admin_session cookie OR an
+ * Authorization: Bearer INGEST_SECRET header. With neither ADMIN_PASSWORD
+ * nor INGEST_SECRET configured, it stays open (dev mode).
  *
- * GET /api/export/recommendations is intentionally public — recommendations
- * feed the public dashboard and are meant for open council review.
+ * GET /api/export/recommendations and GET /api/export/chat-log are
+ * intentionally public — recommendations feed the public dashboard, and
+ * the chat log is the public-records (TPIA) export.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -168,22 +168,6 @@ describe("export route auth — admin session cookie", () => {
     expect(res.status).toBe(200);
   });
 
-  it("protects /api/export/chat-log the same way", async () => {
-    const { GET } = await importChatLogRoute();
-
-    const denied = await GET(
-      makeGet("http://localhost/api/export/chat-log?month=2026-01") as any
-    );
-    expect(denied.status).toBe(401);
-
-    const allowed = await GET(
-      makeGet("http://localhost/api/export/chat-log?month=2026-01", {
-        cookie: `admin_session=${adminSessionToken(ADMIN_PASSWORD)}`,
-      }) as any
-    );
-    expect(allowed.status).toBe(200);
-    expect(allowed.headers.get("content-type")).toContain("x-ndjson");
-  });
 });
 
 describe("export route auth — Bearer INGEST_SECRET", () => {
@@ -217,22 +201,6 @@ describe("export route auth — Bearer INGEST_SECRET", () => {
     expect(res.status).toBe(200);
   });
 
-  it("allows scripted export of the chat log with the bearer token", async () => {
-    const { GET } = await importChatLogRoute();
-
-    const denied = await GET(
-      makeGet("http://localhost/api/export/chat-log?month=2026-01") as any
-    );
-    expect(denied.status).toBe(401);
-
-    const allowed = await GET(
-      makeGet("http://localhost/api/export/chat-log?month=2026-01&format=csv", {
-        authorization: `Bearer ${INGEST_SECRET}`,
-      }) as any
-    );
-    expect(allowed.status).toBe(200);
-    expect(allowed.headers.get("content-type")).toContain("text/csv");
-  });
 });
 
 describe("export route auth — both secrets configured", () => {
@@ -273,13 +241,13 @@ describe("export route auth — both secrets configured", () => {
   });
 });
 
-describe("recommendations export is intentionally public", () => {
+describe("recommendations and chat-log exports are intentionally public", () => {
   beforeEach(() => {
     process.env.ADMIN_PASSWORD = ADMIN_PASSWORD;
     process.env.INGEST_SECRET = INGEST_SECRET;
   });
 
-  it("returns 200 without any credentials even when both secrets are set", async () => {
+  it("serves recommendations without any credentials even when both secrets are set", async () => {
     const { GET } = await importRecsRoute();
     const res = await GET(
       makeGet("http://localhost/api/export/recommendations") as any
@@ -288,12 +256,30 @@ describe("recommendations export is intentionally public", () => {
     expect(res.headers.get("content-type")).toContain("text/markdown");
   });
 
-  it("serves the print-PDF HTML format without credentials", async () => {
+  it("serves the recommendations print-PDF HTML format without credentials", async () => {
     const { GET } = await importRecsRoute();
     const res = await GET(
       makeGet("http://localhost/api/export/recommendations?format=pdf") as any
     );
     expect(res.status).toBe(200);
     expect(res.headers.get("content-type")).toContain("text/html");
+  });
+
+  it("serves the chat log as JSONL without credentials even when both secrets are set", async () => {
+    const { GET } = await importChatLogRoute();
+    const res = await GET(
+      makeGet("http://localhost/api/export/chat-log?month=2026-01") as any
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("x-ndjson");
+  });
+
+  it("serves the chat log as CSV without credentials", async () => {
+    const { GET } = await importChatLogRoute();
+    const res = await GET(
+      makeGet("http://localhost/api/export/chat-log?month=2026-01&format=csv") as any
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/csv");
   });
 });

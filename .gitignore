@@ -16,7 +16,8 @@ out/
 raw-sources/
 
 # chat Q&A audit log — lives on the Railway volume (public-records export)
-chat-log/
+# Anchored to the repo root so it doesn't swallow app/api/export/chat-log/
+/chat-log/
 
 # Generated wiki content — lives on the Railway volume, rebuilt by ingest/lint
 # SCHEMA.md and index.md are kept as seed files for first-boot initialization

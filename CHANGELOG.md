@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.29.0](https://github.com/xozai/CivicSecondBrain/compare/v1.28.0...v1.29.0) (2026-07-19)
+
+
+### Features
+
+* upgrade pdf-parse to v2 ([#214](https://github.com/xozai/CivicSecondBrain/issues/214)) ([ff457a2](https://github.com/xozai/CivicSecondBrain/commit/ff457a23623d69f5ff1dda648f8b3335ec9ab21d))
+
 ## [1.28.0](https://github.com/xozai/CivicSecondBrain/compare/v1.27.4...v1.28.0) (2026-07-19)
 
 

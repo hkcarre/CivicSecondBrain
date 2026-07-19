@@ -5,7 +5,7 @@
 
 import fs from "fs";
 import path from "path";
-import pdfParse from "pdf-parse";
+import { PDFParse } from "pdf-parse";
 import * as cheerio from "cheerio";
 import mammoth from "mammoth";
 import * as XLSX from "xlsx";
@@ -66,19 +66,26 @@ async function parsePdf(filePath: string): Promise<ParsedDocument> {
   }
 
   const buffer = fs.readFileSync(filePath);
-  const data = await pdfParse(buffer);
+  // pdf-parse v2 class API; getInfo().info is the same PDF info dictionary
+  // v1 exposed as data.info.
+  const parser = new PDFParse({ data: new Uint8Array(buffer) });
+  try {
+    const raw = await parser.getText();
+    const info = await parser.getInfo();
 
-  // Release the buffer reference immediately so GC can reclaim it
-  const text = cleanText(data.text).slice(0, MAX_TEXT_CHARS);
-  const pageCount = data.numpages;
-  const title = data.info?.Title as string | undefined;
-  const metadata = {
-    author: (data.info?.Author as string) ?? "",
-    creator: (data.info?.Creator as string) ?? "",
-    creationDate: (data.info?.CreationDate as string) ?? "",
-  };
+    const text = cleanText(raw.text).slice(0, MAX_TEXT_CHARS);
+    const pageCount = info.total;
+    const title = info.info?.Title as string | undefined;
+    const metadata = {
+      author: (info.info?.Author as string) ?? "",
+      creator: (info.info?.Creator as string) ?? "",
+      creationDate: (info.info?.CreationDate as string) ?? "",
+    };
 
-  return { text, pageCount, title, metadata };
+    return { text, pageCount, title, metadata };
+  } finally {
+    await parser.destroy();
+  }
 }
 
 // ─── HTML parser (for MuniCode ordinances, public notices) ────────────────

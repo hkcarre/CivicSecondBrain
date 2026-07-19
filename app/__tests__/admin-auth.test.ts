@@ -1,7 +1,7 @@
 /**
  * Tests for POST /api/admin/login and POST /api/admin/logout
  */
-import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 
 function makeReq(body: object, url = "http://localhost/api/admin/login"): NextRequest {

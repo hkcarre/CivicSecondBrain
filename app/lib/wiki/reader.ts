@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import type { WikiPage, WikiIndex, WikiIndexEntry } from "@/types";
+import type { WikiPage, WikiIndexEntry } from "@/types";
 
 const WIKI_PATH = process.env.WIKI_PATH ?? "./wiki";
 

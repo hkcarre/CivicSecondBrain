@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle, Clock, XCircle, ExternalLink } from "lucide-react";
-import { clsx } from "clsx";
+import { CheckCircle, Clock, ExternalLink } from "lucide-react";
 import type { CivicDocument } from "@/types";
 
 interface ManifestTableProps {

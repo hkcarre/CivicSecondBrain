@@ -10,7 +10,6 @@ import {
   parseMunicodeUrl,
   collectSections,
   fetchMunicodeToc,
-  discoverMunicodeDocs,
 } from "@/lib/scraper/municode-scraper";
 
 // ─── Mock axios ────────────────────────────────────────────────────────────

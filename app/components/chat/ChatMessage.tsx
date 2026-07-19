@@ -132,10 +132,6 @@ function parseContent(content: string): ContentPart[] {
   const parts: ContentPart[] = [];
   const remaining = content;
 
-  // Handle AI ANALYSIS blocks first
-  const aiPattern = /⚠️ AI ANALYSIS[^\n]*\n?([\s\S]*?)(?=\n\n|\[SOURCE|$)/g;
-  const citationPattern = /\[SOURCE:[^\]]+\]/g;
-
   // Simple sequential parser
   const tokens = remaining.split(/(\[SOURCE:[^\]]+\]|⚠️ AI ANALYSIS[^\n]*)/g);
 

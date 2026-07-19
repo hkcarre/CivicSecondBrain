@@ -44,7 +44,7 @@ function makeEntry(path: string, summary: string, category: WikiCategory = "topi
 
 async function callChat(query: string) {
   vi.resetModules();
-  const { readWikiIndex, readRelevantPages } = await import("@/lib/wiki/reader");
+  const { readRelevantPages } = await import("@/lib/wiki/reader");
   const { POST } = await import("@/api/chat/route");
   const req = new Request("http://localhost/api/chat", {
     method: "POST",

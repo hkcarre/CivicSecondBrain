@@ -7,7 +7,7 @@
 
 import { INGEST_SYSTEM_PROMPT } from "./client";
 import { getAIProvider } from "../ai/provider";
-import { readWikiPage, readWikiIndex } from "../wiki/reader";
+import { readWikiPage } from "../wiki/reader";
 import {
   writeWikiPage,
   writeDecisionsPage,

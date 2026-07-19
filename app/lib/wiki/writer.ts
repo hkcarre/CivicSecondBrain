@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import type { WikiPage, IngestResult, Recommendation } from "@/types";
+import type { WikiPage, Recommendation } from "@/types";
 
 const WIKI_PATH = process.env.WIKI_PATH ?? "./wiki";
 
@@ -196,11 +196,9 @@ export function updateWikiIndex(
   }
 
   // Append only new rows under the appropriate section
-  let addedCount = 0;
   for (const entry of newEntries) {
     if (existingPaths.has(entry.path)) continue;
     existingPaths.add(entry.path);
-    addedCount++;
 
     const sectionMap: Record<string, string> = {
       topic: "## Topics",

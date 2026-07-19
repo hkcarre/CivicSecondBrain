@@ -165,7 +165,7 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
         setFailureCount(data.failed);
         setFailedDocuments(data.failedDocuments ?? []);
       }
-    } catch (err) {
+    } catch {
       setStatus("error");
       setResult("Error — check server logs.");
     }

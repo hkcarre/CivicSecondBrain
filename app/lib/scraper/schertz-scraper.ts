@@ -400,17 +400,6 @@ export function toCivicDocument(doc: DiscoveredDocument, localPath: string, id: 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 
-function sanitizeFilename(name: string): string {
-  return name.replace(/[^a-z0-9\s-]/gi, "").replace(/\s+/g, "-").toLowerCase().slice(0, 120);
-}
-
-function getExtension(url: string): string {
-  if (url.includes(".pdf")) return ".pdf";
-  if (url.includes(".xlsx") || url.includes(".xls")) return ".xlsx";
-  if (url.includes(".docx") || url.includes(".doc")) return ".docx";
-  return ".html";
-}
-
 function inferDocType(title: string, folderName: string): DocumentType | undefined {
   const t = `${title} ${folderName}`.toLowerCase();
   if (t.includes("budget") || t.includes("cip") || t.includes("capital improvement")) return "budget";

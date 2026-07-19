@@ -112,7 +112,6 @@ export function WikiHealthPanel({ report }: WikiHealthPanelProps) {
 function Stat({
   label,
   value,
-  icon: Icon,
   color,
 }: {
   label: string;

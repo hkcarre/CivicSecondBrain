@@ -13,13 +13,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import crypto from "crypto";
-
-// ─── helpers ──────────────────────────────────────────────────────────────
-
-function md5(content: string): string {
-  return crypto.createHash("md5").update(content).digest("hex");
-}
 
 // ─── mock modules before importing the route ──────────────────────────────
 

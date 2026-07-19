@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   MessageSquare,
   LayoutDashboard,
-  FileText,
   Settings,
   BookOpen,
   ChevronRight,

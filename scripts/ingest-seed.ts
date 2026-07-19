@@ -66,7 +66,6 @@ const CONCURRENCY = (() => {
 })();
 
 const MANIFEST_PATH = "./raw-sources/manifest.json";
-const RAW_SOURCES_PATH = process.env.RAW_SOURCES_PATH ?? "./raw-sources";
 
 // ─── Prioritized seed document list ───────────────────────────────────────
 //

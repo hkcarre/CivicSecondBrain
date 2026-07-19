@@ -6,7 +6,7 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import { readWikiIndex, readRecentLog } from "./reader";
+import { readWikiIndex } from "./reader";
 import type { Recommendation, WikiHealthReport } from "@/types";
 
 const WIKI_PATH = process.env.WIKI_PATH ?? "./wiki";

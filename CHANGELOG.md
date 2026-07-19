@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.2](https://github.com/xozai/CivicSecondBrain/compare/v1.31.1...v1.31.2) (2026-07-19)
+
+
+### Bug Fixes
+
+* **admin:** login redirect strands user on login page in production ([#231](https://github.com/xozai/CivicSecondBrain/issues/231)) ([20dbf0e](https://github.com/xozai/CivicSecondBrain/commit/20dbf0e4e98e573fa49e5f2744cd787767c0471d))
+
 ## [1.31.1](https://github.com/xozai/CivicSecondBrain/compare/v1.31.0...v1.31.1) (2026-07-19)
 
 

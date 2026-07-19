@@ -40,4 +40,10 @@ yarn-error.log*
 .idea/
 tsconfig.tsbuildinfo
 .playwright-mcp/
+
+# Playwright e2e output
+playwright-report/
+test-results/
+blob-report/
+.playwright/
 .codegraph/

@@ -1,0 +1,49 @@
+name: E2E
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    name: Playwright smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      # Safe, non-secret values only — the smoke suite never calls the AI
+      # provider, so no ANTHROPIC_API_KEY is needed (or provided).
+      WIKI_PATH: ./wiki
+      RAW_SOURCES_PATH: ./raw-sources
+      ADMIN_PASSWORD: e2e-smoke-admin
+      NEXT_PUBLIC_APP_NAME: CivicSecondBrain
+      NEXT_PUBLIC_CITY_NAME: Schertz
+      NEXT_PUBLIC_CITY_STATE: TX
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # Playwright's webServer runs `npm run build && npm start` itself
+      # (see playwright.config.ts) before executing the suite.
+      - name: Run e2e smoke tests
+        run: npx playwright test
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

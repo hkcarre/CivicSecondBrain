@@ -121,6 +121,7 @@ Open [http://localhost:3000](http://localhost:3000)
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
 | `npm test` | Run unit tests (Vitest, 164 tests) |
+| `npm run test:e2e` | Run Playwright e2e smoke tests (requires `npx playwright install chromium` once) |
 | `npm run ingest:seed` | Full parallel ingestion from all sources (~8,000+ documents, 3 workers) |
 | `npm run ingest:seed -- --limit 10` | Ingest first 10 documents (fast, no live scrape) |
 | `npm run ingest:seed -- --type budget` | Ingest only budget documents (comma-separated for multiple: `--type budget,charter`) |
@@ -590,6 +591,7 @@ GitHub Actions runs on every push to `main` and every PR:
 - `npm test` — 157 Vitest unit tests across 16 test files
 - `npm run build` — validates the Next.js production build
 - Lint check — fails if `NEXT_PUBLIC_ANTHROPIC` appears anywhere in source
+- `npm run test:e2e` (separate **E2E** workflow) — Playwright smoke tests against a real production build: `/`, `/wiki`, `/dashboard`, the `/admin` auth-gate redirect, and `GET /api/health/live`. No AI calls — runs entirely without `ANTHROPIC_API_KEY`.
 
 `ANTHROPIC_API_KEY` is intentionally **not** passed to the build step — the build is confirmed clean without it.
 

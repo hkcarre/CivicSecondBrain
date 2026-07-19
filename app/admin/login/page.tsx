@@ -1,12 +1,17 @@
 "use client";
 
 import { useState, FormEvent, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+
+/** Only allow same-origin path redirects ("/x" but not "//host" or "https://…"). */
+function sanitizeNext(raw: string | null): string {
+  if (raw && raw.startsWith("/") && !raw.startsWith("//")) return raw;
+  return "/admin";
+}
 
 function LoginForm() {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") ?? "/admin";
+  const next = sanitizeNext(searchParams.get("next"));
 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -23,16 +28,22 @@ function LoginForm() {
         body: JSON.stringify({ password }),
       });
       if (res.ok) {
-        router.push(next);
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Invalid password");
+        // Full navigation, NOT router.push: in production builds the sidebar's
+        // <Link href="/admin"> prefetches while logged OUT, so the client
+        // Router Cache holds the redirect-to-login entry. router.push would
+        // replay that stale redirect and strand the user on this page.
+        // A hard navigation re-runs the middleware with the fresh cookie.
+        // Deliberately no setLoading(false): the button stays disabled while
+        // the browser navigates away.
+        window.location.assign(next);
+        return;
       }
+      const data = await res.json().catch(() => ({}));
+      setError(data.error ?? "Invalid password");
     } catch {
       setError("Network error — please try again.");
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   }
 
   return (

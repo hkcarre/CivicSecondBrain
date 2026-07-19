@@ -8,14 +8,17 @@
  *   format=md   (default) — returns Markdown
  *   format=pdf  — returns a simple HTML-to-PDF via built-in browser print
  *                 (falls back to md if @react-pdf/renderer is not installed)
+ *
+ * Auth: intentionally public. Recommendations are shown on the public
+ * dashboard and are meant for open council review — unlike /api/export/wiki
+ * and /api/export/chat-log, which require verifyExportAccess().
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
 import type { Recommendation } from "@/types";
-import { verifyExportAccess } from "@/lib/auth";
 
 export const runtime = "nodejs";
 
@@ -167,10 +170,6 @@ function toMarkdown(recommendations: Recommendation[]): string {
 // ─── Route handler ───────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
-  if (!(await verifyExportAccess(req))) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { searchParams } = new URL(req.url);
   const format = searchParams.get("format") ?? "md";
 

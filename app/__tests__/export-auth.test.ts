@@ -1,11 +1,15 @@
 /**
  * export-auth.test.ts
  *
- * Auth tests for GET /api/export/wiki, GET /api/export/recommendations,
- * and GET /api/export/chat-log. All three routes accept EITHER a valid
+ * Auth tests for the /api/export/* routes.
+ *
+ * GET /api/export/wiki and GET /api/export/chat-log accept EITHER a valid
  * admin_session cookie OR an Authorization: Bearer INGEST_SECRET header.
  * With neither ADMIN_PASSWORD nor INGEST_SECRET configured, they stay
  * open (dev mode).
+ *
+ * GET /api/export/recommendations is intentionally public — recommendations
+ * feed the public dashboard and are meant for open council review.
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
@@ -164,22 +168,6 @@ describe("export route auth — admin session cookie", () => {
     expect(res.status).toBe(200);
   });
 
-  it("protects /api/export/recommendations the same way", async () => {
-    const { GET } = await importRecsRoute();
-
-    const denied = await GET(
-      makeGet("http://localhost/api/export/recommendations") as any
-    );
-    expect(denied.status).toBe(401);
-
-    const allowed = await GET(
-      makeGet("http://localhost/api/export/recommendations", {
-        cookie: `admin_session=${adminSessionToken(ADMIN_PASSWORD)}`,
-      }) as any
-    );
-    expect(allowed.status).toBe(200);
-  });
-
   it("protects /api/export/chat-log the same way", async () => {
     const { GET } = await importChatLogRoute();
 
@@ -223,16 +211,6 @@ describe("export route auth — Bearer INGEST_SECRET", () => {
     const { GET } = await importWikiRoute();
     const res = await GET(
       makeGet("http://localhost/api/export/wiki", {
-        authorization: `Bearer ${INGEST_SECRET}`,
-      }) as any
-    );
-    expect(res.status).toBe(200);
-  });
-
-  it("allows scripted export of recommendations with the bearer token", async () => {
-    const { GET } = await importRecsRoute();
-    const res = await GET(
-      makeGet("http://localhost/api/export/recommendations", {
         authorization: `Bearer ${INGEST_SECRET}`,
       }) as any
     );
@@ -292,5 +270,30 @@ describe("export route auth — both secrets configured", () => {
       }) as any
     );
     expect(res.status).toBe(401);
+  });
+});
+
+describe("recommendations export is intentionally public", () => {
+  beforeEach(() => {
+    process.env.ADMIN_PASSWORD = ADMIN_PASSWORD;
+    process.env.INGEST_SECRET = INGEST_SECRET;
+  });
+
+  it("returns 200 without any credentials even when both secrets are set", async () => {
+    const { GET } = await importRecsRoute();
+    const res = await GET(
+      makeGet("http://localhost/api/export/recommendations") as any
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/markdown");
+  });
+
+  it("serves the print-PDF HTML format without credentials", async () => {
+    const { GET } = await importRecsRoute();
+    const res = await GET(
+      makeGet("http://localhost/api/export/recommendations?format=pdf") as any
+    );
+    expect(res.status).toBe(200);
+    expect(res.headers.get("content-type")).toContain("text/html");
   });
 });

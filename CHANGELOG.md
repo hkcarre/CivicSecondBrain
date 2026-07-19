@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.0](https://github.com/xozai/CivicSecondBrain/compare/v1.30.0...v1.31.0) (2026-07-19)
+
+
+### Features
+
+* add readme-refresh docs skill ([#224](https://github.com/xozai/CivicSecondBrain/issues/224)) ([afc877b](https://github.com/xozai/CivicSecondBrain/commit/afc877bda15c81de02667064c7eae6c537c73ca0))
+
 ## [1.30.0](https://github.com/xozai/CivicSecondBrain/compare/v1.29.0...v1.30.0) (2026-07-19)
 
 

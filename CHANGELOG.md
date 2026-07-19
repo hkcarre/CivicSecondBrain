@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.3](https://github.com/xozai/CivicSecondBrain/compare/v1.31.2...v1.31.3) (2026-07-19)
+
+
+### Bug Fixes
+
+* remove double-applied decision boost in TF-IDF selector (closes [#233](https://github.com/xozai/CivicSecondBrain/issues/233)) ([#234](https://github.com/xozai/CivicSecondBrain/issues/234)) ([1be1a03](https://github.com/xozai/CivicSecondBrain/commit/1be1a03ed5d560a87c8bf76b48a6ecb012f24e4a))
+
 ## [1.31.2](https://github.com/xozai/CivicSecondBrain/compare/v1.31.1...v1.31.2) (2026-07-19)
 
 

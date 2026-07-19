@@ -16,8 +16,15 @@ import axios from "axios";
 import type { AxiosInstance } from "axios";
 import type { DocumentType, BoardName } from "@/types";
 import type { DiscoveredDocument } from "./schertz-scraper";
+import { envWithDeprecatedFallback } from "@/lib/env";
 
-const BASE_URL = "https://laserfiche.schertzweb.com";
+// Laserfiche WebLink base URL — the host that serves /WebLink/Browse.aspx.
+// Canonical env var: LASERFICHE_URL (e.g. https://laserfiche.schertzweb.com).
+// SCHERTZ_LASERFICHE_URL is a deprecated alias — still honored, logs a
+// one-time warning. Defaults to the Schertz instance.
+const BASE_URL =
+  envWithDeprecatedFallback("LASERFICHE_URL", "SCHERTZ_LASERFICHE_URL") ??
+  "https://laserfiche.schertzweb.com";
 const REPO = "SCHERTZ";
 const DBID = 1;
 const ROOT_FOLDER_ID = 25548;

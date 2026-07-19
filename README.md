@@ -313,28 +313,26 @@ GEMINI_API_KEY=AIzaSy...YOUR_KEY_HERE...
 
 ### City Identity
 
-All UI strings, page titles, and AI system prompts read from these variables — no code changes required when deploying for a different city.
+All UI strings, page titles, and AI system prompts read from these variables — no code changes required when deploying for a different city. **You only need to set the `NEXT_PUBLIC_` pair** — server-side code falls back to it automatically.
 
 | Variable | ★/○ | Format / Example | Default |
 |---|---|---|---|
 | `NEXT_PUBLIC_CITY_NAME` | ○ | `"Schertz"` \| `"New Braunfels"` \| `"Austin"` | `"Schertz"` |
 | `NEXT_PUBLIC_CITY_STATE` | ○ | Two-letter abbreviation: `"TX"` \| `"CA"` \| `"FL"` | `"TX"` |
-| `CITY_NAME` | ○ | Same as `NEXT_PUBLIC_CITY_NAME` — used server-side in AI prompts | `"Schertz"` |
-| `CITY_STATE` | ○ | Same as `NEXT_PUBLIC_CITY_STATE` — used server-side in AI prompts | `"TX"` |
+| `CITY_NAME` | ○ | Optional server-side override for AI prompts — rarely needed | *(falls back to `NEXT_PUBLIC_CITY_NAME`)* |
+| `CITY_STATE` | ○ | Optional server-side override for AI prompts — rarely needed | *(falls back to `NEXT_PUBLIC_CITY_STATE`)* |
 
 ```bash
 # Schertz (default — no changes needed)
 NEXT_PUBLIC_CITY_NAME="Schertz"
 NEXT_PUBLIC_CITY_STATE="TX"
-CITY_NAME="Schertz"
-CITY_STATE="TX"
 
 # Example: deploy for New Braunfels, TX
 NEXT_PUBLIC_CITY_NAME="New Braunfels"
 NEXT_PUBLIC_CITY_STATE="TX"
-CITY_NAME="New Braunfels"
-CITY_STATE="TX"
 ```
+
+**Why two pairs exist:** Next.js inlines `NEXT_PUBLIC_` variables into the client bundle at **build time** — that is what the browser UI shows, so make sure the pair is set when `next build` runs (Railway exposes service variables during Docker builds automatically). Server code (AI prompts, scraper logs) reads the environment at **runtime** and uses `CITY_NAME`/`CITY_STATE` if set, falling back to the `NEXT_PUBLIC_` pair. Setting both pairs to different values logs a startup warning, since the UI and the AI prompts would disagree about the city name.
 
 ---
 
@@ -342,11 +340,13 @@ CITY_STATE="TX"
 
 | Variable | ★/○ | Format / Example | Default |
 |---|---|---|---|
-| `GOV_BASE_URL` | ○ | Root URL of city website, no trailing slash. e.g. `https://www.newbraunfels.gov` | `https://www.schertz.com` |
-| `SCHERTZ_GOV_URL` | ○ | Full CivicPlus section URL. Format: `https://{city}/{folder-id}/Government` | `https://www.schertz.com/27/Government` |
-| `SCHERTZ_LASERFICHE_URL` | ○ | Full Laserfiche AgendaCenter URL | `https://www.schertz.com/AgendaCenter` |
+| `CIVICPLUS_URL` | ○ | Full CivicPlus section URL. Format: `https://{city}/{folder-id}/Government` | `https://www.schertz.com/27/Government` |
+| `LASERFICHE_URL` | ○ | Laserfiche WebLink base URL — the host serving `/WebLink/Browse.aspx` | `https://laserfiche.schertzweb.com` |
+| `GOV_BASE_URL` | ○ | Explicit root URL of city website, no trailing slash. Overrides the root derived from `CIVICPLUS_URL` | *(derived from `CIVICPLUS_URL`)* |
 | `MUNICODE_URL` | ○ | Full MuniCode URL including code slug (see below). Leave blank to disable | *(disabled)* |
 | `MAX_FILE_SIZE_MB` | ○ | Integer: `25` \| `50` \| `100` | `25` |
+
+> **Deprecated names:** `SCHERTZ_GOV_URL` and `SCHERTZ_LASERFICHE_URL` still work as aliases for `CIVICPLUS_URL` and `LASERFICHE_URL`, but log a deprecation warning at startup and will be removed in a future major release. Rename them in your deployment.
 
 **`MUNICODE_URL`** — enables the MuniCode ordinance scraper. Leave blank to skip gracefully (other scrapers continue). The URL must include the full path with the code slug:
 
@@ -430,8 +430,6 @@ ANTHROPIC_API_KEY=sk-ant-api03-...YOUR_KEY_HERE...AA
 # City
 NEXT_PUBLIC_CITY_NAME="Schertz"
 NEXT_PUBLIC_CITY_STATE="TX"
-CITY_NAME="Schertz"
-CITY_STATE="TX"
 
 # Scrapers
 MUNICODE_URL=https://library.municode.com/tx/schertz/codes/code_of_ordinances
@@ -457,8 +455,6 @@ OPENAI_API_KEY=sk-proj-...YOUR_KEY_HERE...
 # City
 NEXT_PUBLIC_CITY_NAME="New Braunfels"
 NEXT_PUBLIC_CITY_STATE="TX"
-CITY_NAME="New Braunfels"
-CITY_STATE="TX"
 
 # Scrapers
 GOV_BASE_URL=https://www.newbraunfels.gov
@@ -481,10 +477,10 @@ RAW_SOURCES_PATH=/data/raw-sources
 
 CivicSecondBrain is designed to work with any CivicPlus municipality. To deploy for a different city:
 
-1. Set `NEXT_PUBLIC_CITY_NAME`, `NEXT_PUBLIC_CITY_STATE`, `CITY_NAME`, `CITY_STATE`
-2. Set `GOV_BASE_URL` to the city's government website root (e.g. `https://www.newbraunfels.gov`)
+1. Set `NEXT_PUBLIC_CITY_NAME` and `NEXT_PUBLIC_CITY_STATE` (server-side prompts fall back to these — no need to duplicate them into `CITY_NAME`/`CITY_STATE`)
+2. Set `CIVICPLUS_URL` to the city's CivicPlus "Government" section URL, or `GOV_BASE_URL` to the site root (e.g. `https://www.newbraunfels.gov`)
 3. Set `MUNICODE_URL` if the city publishes ordinances on MuniCode
-4. Laserfiche folder IDs in `laserfiche-scraper.ts` are still Schertz-specific — update those for a different Laserfiche instance
+4. Set `LASERFICHE_URL` to the city's Laserfiche WebLink base URL — but note the repo name and folder IDs in `laserfiche-scraper.ts` are still Schertz-specific and need updating for a different Laserfiche instance
 
 ---
 

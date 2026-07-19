@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { getCityFull } from "@/lib/env";
 
 // Singleton Claude client
 export const claude = new Anthropic({
@@ -14,11 +15,11 @@ export const MODELS = {
 } as const;
 
 // ─── City identity (env-configurable) ────────────────────────────────────
-// Set CITY_NAME and CITY_STATE in .env.local to adapt to any municipality.
+// Set NEXT_PUBLIC_CITY_NAME and NEXT_PUBLIC_CITY_STATE in .env.local to adapt
+// to any municipality. Server-side reads fall back to those values, so a
+// single pair configures both the UI and these prompts (see app/lib/env.ts).
 
-const CITY_NAME = process.env.CITY_NAME ?? process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz";
-const CITY_STATE = process.env.CITY_STATE ?? process.env.NEXT_PUBLIC_CITY_STATE ?? "TX";
-export const CITY_FULL = `${CITY_NAME}, ${CITY_STATE}`;
+export const CITY_FULL = getCityFull();
 
 // ─── System Prompts ────────────────────────────────────────────────────────
 

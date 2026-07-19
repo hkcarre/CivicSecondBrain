@@ -20,17 +20,21 @@ import type { CivicDocument, DocumentType, BoardName } from "@/types";
 import { discoverLaserficheDocs } from "./laserfiche-scraper";
 import { discoverMunicodeDocs } from "./municode-scraper";
 import { docId } from "@/lib/manifest";
+import { envWithDeprecatedFallback, getCityName } from "@/lib/env";
 
-// Base URL for the city's government website.
-// Override via GOV_BASE_URL env var for non-Schertz deployments.
-// Falls back to the SCHERTZ_GOV_URL env var for backward compatibility,
-// then to the Schertz default.
+// Base URL for the city's government website. Precedence:
+//   1. GOV_BASE_URL   — explicit site root override (no path, no trailing slash)
+//   2. CIVICPLUS_URL  — full CivicPlus section URL; the path is stripped to get
+//                       the site root. (SCHERTZ_GOV_URL is a deprecated alias —
+//                       still honored, logs a one-time warning.)
+//   3. Schertz default
+const CIVICPLUS_URL = envWithDeprecatedFallback("CIVICPLUS_URL", "SCHERTZ_GOV_URL");
 const BASE_URL =
-  process.env.GOV_BASE_URL ??
-  process.env.SCHERTZ_GOV_URL?.replace(/\/\d+\/.*$/, "") ?? // strip path
+  process.env.GOV_BASE_URL ||
+  CIVICPLUS_URL?.replace(/\/\d+\/.*$/, "") || // strip "/27/Government"-style path
   "https://www.schertz.com";
 
-const CITY_NAME = process.env.CITY_NAME ?? process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz";
+const CITY_NAME = getCityName();
 const RAW_SOURCES_PATH = process.env.RAW_SOURCES_PATH ?? "./raw-sources";
 const SKIP_DOC_IDS = new Set(["8101"]); // City Building Map — not a civic document
 

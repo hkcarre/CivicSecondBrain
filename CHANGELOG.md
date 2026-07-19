@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.4](https://github.com/xozai/CivicSecondBrain/compare/v1.27.3...v1.27.4) (2026-07-19)
+
+
+### Bug Fixes
+
+* **export:** make /api/export/chat-log public (TPIA transparency) ([#195](https://github.com/xozai/CivicSecondBrain/issues/195)) ([81a0472](https://github.com/xozai/CivicSecondBrain/commit/81a0472f5f40c643cc5509c8e0a329ba70f6bda5))
+
 ## [1.27.3](https://github.com/xozai/CivicSecondBrain/compare/v1.27.2...v1.27.3) (2026-07-19)
 
 

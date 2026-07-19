@@ -14,8 +14,7 @@ import path from "path";
 import crypto from "crypto";
 import { downloadDocument, toCivicDocument } from "../app/lib/scraper/schertz-scraper";
 import { ingestDocument } from "../app/lib/claude/ingest-engine";
-import { appendToLog } from "../app/lib/wiki/writer";
-import type { DocumentType } from "../app/types";
+import type { CivicDocument, DocumentType } from "../app/types";
 
 // ─── Parse CLI args ────────────────────────────────────────────────────────
 
@@ -36,16 +35,15 @@ if (!url) {
 }
 
 const MANIFEST_PATH = "./raw-sources/manifest.json";
-const RAW_SOURCES_PATH = process.env.RAW_SOURCES_PATH ?? "./raw-sources";
 
-function loadManifest(): Record<string, any> {
+function loadManifest(): Record<string, CivicDocument> {
   if (fs.existsSync(MANIFEST_PATH)) {
     return JSON.parse(fs.readFileSync(MANIFEST_PATH, "utf-8"));
   }
   return {};
 }
 
-function saveManifest(manifest: Record<string, any>): void {
+function saveManifest(manifest: Record<string, CivicDocument>): void {
   fs.mkdirSync(path.dirname(MANIFEST_PATH), { recursive: true });
   fs.writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
 }

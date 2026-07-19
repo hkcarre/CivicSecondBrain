@@ -44,6 +44,7 @@ export default function ChatPage() {
   useEffect(() => {
     const saved = loadHistory();
     if (saved.length > 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage is unavailable during SSR; must restore post-mount
       setMessages(saved);
       setSessionRestored(true);
     }

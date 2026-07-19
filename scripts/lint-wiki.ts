@@ -10,7 +10,8 @@
  */
 
 import { claude, MODELS, LINT_SYSTEM_PROMPT } from "../app/lib/claude/client";
-import { readFullWiki, readWikiPage, buildWikiContext } from "../app/lib/wiki/reader";
+import { readWikiPage, buildWikiContext } from "../app/lib/wiki/reader";
+import type { WikiPage } from "../app/types";
 import { writeRecommendationPage, updateWikiIndex, appendToLog } from "../app/lib/wiki/writer";
 import type { Recommendation } from "../app/types";
 
@@ -37,7 +38,7 @@ async function main() {
   // 1. Read only topic pages (bounded memory regardless of wiki size)
   const pages = LINT_TOPIC_PAGES
     .map((p) => readWikiPage(p))
-    .filter(Boolean) as ReturnType<typeof readWikiPage>[];
+    .filter((p): p is WikiPage => p !== null);
 
   if (pages.length === 0) {
     console.log("⚠  No wiki topic pages found. Run npm run ingest:seed first.");
@@ -45,7 +46,7 @@ async function main() {
   }
 
   console.log(`📖 Analyzing ${pages.length} topic pages...\n`);
-  const wikiContext = buildWikiContext(pages as any);
+  const wikiContext = buildWikiContext(pages);
   const systemPrompt = LINT_SYSTEM_PROMPT.replace("{DATE}", today);
 
   // 2. Ask Claude to analyze and generate recommendations

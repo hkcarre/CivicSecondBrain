@@ -130,7 +130,7 @@ type ContentPart =
 
 function parseContent(content: string): ContentPart[] {
   const parts: ContentPart[] = [];
-  let remaining = content;
+  const remaining = content;
 
   // Handle AI ANALYSIS blocks first
   const aiPattern = /⚠️ AI ANALYSIS[^\n]*\n?([\s\S]*?)(?=\n\n|\[SOURCE|$)/g;

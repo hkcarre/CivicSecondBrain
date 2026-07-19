@@ -51,11 +51,13 @@ export function Sidebar() {
 
   // Sync dark state with class already applied by the inline script
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- document is unavailable during SSR; must read post-mount
     setIsDark(document.documentElement.classList.contains("dark"));
   }, []);
 
   // Close mobile drawer on route change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMobileOpen(false);
   }, [pathname]);
 

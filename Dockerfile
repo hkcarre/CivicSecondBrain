@@ -25,7 +25,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache libc6-compat
+# libc6-compat intentionally not installed here: node_modules is pre-built in
+# the deps stage and `npm run build` executes no native binaries needing it.
 
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -71,6 +72,14 @@ COPY --from=builder /app/wiki/SCHEMA.md /app/wiki-seed/SCHEMA.md
 COPY --from=builder /app/wiki/index.md  /app/wiki-seed/index.md
 
 EXPOSE 3000
+
+# Liveness probe — /api/health/live always returns 200 while the process is up.
+# Deliberately NOT /api/health (readiness), which returns 503 when the AI key is
+# missing and would wrongly mark a running container unhealthy.
+# Shell form so ${PORT} expands at runtime (Railway may override the default).
+# busybox wget ships with alpine; --start-period covers init-data.sh + Next.js boot.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- "http://127.0.0.1:${PORT:-3000}/api/health/live" || exit 1
 
 # On every start: initialize the volume if needed, then launch Next.js
 CMD ["sh", "-c", "sh /app/scripts/init-data.sh && npm start"]

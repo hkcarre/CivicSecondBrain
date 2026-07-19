@@ -6,6 +6,14 @@ import path from "path";
 // We test the security properties of downloadDocument in isolation.
 // The network call (axios) is mocked so tests are fast and offline.
 
+// vi.mock calls must be at module top level (nested calls are deprecated and
+// will become an error in a future Vitest version). Registrations survive
+// vi.resetModules(); per-test behavior is applied in importDownloadDocument.
+vi.mock("axios");
+vi.mock("../lib/scraper/laserfiche-scraper", () => ({
+  discoverLaserficheDocs: vi.fn().mockResolvedValue([]),
+}));
+
 let tmpDir: string;
 
 beforeEach(() => {
@@ -21,11 +29,6 @@ afterEach(() => {
 
 async function importDownloadDocument() {
   vi.resetModules();
-  // Mock axios after resetModules so the re-imported module gets the mock
-  vi.mock("axios");
-  vi.mock("../lib/scraper/laserfiche-scraper", () => ({
-    discoverLaserficheDocs: vi.fn().mockResolvedValue([]),
-  }));
   const axiosMod = await import("axios");
   const axiosMock = axiosMod.default as unknown as { head: ReturnType<typeof vi.fn>; get: ReturnType<typeof vi.fn> };
   // HEAD: pretend server doesn't support it

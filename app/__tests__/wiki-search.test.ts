@@ -33,7 +33,7 @@ vi.mock("@/lib/claude/client", () => ({
   CITY_FULL: "Schertz, TX",
 }));
 
-function makeEntry(path: string, summary: string, category = "topic", lastUpdated = "2024-01-01") {
+function makeEntry(path: string, summary: string, category: WikiCategory = "topic", lastUpdated = "2024-01-01") {
   return { path, summary, category, lastUpdated, sourceCount: 1 };
 }
 
@@ -106,7 +106,7 @@ describe("TF-IDF page selector (via chat route)", () => {
 // ─── /api/wiki/search endpoint tests ─────────────────────────────────────
 
 import { searchWikiPages, buildExcerpt } from "../api/wiki/search/route";
-import type { WikiPage } from "../types";
+import type { WikiCategory, WikiPage } from "../types";
 
 function makePage(overrides: Partial<WikiPage> = {}): WikiPage {
   return {

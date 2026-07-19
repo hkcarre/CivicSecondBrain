@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.1](https://github.com/xozai/CivicSecondBrain/compare/v1.27.0...v1.27.1) (2026-07-19)
+
+
+### Bug Fixes
+
+* **security:** require auth on /api/export routes ([#184](https://github.com/xozai/CivicSecondBrain/issues/184)) ([f2f7d31](https://github.com/xozai/CivicSecondBrain/commit/f2f7d3136c79341c7b97b8d5642497c782b944bd))
+
 ## [1.27.0](https://github.com/xozai/CivicSecondBrain/compare/v1.26.0...v1.27.0) (2026-07-19)
 
 

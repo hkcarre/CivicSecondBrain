@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.2](https://github.com/xozai/CivicSecondBrain/compare/v1.27.1...v1.27.2) (2026-07-19)
+
+
+### Bug Fixes
+
+* migrate ESLint to v9 flat config and enforce lint in CI ([#189](https://github.com/xozai/CivicSecondBrain/issues/189)) ([0531e9b](https://github.com/xozai/CivicSecondBrain/commit/0531e9b725f4fab02c24ff61fba47ac3ea772c0f))
+
 ## [1.27.1](https://github.com/xozai/CivicSecondBrain/compare/v1.27.0...v1.27.1) (2026-07-19)
 
 

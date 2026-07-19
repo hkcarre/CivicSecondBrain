@@ -6,6 +6,36 @@ import { chunkDocument, parseDocument } from "../lib/parser/pdf-parser";
 
 const FIXTURES = path.join(__dirname, "fixtures");
 
+// ─── parseDocument — PDF ───────────────────────────────────────────────────
+
+describe("parseDocument — .pdf", () => {
+  it("returns non-empty text from a valid PDF file", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.pdf"));
+    expect(result.text.length).toBeGreaterThan(0);
+  });
+
+  it("extracts expected text content from the PDF", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.pdf"));
+    expect(result.text).toContain("CivicSecondBrain Test Fixture");
+    expect(result.text).toContain("$4.2M general fund budget (FY2024)");
+  });
+
+  it("reports the correct page count", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.pdf"));
+    expect(result.pageCount).toBe(2);
+  });
+
+  it("extracts text from every page, not just the first", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.pdf"));
+    expect(result.text).toContain("Second page content");
+  });
+
+  it("does not mark a parseable PDF as skipped", async () => {
+    const result = await parseDocument(path.join(FIXTURES, "test.pdf"));
+    expect(result.skipped).toBeFalsy();
+  });
+});
+
 // ─── parseDocument — DOCX ──────────────────────────────────────────────────
 
 describe("parseDocument — .docx", () => {

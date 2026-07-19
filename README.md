@@ -22,6 +22,7 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 | **City Health Dashboard** | At-a-glance view of civic KPIs and pending AI alerts |
 | **Wiki Browser** | Browse all ingested wiki pages at `/wiki`, grouped by category |
 | **Export** | Download recommendations or full wiki as Markdown or ZIP |
+| **Public-Records Audit Log** | Every chat Q&A is appended to a monthly audit log (no client IPs) and exportable as JSONL/CSV for public-records requests |
 | **Multi-model AI** | Swap between Anthropic Claude, OpenAI GPT, or Google Gemini via a single env var |
 | **Responsive UI** | Works on desktop, tablet, and phone — collapsible sidebar drawer on mobile |
 | **Scheduled Automation** | Nightly ingest and weekly lint via Railway cron or GitHub Actions |
@@ -192,6 +193,7 @@ All generated content lives on the Railway persistent volume (`/data/wiki`) and 
 ├── topics/                      ← Policy areas built from ingested documents
 ├── decisions/                   ← Per-meeting votes (YYYY-MM-DD-[board].md)
 ├── recommendations/             ← AI-generated analysis (requires council review)
+├── briefings/                   ← Pre-meeting briefing packets (YYYY-MM-DD-[board]-briefing.md)
 └── queries/                     ← Saved Q&A answers
 ```
 
@@ -210,7 +212,8 @@ All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `la
 | `/admin/login` | Admin login page |
 | `GET /api/health` | Readiness check — returns 503 if API key is missing/invalid or wiki index not found |
 | `GET /api/health/live` | Liveness probe — always returns 200 if the process is running (used by Railway healthcheck) |
-| `POST /api/chat` | Streaming chat endpoint |
+| `POST /api/chat` | Streaming chat endpoint (per-IP rate limit — see `CHAT_RATE_LIMIT_RPM`) |
+| `POST /api/chat/file` | Save a chat answer to `wiki/queries/` (the chat UI's "File this answer" button) |
 | `POST /api/ingest` | Trigger discovery ingest (requires `INGEST_SECRET`) |
 | `POST /api/ingest/document` | Ingest one specific document URL without running discovery (requires `INGEST_SECRET`) |
 | `POST /api/ingest/upload` | Ingest a local file uploaded as `multipart/form-data` — same pipeline as URL ingest (requires `INGEST_SECRET`) |
@@ -237,10 +240,11 @@ openssl rand -base64 24
 
 Without `ADMIN_PASSWORD`, the admin panel is open (dev mode only — always set in production).
 
-The Admin panel supports scheduled ingestion and two manual single-document modes:
+The Admin panel supports scheduled ingestion, two manual single-document modes, and a briefing generator:
 
 - **By URL** — paste an `http` or `https` document URL and optionally provide title, type, date, and board metadata. Downloads and ingests that one document without running the full discovery scrape.
 - **Upload File** — drag-and-drop or browse (Finder/Explorer) to upload a local file directly. Accepts `.pdf`, `.html`, `.htm`, `.txt`, `.docx`, `.doc`, `.xlsx`, `.xls`. Files larger than `MAX_FILE_SIZE_MB` are rejected before saving. The file is saved to `RAW_SOURCES_PATH`, run through the same ingest engine, then deleted.
+- **Briefing Packet** — paste a published agenda URL (optional meeting date and board) to generate a per-item briefing packet saved to `wiki/briefings/` (see `POST /api/briefing` below).
 
 ### API route auth
 `/api/ingest`, `/api/ingest/document`, `/api/lint`, and `/api/briefing` require an `Authorization: Bearer <ingest-secret>` header matching `INGEST_SECRET`. Without `INGEST_SECRET`, requests are accepted in dev mode.
@@ -292,7 +296,7 @@ The route accepts only `http` and `https` URLs. It validates the metadata, downl
 
 ### CI security
 - `ANTHROPIC_API_KEY` is **not** passed to the CI build step (build confirmed clean without it)
-- A lint step fails CI if any `NEXT_PUBLIC_ANTHROPIC` reference is found (prevents accidental browser bundle exposure)
+- A secret-guard step fails CI if any `NEXT_PUBLIC_ANTHROPIC` reference is found (prevents accidental browser bundle exposure)
 
 ---
 
@@ -589,8 +593,11 @@ railway run npm run lint:wiki                    # generate recommendations
 - **HTML:** `cheerio` with nav/sidebar/footer removal
 - **Unsupported formats** are skipped without calling the AI — no blank wiki pages
 
-### Chat page selection (TF-IDF)
-The chat endpoint uses TF-IDF cosine similarity to select the most relevant wiki pages for each query — replacing the previous hardcoded keyword map. Works across any topic without configuration, and falls back to topic pages for broad queries. Decision pages are boosted for temporal queries ("last meeting", "recent vote").
+### AI call resilience
+Every AI provider call (chat, ingest, lint, briefings) retries transient failures — rate limits (429), provider overload (529), server errors (5xx), and network drops — with exponential backoff and jitter (3 retries, 500ms base, 8s cap) before surfacing an error. Permanent failures (invalid key, bad request) fail fast without retrying.
+
+### Wiki page selection (TF-IDF)
+The chat endpoint and the briefing generator share a TF-IDF cosine-similarity selector (`app/lib/wiki/select.ts`) that picks the most relevant wiki pages for each query — replacing the previous hardcoded keyword map. Works across any topic without configuration, and falls back to topic pages for broad queries. Decision pages are boosted for temporal queries ("last meeting", "recent vote").
 
 ### YAML auto-repair
 Wiki pages with unquoted colons or pipe characters in their YAML frontmatter are automatically repaired on first read.
@@ -640,8 +647,9 @@ Railway's **"Wait for CI"** setting ensures deploys only happen after tests pass
 - **Scraping:** Axios + Cheerio + custom CivicPlus DocumentCenter, Laserfiche, and MuniCode API clients
 - **Document Parsing:** pdf-parse (PDF), mammoth (DOCX), SheetJS (XLSX), cheerio (HTML)
 - **Page Selection:** TF-IDF cosine similarity scorer (zero deps, replaces hardcoded keyword map)
-- **Styling:** Tailwind CSS (dark mode, responsive)
+- **Styling:** Tailwind CSS v4 (dark mode, responsive)
 - **Testing:** Vitest unit tests (wiki, parser, scraper, AI provider, admin auth, export) + Playwright e2e smoke
+- **Linting:** ESLint 9 flat config (`eslint-config-next` core-web-vitals + typescript presets)
 - **Auth:** HMAC-SHA256 signed session cookie (admin panel), Bearer token (API routes)
 - **Deployment:** Docker on Railway with persistent volume + cron jobs
 - **CI:** GitHub Actions

@@ -12,6 +12,18 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 
 ---
 
+## Recent Updates
+
+### Unreleased
+
+- **Topic pages stay on-topic during ingestion** — multi-topic documents no longer scatter every extracted fact (with citations) across all affected topic pages; each page now receives only the facts relevant to it (#237)
+- **Unsupported file formats skip gracefully** — documents the parser can't handle are counted as skipped instead of surfacing as ingest failures in the admin panel and nightly cron logs (#237)
+- **File-size guards fail safe** — a misconfigured `MAX_FILE_SIZE_MB` no longer silently disables the upload, PDF, and download size caps; invalid values fall back to the 25 MB default with a warning (#241)
+
+*(Full version history lives in [CHANGELOG.md](CHANGELOG.md), generated automatically by release-please.)*
+
+---
+
 ## What It Does
 
 | Feature | Description |

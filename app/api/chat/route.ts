@@ -8,6 +8,7 @@
 
 import { QUERY_SYSTEM_PROMPT } from "@/lib/claude/client";
 import { getAIProvider } from "@/lib/ai/provider";
+import { checkChatRateLimit, getClientIp } from "@/lib/rate-limit";
 import {
   readWikiIndex,
   readRelevantPages,
@@ -20,6 +21,31 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
+    // ── 0. Rate limit before any AI call ─────────────────────────────────────
+    // Per-IP in-memory sliding window (CHAT_RATE_LIMIT_RPM, default 20/min).
+    // In-memory is sufficient because this deployment runs a single replica
+    // (railway.toml: numReplicas = 1); a multi-replica deployment would need
+    // a shared store (Redis/Upstash) — see app/lib/rate-limit.ts.
+    const rate = checkChatRateLimit(getClientIp(req.headers));
+    if (!rate.allowed) {
+      // JSON { error } body — the chat UI surfaces this as an inline
+      // assistant error message on non-OK responses.
+      return new Response(
+        JSON.stringify({
+          error: `Too many requests — please wait ${rate.retryAfterSeconds} second${rate.retryAfterSeconds === 1 ? "" : "s"} and try again.`,
+        }),
+        {
+          status: 429,
+          headers: {
+            "Content-Type": "application/json",
+            "Retry-After": String(rate.retryAfterSeconds),
+            "X-RateLimit-Limit": String(rate.limit),
+            "X-RateLimit-Remaining": "0",
+          },
+        }
+      );
+    }
+
     const { messages, fileAnswer } = await req.json();
     const userMessage: string = messages[messages.length - 1]?.content ?? "";
 

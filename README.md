@@ -381,6 +381,7 @@ Both secrets **must be set in production**. Without them `/admin` and the ingest
 |---|---|---|---|
 | `ADMIN_PASSWORD` | ★ production | Any string — use a strong random value. `openssl rand -base64 24` | Open — no auth |
 | `INGEST_SECRET` | ★ production | Any string — use a strong random value. `openssl rand -hex 32` | Open — no auth |
+| `CHAT_RATE_LIMIT_RPM` | ○ | Positive integer: `20` \| `60` | `20` |
 
 ```bash
 # Generate in your terminal and paste into Railway dashboard:
@@ -395,6 +396,8 @@ INGEST_SECRET=a3f1c8e2d9b04765f2a8c1e3d6b90f4e2c7a1d5b8e3f6c9a2d4b7e0f1c3a6d9
 **`ADMIN_PASSWORD`** protects `/admin` with a login page. The session cookie is HMAC-SHA256 signed, HttpOnly, SameSite=Lax, and expires after 8 hours. Changing the password immediately invalidates all existing sessions.
 
 **`INGEST_SECRET`** — callers must send `Authorization: Bearer <ingest-secret>` to `POST /api/ingest`, `POST /api/ingest/document`, `POST /api/ingest/upload`, and `POST /api/lint`. The GitHub Actions scheduled workflow reads this from repository secrets.
+
+**`CHAT_RATE_LIMIT_RPM`** — max `POST /api/chat` requests per minute per client IP. Every chat request triggers a paid AI API call, so this caps the cost impact of crawl bursts or abuse. Requests over the limit get an HTTP 429 with a `Retry-After` header (the chat UI shows a friendly retry message). The limiter is an in-memory sliding window keyed by the first hop of `x-forwarded-for` — sufficient because the Railway deployment runs a single replica; a multi-replica deployment would need a shared store (Redis/Upstash).
 
 ---
 

@@ -1,0 +1,31 @@
+version: 2
+updates:
+  # npm dependencies — weekly, grouped to reduce PR noise
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      ai-sdks:
+        patterns:
+          - "@anthropic-ai/*"
+          - "openai"
+          - "@google/*"
+      dev-dependencies:
+        dependency-type: development
+    commit-message:
+      prefix: "chore"
+      include: scope
+
+  # GitHub Actions — weekly
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 3
+    commit-message:
+      prefix: "chore"
+      include: scope

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.30.0](https://github.com/xozai/CivicSecondBrain/compare/v1.29.0...v1.30.0) (2026-07-19)
+
+
+### Features
+
+* add test-triage-fix QA loop skill ([#223](https://github.com/xozai/CivicSecondBrain/issues/223)) ([b202632](https://github.com/xozai/CivicSecondBrain/commit/b2026321ef53004b8bf4f906212181fb163faf06))
+
 ## [1.29.0](https://github.com/xozai/CivicSecondBrain/compare/v1.28.0...v1.29.0) (2026-07-19)
 
 

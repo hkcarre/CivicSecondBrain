@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.23.2](https://github.com/xozai/CivicSecondBrain/compare/v1.23.1...v1.23.2) (2026-07-19)
+
+
+### Performance Improvements
+
+* add pagination and result cap to /api/wiki/search ([#165](https://github.com/xozai/CivicSecondBrain/issues/165)) ([eb374e1](https://github.com/xozai/CivicSecondBrain/commit/eb374e1318709578700f2a92eb55ec69c3d32108)), closes [#139](https://github.com/xozai/CivicSecondBrain/issues/139)
+
 ## [1.23.1](https://github.com/xozai/CivicSecondBrain/compare/v1.23.0...v1.23.1) (2026-07-19)
 
 

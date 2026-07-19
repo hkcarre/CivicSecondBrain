@@ -3,6 +3,7 @@ import path from "path";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { verifyIngestAccess } from "@/lib/auth";
+import { getMaxFileSizeMb } from "@/lib/env";
 import { ingestDocument } from "@/lib/claude/ingest-engine";
 import { appendToLog } from "@/lib/wiki/writer";
 import { inferManualDocumentType } from "@/lib/ingest/manual-ingest";
@@ -25,7 +26,7 @@ export async function POST(req: Request) {
     return Response.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  const maxMb = parseInt(process.env.MAX_FILE_SIZE_MB ?? "25");
+  const maxMb = getMaxFileSizeMb();
   const rawSourcesPath = process.env.RAW_SOURCES_PATH ?? "./raw-sources";
 
   let formData: FormData;

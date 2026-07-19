@@ -9,6 +9,7 @@ import { PDFParse } from "pdf-parse";
 import * as cheerio from "cheerio";
 import mammoth from "mammoth";
 import * as XLSX from "xlsx";
+import { getMaxFileSizeMb } from "@/lib/env";
 
 export interface ParsedDocument {
   text: string;
@@ -21,7 +22,7 @@ export interface ParsedDocument {
 
 // Cap: skip PDFs larger than MAX_FILE_SIZE_MB (default 25 MB).
 // Set the env var to allow larger files when more memory is available.
-const MAX_PDF_BYTES = parseInt(process.env.MAX_FILE_SIZE_MB ?? "25") * 1024 * 1024;
+const MAX_PDF_BYTES = getMaxFileSizeMb() * 1024 * 1024;
 
 // Cap extracted text at ~400k chars (~100k tokens) before chunking.
 // Prevents runaway memory on massive documents.

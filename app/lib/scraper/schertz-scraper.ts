@@ -20,7 +20,7 @@ import type { CivicDocument, DocumentType, BoardName } from "@/types";
 import { discoverLaserficheDocs } from "./laserfiche-scraper";
 import { discoverMunicodeDocs } from "./municode-scraper";
 import { docId } from "@/lib/manifest";
-import { envWithDeprecatedFallback, getCityName } from "@/lib/env";
+import { envWithDeprecatedFallback, getCityName, getMaxFileSizeMb } from "@/lib/env";
 
 // Base URL for the city's government website. Precedence:
 //   1. GOV_BASE_URL   — explicit site root override (no path, no trailing slash)
@@ -298,7 +298,7 @@ async function scrapePublicNotices(): Promise<DiscoveredDocument[]> {
 // ─── Download a document to raw-sources/ ──────────────────────────────────
 
 // Set MAX_FILE_SIZE_MB env var to override (e.g. MAX_FILE_SIZE_MB=50 for larger memory)
-const MAX_DOWNLOAD_BYTES = parseInt(process.env.MAX_FILE_SIZE_MB ?? "25") * 1024 * 1024;
+const MAX_DOWNLOAD_BYTES = getMaxFileSizeMb() * 1024 * 1024;
 
 export async function downloadDocument(doc: DiscoveredDocument): Promise<string | null> {
   try {

@@ -88,3 +88,22 @@ export function getCityState(): string {
 export function getCityFull(): string {
   return `${getCityName()}, ${getCityState()}`;
 }
+
+/**
+ * MAX_FILE_SIZE_MB with a fail-safe default: a non-numeric or non-positive
+ * value falls back to 25 instead of yielding NaN — a bare parseInt would
+ * make every `size > cap` comparison false and silently DISABLE the size
+ * guards that protect the container from OOM on large PDFs (#240).
+ */
+export function getMaxFileSizeMb(): number {
+  const raw = process.env["MAX_FILE_SIZE_MB"];
+  const parsed = raw === undefined ? 25 : parseInt(raw, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    warnOnce(
+      "MAX_FILE_SIZE_MB-invalid",
+      `[env] MAX_FILE_SIZE_MB="${raw}" is not a positive number — using the 25MB default.`
+    );
+    return 25;
+  }
+  return parsed;
+}

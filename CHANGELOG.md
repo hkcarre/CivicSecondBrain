@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.1](https://github.com/xozai/CivicSecondBrain/compare/v1.31.0...v1.31.1) (2026-07-19)
+
+
+### Bug Fixes
+
+* **auth:** accept admin session cookie on ingest/lint/briefing routes ([#228](https://github.com/xozai/CivicSecondBrain/issues/228)) ([55c4497](https://github.com/xozai/CivicSecondBrain/commit/55c4497207ab4f29969fdc9d5cd01bdb96156d8a))
+
 ## [1.31.0](https://github.com/xozai/CivicSecondBrain/compare/v1.30.0...v1.31.0) (2026-07-19)
 
 

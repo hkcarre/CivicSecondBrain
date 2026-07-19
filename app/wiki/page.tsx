@@ -33,6 +33,11 @@ const CATEGORY_META: Record<
     color: "bg-purple-50 text-purple-700 border-purple-200",
     description: "Previously answered questions",
   },
+  briefing: {
+    label: "Briefings",
+    color: "bg-teal-50 text-teal-700 border-teal-200",
+    description: "AI-generated pre-meeting briefing packets — requires council review",
+  },
 };
 
 const CATEGORY_ORDER: WikiCategory[] = [
@@ -41,6 +46,7 @@ const CATEGORY_ORDER: WikiCategory[] = [
   "person",
   "recommendation",
   "query",
+  "briefing",
 ];
 
 export default function WikiPage() {
@@ -131,7 +137,7 @@ function WikiEntryRow({
 }) {
   const meta = CATEGORY_META[category];
   const title = entry.path
-    .replace(/^(topics|decisions|people|recommendations|queries)\//, "")
+    .replace(/^(topics|decisions|people|recommendations|queries|briefings)\//, "")
     .replace(/\.md$/, "")
     .replace(/-/g, " ")
     .replace(/\b\w/g, (c) => c.toUpperCase());

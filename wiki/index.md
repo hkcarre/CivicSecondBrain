@@ -21,3 +21,7 @@
 ## Queries Filed
 | Page | Summary | Last Updated | Sources |
 |---|---|---|---|
+
+## Briefings
+| Page | Summary | Last Updated | Sources |
+|---|---|---|---|

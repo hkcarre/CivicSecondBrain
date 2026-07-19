@@ -18,6 +18,7 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 | **Persistent Wiki** | AI builds and maintains a structured wiki from every ingested document |
 | **Smart Ingestion** | Parallel scrape of DocumentCenter, Laserfiche, Finance sub-pages, and MuniCode (~8,000+ documents), plus manual single-document ingest |
 | **Proactive Recommendations** | AI analysis surfaces budget trends, strategic plan gaps, and improvement opportunities |
+| **Meeting Briefing Packets** | Paste a published agenda URL — AI extracts the agenda items, cross-references each against the wiki, and writes a per-item briefing packet (background, past decisions, budget implications, open questions) |
 | **City Health Dashboard** | At-a-glance view of civic KPIs and pending AI alerts |
 | **Wiki Browser** | Browse all ingested wiki pages at `/wiki`, grouped by category |
 | **Export** | Download recommendations or full wiki as Markdown or ZIP |
@@ -120,7 +121,7 @@ Open [http://localhost:3000](http://localhost:3000)
 | `npm run dev` | Start development server |
 | `npm run build` | Production build |
 | `npm run lint` | ESLint |
-| `npm test` | Run unit tests (Vitest, 164 tests) |
+| `npm test` | Run unit tests (Vitest, 264 tests) |
 | `npm run test:e2e` | Run Playwright e2e smoke tests (requires `npx playwright install chromium` once) |
 | `npm run ingest:seed` | Full parallel ingestion from all sources (~8,000+ documents, 3 workers) |
 | `npm run ingest:seed -- --limit 10` | Ingest first 10 documents (fast, no live scrape) |
@@ -214,6 +215,7 @@ All wiki pages use YAML frontmatter (`title`, `type`, `category`, `sources`, `la
 | `POST /api/ingest/document` | Ingest one specific document URL without running discovery (requires `INGEST_SECRET`) |
 | `POST /api/ingest/upload` | Ingest a local file uploaded as `multipart/form-data` — same pipeline as URL ingest (requires `INGEST_SECRET`) |
 | `POST /api/lint` | Trigger wiki analysis (requires `INGEST_SECRET`) |
+| `POST /api/briefing` | Generate a meeting briefing packet from an agenda URL (requires `INGEST_SECRET`) |
 | `GET /api/wiki/search` | Full-text wiki search (`?q=query&category=topic&limit=50&offset=0` — `limit` defaults to 50, capped at 200; response includes `total`) |
 | `GET /api/export/recommendations` | Export recommendations as `.md` or print-PDF HTML |
 | `GET /api/export/wiki` | Export full wiki as `.md` or `.zip` |
@@ -241,7 +243,7 @@ The Admin panel supports scheduled ingestion and two manual single-document mode
 - **Upload File** — drag-and-drop or browse (Finder/Explorer) to upload a local file directly. Accepts `.pdf`, `.html`, `.htm`, `.txt`, `.docx`, `.doc`, `.xlsx`, `.xls`. Files larger than `MAX_FILE_SIZE_MB` are rejected before saving. The file is saved to `RAW_SOURCES_PATH`, run through the same ingest engine, then deleted.
 
 ### API route auth
-`/api/ingest`, `/api/ingest/document`, and `/api/lint` require an `Authorization: Bearer <ingest-secret>` header matching `INGEST_SECRET`. Without `INGEST_SECRET`, requests are accepted in dev mode.
+`/api/ingest`, `/api/ingest/document`, `/api/lint`, and `/api/briefing` require an `Authorization: Bearer <ingest-secret>` header matching `INGEST_SECRET`. Without `INGEST_SECRET`, requests are accepted in dev mode.
 
 ```bash
 # Generate a secret
@@ -261,6 +263,18 @@ openssl rand -hex 32
 ```
 
 The route accepts only `http` and `https` URLs. It validates the metadata, downloads that one document, runs the standard ingest engine, and saves the manifest only after a successful ingest. Download failures, unsupported formats, and AI ingest errors return JSON failure responses without updating the manifest.
+
+`POST /api/briefing` generates a pre-meeting briefing packet from a published agenda:
+
+```json
+{
+  "agendaUrl": "https://example.gov/agenda.pdf",
+  "meetingDate": "2026-08-04",
+  "board": "city-council"
+}
+```
+
+`meetingDate` and `board` are optional — when omitted they are inferred from the agenda text. The route downloads and parses the agenda (deleting the temp file afterwards), extracts the agenda item list with one AI call, then cross-references each item against the wiki (same TF-IDF page selector as chat) and writes one brief per item — background, related past decisions/ordinances, budget implications with fiscal-year context, and open questions. The packet is saved to `wiki/briefings/YYYY-MM-DD-<board>-briefing.md`. Cost guards: max 25 items briefed per packet (noted in the output when truncated) and ~10k chars of wiki context per item.
 
 ### CI security
 - `ANTHROPIC_API_KEY` is **not** passed to the CI build step (build confirmed clean without it)
@@ -397,7 +411,7 @@ INGEST_SECRET=a3f1c8e2d9b04765f2a8c1e3d6b90f4e2c7a1d5b8e3f6c9a2d4b7e0f1c3a6d9
 
 **`ADMIN_PASSWORD`** protects `/admin` with a login page. The session cookie is HMAC-SHA256 signed, HttpOnly, SameSite=Lax, and expires after 8 hours. Changing the password immediately invalidates all existing sessions.
 
-**`INGEST_SECRET`** — callers must send `Authorization: Bearer <ingest-secret>` to `POST /api/ingest`, `POST /api/ingest/document`, `POST /api/ingest/upload`, and `POST /api/lint`. The GitHub Actions scheduled workflow reads this from repository secrets.
+**`INGEST_SECRET`** — callers must send `Authorization: Bearer <ingest-secret>` to `POST /api/ingest`, `POST /api/ingest/document`, `POST /api/ingest/upload`, `POST /api/lint`, and `POST /api/briefing`. The GitHub Actions scheduled workflow reads this from repository secrets.
 
 **`CHAT_RATE_LIMIT_RPM`** — max `POST /api/chat` requests per minute per client IP. Every chat request triggers a paid AI API call, so this caps the cost impact of crawl bursts or abuse. Requests over the limit get an HTTP 429 with a `Retry-After` header (the chat UI shows a friendly retry message). The limiter is an in-memory sliding window keyed by the first hop of `x-forwarded-for` — sufficient because the Railway deployment runs a single replica; a multi-replica deployment would need a shared store (Redis/Upstash).
 

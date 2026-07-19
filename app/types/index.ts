@@ -53,7 +53,8 @@ export type WikiCategory =
   | "decision"
   | "person"
   | "recommendation"
-  | "query";
+  | "query"
+  | "briefing";
 
 export type RecommendationSeverity = "high" | "medium" | "low";
 
@@ -141,6 +142,28 @@ export interface Recommendation {
   sourcesAnalyzed: string[];
   generatedAt: string;
   path: string;
+}
+
+// ─── Briefing Types ────────────────────────────────────────────────────────
+
+/** One agenda item extracted from a published meeting agenda. */
+export interface AgendaItem {
+  number: string;
+  title: string;
+  summary: string;
+}
+
+export interface BriefingResult {
+  /** Wiki-relative path of the generated packet, e.g. briefings/2026-07-21-city-council-briefing.md */
+  path: string;
+  /** Number of agenda items actually briefed (capped at MAX_BRIEFING_ITEMS). */
+  itemCount: number;
+  /** Total agenda items found in the document before the cap was applied. */
+  totalItems: number;
+  /** True when the agenda had more items than the cap allowed. */
+  truncated: boolean;
+  /** The composed packet markdown (body, without frontmatter). */
+  markdown: string;
 }
 
 // ─── Lint / Health Types ───────────────────────────────────────────────────

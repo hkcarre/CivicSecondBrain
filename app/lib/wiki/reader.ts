@@ -140,6 +140,7 @@ function inferCategory(pagePath: string): WikiIndexEntry["category"] {
   if (pagePath.startsWith("people/")) return "person";
   if (pagePath.startsWith("recommendations/")) return "recommendation";
   if (pagePath.startsWith("queries/")) return "query";
+  if (pagePath.startsWith("briefings/")) return "briefing";
   return "topic";
 }
 

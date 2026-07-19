@@ -77,6 +77,37 @@ export function writeDecisionsPage(
   return pagePath;
 }
 
+// ─── Write a meeting briefing packet page ─────────────────────────────────
+
+export function writeBriefingPage(
+  meetingDate: string,
+  board: string,
+  title: string,
+  content: string,
+  sources: string[]
+): string {
+  const slug =
+    board
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "council";
+  const pagePath = `briefings/${meetingDate}-${slug}-briefing.md`;
+
+  const page: WikiPage = {
+    title,
+    type: "wiki",
+    category: "briefing",
+    sources,
+    lastUpdated: meetingDate,
+    content,
+    path: pagePath,
+  };
+
+  writeWikiPage(page);
+  return pagePath;
+}
+
 // ─── Write a recommendation page ──────────────────────────────────────────
 
 export function writeRecommendationPage(rec: Recommendation): string {
@@ -177,8 +208,15 @@ export function updateWikiIndex(
       person: "## People & Boards",
       recommendation: "## Recommendations",
       query: "## Queries Filed",
+      briefing: "## Briefings",
     };
     const section = sectionMap[entry.category] ?? "## Topics";
+    // Older index.md files (pre-briefings) may lack the section — create it.
+    if (!content.includes(section)) {
+      content =
+        content.trimEnd() +
+        `\n\n${section}\n| Page | Summary | Last Updated | Sources |\n|---|---|---|---|\n`;
+    }
     // Escape pipe characters in path and summary so they don't break markdown table parsing.
     const safePath = entry.path.replace(/\|/g, "&#124;");
     const safeSummary = entry.summary.slice(0, 80).replace(/\|/g, "&#124;");

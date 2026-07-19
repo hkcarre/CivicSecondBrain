@@ -13,6 +13,7 @@ const CATEGORY_COLORS: Record<WikiCategory, string> = {
   person: "bg-green-50 text-green-700 border-green-200",
   recommendation: "bg-red-50 text-red-700 border-red-200",
   query: "bg-purple-50 text-purple-700 border-purple-200",
+  briefing: "bg-teal-50 text-teal-700 border-teal-200",
 };
 
 interface Props {
@@ -64,6 +65,7 @@ export default async function WikiDetailPage({ params }: Props) {
     person: "Person",
     recommendation: "Recommendation",
     query: "Saved Q&A",
+    briefing: "Briefing Packet",
   };
 
   return (
@@ -140,7 +142,7 @@ export default async function WikiDetailPage({ params }: Props) {
                 <ul className="space-y-1.5">
                   {related.map((entry) => {
                     const title = entry.path
-                      .replace(/^(topics|decisions|people|recommendations|queries)\//, "")
+                      .replace(/^(topics|decisions|people|recommendations|queries|briefings)\//, "")
                       .replace(/\.md$/, "")
                       .replace(/-/g, " ")
                       .replace(/\b\w/g, (c) => c.toUpperCase());

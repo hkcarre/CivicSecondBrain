@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import type { FormEvent, DragEvent } from "react";
-import { RefreshCw, Play, FileSearch, CheckCircle, Loader2, FileText, Upload, X } from "lucide-react";
+import { RefreshCw, Play, FileSearch, CheckCircle, Loader2, FileText, Upload, X, ClipboardList } from "lucide-react";
 import { clsx } from "clsx";
 
 const DOCUMENT_TYPE_OPTIONS = [
@@ -70,6 +70,12 @@ interface UploadFormState {
   date: string;
 }
 
+interface BriefingFormState {
+  agendaUrl: string;
+  meetingDate: string;
+  board: string;
+}
+
 const ACCEPTED_EXTENSIONS = [".pdf", ".html", ".htm", ".txt", ".docx", ".doc", ".xlsx", ".xls"];
 
 export interface ManualIngestPayload {
@@ -121,6 +127,11 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
     type: "",
     board: "",
     date: "",
+  });
+  const [briefingForm, setBriefingForm] = useState<BriefingFormState>({
+    agendaUrl: "",
+    meetingDate: "",
+    board: "",
   });
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -208,6 +219,37 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
         setUploadForm({ file: null, title: "", type: "", board: "", date: "" });
         if (fileInputRef.current) fileInputRef.current.value = "";
       }
+    } catch {
+      setStatus("error");
+      setResult("Error — check server logs.");
+    }
+  };
+
+  const generateBriefing = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setStatus("running");
+    setActiveAction("briefing");
+    setResult(null);
+    setFailureCount(0);
+    setFailedDocuments([]);
+
+    try {
+      const payload: Record<string, string> = { agendaUrl: briefingForm.agendaUrl.trim() };
+      if (briefingForm.meetingDate) payload.meetingDate = briefingForm.meetingDate;
+      if (briefingForm.board) payload.board = briefingForm.board;
+
+      const res = await fetch("/api/briefing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      setStatus(res.ok ? "done" : "error");
+      setResult(
+        res.ok && data.path
+          ? `${data.message ?? "Briefing generated."} Saved to wiki/${data.path}`
+          : data.message ?? (res.ok ? "Complete." : "Error — check server logs.")
+      );
     } catch {
       setStatus("error");
       setResult("Error — check server logs.");
@@ -443,6 +485,63 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
               </div>
             </form>
           )}
+        </div>
+
+        {/* Briefing Packet */}
+        <div className="mt-4 border-t border-gray-200 pt-4">
+          <h3 className="text-sm font-semibold text-gray-900 mb-1">Briefing Packet</h3>
+          <p className="text-xs text-gray-400 mb-3">
+            Generate a pre-meeting briefing from a published agenda URL — each item
+            cross-referenced against the wiki.
+          </p>
+          <form onSubmit={generateBriefing} className="space-y-3">
+            <input
+              type="url"
+              required
+              value={briefingForm.agendaUrl}
+              onChange={(event) =>
+                setBriefingForm((form) => ({ ...form, agendaUrl: event.target.value }))
+              }
+              placeholder="https://example.gov/agenda.pdf"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 placeholder:text-gray-400 focus:border-city-navy focus:outline-none"
+            />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <input
+                type="date"
+                value={briefingForm.meetingDate}
+                onChange={(event) =>
+                  setBriefingForm((form) => ({ ...form, meetingDate: event.target.value }))
+                }
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-city-navy focus:outline-none"
+              />
+              <select
+                value={briefingForm.board}
+                onChange={(event) =>
+                  setBriefingForm((form) => ({ ...form, board: event.target.value }))
+                }
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 focus:border-city-navy focus:outline-none"
+              >
+                <option value="">Infer board</option>
+                {BOARD_OPTIONS.map((b) => (
+                  <option key={b} value={b}>{b}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={status === "running" || !briefingForm.agendaUrl.trim()}
+                className="inline-flex items-center gap-2 rounded-lg bg-city-navy px-3 py-2 text-sm font-medium text-white hover:bg-city-navy-light disabled:opacity-50"
+              >
+                {activeAction === "briefing" && status === "running" ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <ClipboardList size={15} />
+                )}
+                Generate Briefing
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* Result */}

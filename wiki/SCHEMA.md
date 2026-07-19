@@ -56,6 +56,7 @@ schertz.com documents
 | `wiki/people/boards.md` | 14 advisory boards — members, meeting frequency | Website, agendas | Quarterly |
 | `wiki/recommendations/` | AI-generated improvement analyses | Full wiki state | Nightly LINT |
 | `wiki/queries/` | Filed Q&A answers saved for reuse | Generated during QUERY | On demand |
+| `wiki/briefings/YYYY-MM-DD-[board]-briefing.md` | Pre-meeting briefing packets — one section per agenda item | Published agenda + wiki state | Before each meeting (on demand) |
 | `wiki/index.md` | Content catalog — LLM navigation layer | Generated | After every operation |
 | `wiki/log.md` | Append-only operation history | Generated | After every operation |
 
@@ -105,7 +106,7 @@ schertz.com documents
 ```
 ## [YYYY-MM-DD] OPERATION | Label
 ```
-Where OPERATION is one of: `BOOTSTRAP`, `INGEST`, `INGEST-BATCH`, `QUERY`, `LINT`, `RECOMMEND`
+Where OPERATION is one of: `BOOTSTRAP`, `INGEST`, `INGEST-BATCH`, `QUERY`, `LINT`, `RECOMMEND`, `BRIEFING`
 
 **Never use `##` headings inside a log entry body.**
 
@@ -123,7 +124,7 @@ Every wiki page requires:
 ---
 title: [Page Title]
 type: wiki
-category: [topic | decision | person | recommendation | query]
+category: [topic | decision | person | recommendation | query | briefing]
 sources: [list of document filenames this was derived from]
 last_updated: YYYY-MM-DD
 ---

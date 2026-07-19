@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Copy `.env.example` to `.env.local` and set `ANTHROPIC_API_KEY`. The `WIKI_PATH` and `RAW_SOURCES_PATH` vars default to `./wiki` and `./raw-sources` for local dev.
 
-`INGEST_SECRET` protects the `/api/ingest` and `/api/lint` POST routes. Callers must include `Authorization: Bearer <secret>` in the request. If `INGEST_SECRET` is not set, the routes are open (dev-mode convenience; always set this in production).
+`INGEST_SECRET` protects the `/api/ingest`, `/api/lint`, and `/api/briefing` POST routes. Callers must include `Authorization: Bearer <secret>` in the request. If `INGEST_SECRET` is not set, the routes are open (dev-mode convenience; always set this in production).
 
 ## Commands
 
@@ -45,8 +45,9 @@ TypeScript scripts run via `tsx` with env loaded from `.env.local` through `scri
 ### Three core operations (all call the Anthropic Claude API)
 
 - **INGEST** (`app/lib/claude/ingest-engine.ts`, `scripts/ingest-seed.ts`): Downloads a document, parses it (skipping files >25MB or non-PDF formats), calls Claude to extract `ExtractedKnowledge`, writes/updates wiki pages, saves manifest entry.
-- **QUERY** (`app/api/chat/route.ts`): Reads `wiki/index.md`, keyword-selects relevant pages via `selectRelevantPages()`, streams a Claude response. Page selection is keyword-based — intended to be replaced with OpenSearch k-NN at scale.
+- **QUERY** (`app/api/chat/route.ts`): Reads `wiki/index.md`, keyword-selects relevant pages via `selectRelevantPages()` (`app/lib/wiki/select.ts`, shared with BRIEFING), streams a Claude response. Page selection is keyword-based — intended to be replaced with OpenSearch k-NN at scale.
 - **LINT** (`app/api/lint/route.ts`, `scripts/lint-wiki.ts`): Reads topic wiki pages, sends to Claude for analysis, writes `wiki/recommendations/` pages. The script version reads only 8 fixed topic pages to bound memory; the API route version reads the full wiki.
+- **BRIEFING** (`app/lib/briefing/generate.ts`, `app/api/briefing/route.ts`): Downloads a published agenda, extracts the item list with one AI call (capped at 25 items), cross-references each item against the wiki via the shared TF-IDF selector (`app/lib/wiki/select.ts`, ~10k chars context per item), and writes a per-item briefing packet to `wiki/briefings/YYYY-MM-DD-<board>-briefing.md`.
 
 ### Key paths
 

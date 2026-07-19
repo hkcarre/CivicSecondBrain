@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.27.0](https://github.com/xozai/CivicSecondBrain/compare/v1.26.0...v1.27.0) (2026-07-19)
+
+
+### Features
+
+* generate council meeting briefing packets from agendas ([#182](https://github.com/xozai/CivicSecondBrain/issues/182)) ([3b1397b](https://github.com/xozai/CivicSecondBrain/commit/3b1397bbc4b8f0f994e1f8a8d2b965142d9dc9e0)), closes [#147](https://github.com/xozai/CivicSecondBrain/issues/147)
+
 ## [1.26.0](https://github.com/xozai/CivicSecondBrain/compare/v1.25.1...v1.26.0) (2026-07-19)
 
 

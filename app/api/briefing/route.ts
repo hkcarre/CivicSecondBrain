@@ -12,7 +12,7 @@
 
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { verifySecret } from "@/lib/auth";
+import { verifyIngestAccess } from "@/lib/auth";
 import { generateBriefing } from "@/lib/briefing/generate";
 import {
   BriefingGenerationError,
@@ -23,7 +23,7 @@ import {
 export const maxDuration = 300; // 5 minutes — up to 26 AI calls per packet
 
 export async function POST(req: Request): Promise<NextResponse> {
-  if (!verifySecret(req)) {
+  if (!(await verifyIngestAccess(req))) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 

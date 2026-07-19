@@ -20,7 +20,7 @@ import {
   markIngested,
 } from "@/lib/manifest";
 import { appendToLog } from "@/lib/wiki/writer";
-import { verifySecret } from "@/lib/auth";
+import { verifyIngestAccess } from "@/lib/auth";
 
 export const maxDuration = 300;
 
@@ -28,7 +28,7 @@ export const maxDuration = 300;
 let ingestInProgress = false;
 
 export async function POST(req: Request): Promise<NextResponse> {
-  if (!verifySecret(req)) {
+  if (!(await verifyIngestAccess(req))) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 

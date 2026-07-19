@@ -2,7 +2,7 @@ import fs from "fs";
 import path from "path";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
-import { verifySecret } from "@/lib/auth";
+import { verifyIngestAccess } from "@/lib/auth";
 import { ingestDocument } from "@/lib/claude/ingest-engine";
 import { appendToLog } from "@/lib/wiki/writer";
 import { inferManualDocumentType } from "@/lib/ingest/manual-ingest";
@@ -21,7 +21,7 @@ function stemFromFilename(filename: string): string {
 }
 
 export async function POST(req: Request) {
-  if (!verifySecret(req)) {
+  if (!(await verifyIngestAccess(req))) {
     return Response.json({ success: false, message: "Unauthorized" }, { status: 401 });
   }
 

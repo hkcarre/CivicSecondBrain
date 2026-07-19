@@ -6,7 +6,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { verifySecret } from "@/lib/auth";
+import { verifyIngestAccess } from "@/lib/auth";
 import {
   ingestManualDocument,
   ManualIngestUnsupportedError,
@@ -17,7 +17,7 @@ import {
 export const maxDuration = 300;
 
 export async function POST(req: Request): Promise<NextResponse> {
-  if (!verifySecret(req)) {
+  if (!(await verifyIngestAccess(req))) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 

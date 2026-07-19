@@ -112,7 +112,8 @@ function readDirRecursive(dir: string, pages: WikiPage[]): void {
     } else if (
       entry.isFile() &&
       entry.name.endsWith(".md") &&
-      entry.name !== "SCHEMA.md"
+      entry.name !== "SCHEMA.md" &&
+      entry.name !== "index.md"
     ) {
       const relativePath = path.relative(WIKI_PATH, fullPath);
       const page = readWikiPage(relativePath);

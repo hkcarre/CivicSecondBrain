@@ -246,7 +246,7 @@ export async function discoverLaserficheDocs(): Promise<DiscoveredDocument[]> {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────
 
-function extractDateFromName(name: string): string | undefined {
+export function extractDateFromName(name: string): string | undefined {
   // "2024-01-10", "01/10/2024", "January 10 2024", "01-10-2024"
   const iso = name.match(/\b(20\d{2})[.\-\/](0[1-9]|1[0-2])[.\-\/](0[1-9]|[12]\d|3[01])\b/);
   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
@@ -260,7 +260,7 @@ function extractDateFromName(name: string): string | undefined {
   return undefined;
 }
 
-function extractDateFromData(data: (string | number | null)[]): string {
+export function extractDateFromData(data: (string | number | null)[]): string {
   // data[11] = CreationDate, data[12] = LastModified
   const raw = (data[11] ?? data[12]) as string | null;
   if (!raw) return new Date().toISOString().split("T")[0];
@@ -271,7 +271,7 @@ function extractDateFromData(data: (string | number | null)[]): string {
   }
 }
 
-function inferTypeFromName(name: string, folderName: string): DocumentType | undefined {
+export function inferTypeFromName(name: string, folderName: string): DocumentType | undefined {
   const t = `${name} ${folderName}`.toLowerCase();
   if (t.includes("minute")) return "meeting-minutes";
   if (t.includes("agenda")) return "agenda";
@@ -284,7 +284,7 @@ function inferTypeFromName(name: string, folderName: string): DocumentType | und
   return undefined;
 }
 
-function inferBoardFromName(folderName: string): BoardName | undefined {
+export function inferBoardFromName(folderName: string): BoardName | undefined {
   const n = folderName.toLowerCase();
   if (n.includes("city council") || n.includes("council")) return "city-council";
   if (n.includes("planning") || n.includes("zoning")) return "planning-zoning";

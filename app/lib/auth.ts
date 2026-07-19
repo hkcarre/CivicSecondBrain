@@ -70,24 +70,22 @@ function getCookie(req: Request, name: string): string | null {
 }
 
 /**
- * Verifies access to the /api/export/* routes.
- *
- * Accepts EITHER:
- *  - a valid `admin_session` cookie (set by POST /api/admin/login — the admin
- *    panel's export links work without changes), OR
- *  - an `Authorization: Bearer <INGEST_SECRET>` header (for scripted exports).
+ * Shared dual-auth check: accepts EITHER
+ *  - a valid `admin_session` cookie (set by POST /api/admin/login — browser
+ *    requests from the admin panel work without changes), OR
+ *  - an `Authorization: Bearer <INGEST_SECRET>` header (for scripts/cron).
  *
  * If neither ADMIN_PASSWORD nor INGEST_SECRET is configured, returns true
  * (dev/local mode) but logs a warning — consistent with verifySecret above.
  */
-export async function verifyExportAccess(req: Request): Promise<boolean> {
+async function verifyAdminOrSecret(req: Request, routeLabel: string): Promise<boolean> {
   const adminPassword = process.env.ADMIN_PASSWORD;
   const ingestSecret = process.env.INGEST_SECRET;
 
   if (!adminPassword && !ingestSecret) {
     console.warn(
       "[auth] WARNING: Neither ADMIN_PASSWORD nor INGEST_SECRET is set. " +
-        "All requests to /api/export/* are accepted in dev mode. " +
+        `All requests to ${routeLabel} are accepted in dev mode. ` +
         "Set them in production to restrict access."
     );
     return true;
@@ -108,4 +106,24 @@ export async function verifyExportAccess(req: Request): Promise<boolean> {
   }
 
   return false;
+}
+
+/**
+ * Verifies access to the /api/export/* routes (admin cookie OR bearer secret).
+ */
+export async function verifyExportAccess(req: Request): Promise<boolean> {
+  return verifyAdminOrSecret(req, "/api/export/*");
+}
+
+/**
+ * Verifies access to the ingest-family mutation routes: /api/ingest,
+ * /api/ingest/document, /api/ingest/upload, /api/lint, and /api/briefing.
+ *
+ * Accepts the admin session cookie so the password-protected admin panel's
+ * buttons work in production, OR the bearer secret for scripted/cron callers.
+ * (Previously these routes accepted only the bearer secret, so every admin
+ * panel action returned 401 on deployments with INGEST_SECRET set.)
+ */
+export async function verifyIngestAccess(req: Request): Promise<boolean> {
+  return verifyAdminOrSecret(req, "/api/ingest, /api/lint, and /api/briefing");
 }

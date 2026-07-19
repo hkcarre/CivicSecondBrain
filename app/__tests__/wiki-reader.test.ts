@@ -131,6 +131,34 @@ describe("readWikiIndex", () => {
   });
 });
 
+describe("readFullWiki", () => {
+  it("excludes index.md — it is navigation metadata, not analyzable content (#227)", async () => {
+    writeFixture("index.md", "# Wiki Index\n> City: Schertz, TX\n");
+    writeFixture("topics/budget.md", SAMPLE_PAGE);
+    const { readFullWiki } = await importReader();
+
+    const pages = readFullWiki();
+    expect(pages).toHaveLength(1);
+    expect(pages[0].path).toBe("topics/budget.md");
+  });
+
+  it("returns an empty array when only index.md exists (no real content yet)", async () => {
+    writeFixture("index.md", "# Wiki Index\n> City: Schertz, TX\n");
+    const { readFullWiki } = await importReader();
+    expect(readFullWiki()).toEqual([]);
+  });
+
+  it("still excludes SCHEMA.md alongside real content", async () => {
+    writeFixture("SCHEMA.md", "# Schema doc");
+    writeFixture("topics/budget.md", SAMPLE_PAGE);
+    const { readFullWiki } = await importReader();
+
+    const pages = readFullWiki();
+    expect(pages).toHaveLength(1);
+    expect(pages[0].path).toBe("topics/budget.md");
+  });
+});
+
 describe("readRelevantPages", () => {
   it("returns pages that exist, skips those that don't", async () => {
     writeFixture("topics/budget.md", SAMPLE_PAGE);

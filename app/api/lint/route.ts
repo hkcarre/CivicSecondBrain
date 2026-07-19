@@ -11,12 +11,12 @@ import { getAIProvider } from "@/lib/ai/provider";
 import { readFullWiki, buildWikiContext } from "@/lib/wiki/reader";
 import { writeRecommendationPage, updateWikiIndex, appendToLog } from "@/lib/wiki/writer";
 import type { Recommendation } from "@/types";
-import { verifySecret } from "@/lib/auth";
+import { verifyIngestAccess } from "@/lib/auth";
 
 export const maxDuration = 300; // 5 minutes
 
 export async function POST(req: Request) {
-  if (!verifySecret(req)) {
+  if (!(await verifyIngestAccess(req))) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 

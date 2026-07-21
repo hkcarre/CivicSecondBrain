@@ -51,3 +51,6 @@ test-results/
 blob-report/
 .playwright/
 .codegraph/
+
+# Vitest coverage output
+coverage/

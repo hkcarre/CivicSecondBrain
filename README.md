@@ -14,11 +14,12 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 
 ## Recent Updates
 
+Recently shipped (v1.31.4–v1.31.6): topic pages stay on-topic during ingestion, unsupported file formats skip gracefully instead of counting as failures, file-size guards fail safe on misconfiguration, and the nightly scheduled ingest now acknowledges instantly (202) and runs in the background — so the GitHub Actions job reports truthfully instead of timing out at the network edge (#252).
+
 ### Unreleased
 
-- **Topic pages stay on-topic during ingestion** — multi-topic documents no longer scatter every extracted fact (with citations) across all affected topic pages; each page now receives only the facts relevant to it (#237)
-- **Unsupported file formats skip gracefully** — documents the parser can't handle are counted as skipped instead of surfacing as ingest failures in the admin panel and nightly cron logs (#237)
-- **File-size guards fail safe** — a misconfigured `MAX_FILE_SIZE_MB` no longer silently disables the upload, PDF, and download size caps; invalid values fall back to the 25 MB default with a warning (#241)
+- **Chat endpoint contracts pinned by tests** — rate limiting, public-records audit logging on errors and client disconnects, and malformed-request handling now have direct regression coverage; the suite stands at 417 tests (#255)
+- **Repo hygiene** — Vitest coverage output is gitignored so it can't be committed by accident (#254)
 
 *(Full version history lives in [CHANGELOG.md](CHANGELOG.md), generated automatically by release-please.)*
 

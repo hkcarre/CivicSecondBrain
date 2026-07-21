@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.6](https://github.com/xozai/CivicSecondBrain/compare/v1.31.5...v1.31.6) (2026-07-21)
+
+
+### Bug Fixes
+
+* async mode for /api/ingest so scheduled runs outlive edge timeouts ([#252](https://github.com/xozai/CivicSecondBrain/issues/252)) ([ed47dff](https://github.com/xozai/CivicSecondBrain/commit/ed47dffd38a7d8ef2723c9a0244546dc2f4a6abc))
+
 ## [1.31.5](https://github.com/xozai/CivicSecondBrain/compare/v1.31.4...v1.31.5) (2026-07-19)
 
 

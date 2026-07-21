@@ -196,4 +196,70 @@ describe("buildWikiContext", () => {
 
     expect(ctx.split("WIKI PAGE:")).toHaveLength(3);
   });
+
+  // ── Regression: #257 — head-of-line blocking on oversized pages ──────────
+  //
+  // Production topic pages grew past 500k chars (larger than the lint
+  // route's entire 320k-char budget). The old implementation `break`ed at
+  // the first page that didn't fit, delivering an EMPTY context ("0 of 82
+  // pages included") to the LINT AI — which then recommended redesigning
+  // the wiki system. One oversized page must never starve the context.
+
+  const bigPage = (path: string, chars: number) => ({
+    title: path,
+    type: "wiki" as const,
+    category: "topic" as const,
+    sources: [],
+    lastUpdated: "2026-07-21",
+    content: "x".repeat(chars),
+    path,
+  });
+
+  it("slices an oversized first page instead of returning an empty context (#257)", async () => {
+    const { buildWikiContext } = await importReader();
+    // 500k-char page against a 80k-token (~320k char) budget
+    const pages = [bigPage("topics/governance.md", 500_000), bigPage("topics/budget.md", 1_000)];
+    const ctx = buildWikiContext(pages, 80_000);
+
+    expect(ctx.length).toBeGreaterThan(10_000); // not starved
+    expect(ctx).toContain("topics/governance.md"); // oversized page sliced in
+    expect(ctx).toContain("topics/budget.md"); // later page still included
+    expect(ctx).toContain("truncated to fit");
+  });
+
+  it("caps any single page so one page cannot consume the whole budget", async () => {
+    const { buildWikiContext } = await importReader();
+    const pages = [bigPage("topics/a.md", 400_000), bigPage("topics/b.md", 400_000)];
+    const ctx = buildWikiContext(pages, 80_000);
+
+    // Both pages present, each held to the per-page cap (budget/8)
+    expect(ctx).toContain("topics/a.md");
+    expect(ctx).toContain("topics/b.md");
+    expect(ctx.length).toBeLessThanOrEqual(80_000 * 4 + 500);
+  });
+
+  it("skips pages that no longer fit but keeps including smaller later ones", async () => {
+    const { buildWikiContext } = await importReader();
+    // Budget 1k tokens = 4,000 chars; per-page cap floor = 2,000 chars.
+    // one.md slices to 2,000 (cum ≈2,000). middle.md slices to 2,000 but
+    // 2,000+2,000 exceeds the 4,000 budget → SKIPPED. three.md (~1,550)
+    // still fits afterward — proving a skip is not fatal to later pages.
+    const pages = [
+      bigPage("topics/one.md", 3_500),
+      bigPage("topics/middle.md", 10_000),
+      bigPage("topics/three.md", 1_500),
+    ];
+    const ctx = buildWikiContext(pages, 1_000);
+
+    expect(ctx).toContain("topics/one.md");
+    expect(ctx).not.toContain("topics/middle.md"); // skipped, not fatal
+    expect(ctx).toContain("topics/three.md"); // included after the skip
+    expect(ctx).toContain("page(s) omitted");
+  });
+
+  it("returns a clean context with no notice when everything fits", async () => {
+    const { buildWikiContext } = await importReader();
+    const ctx = buildWikiContext([bigPage("topics/small.md", 500)], 80_000);
+    expect(ctx).not.toContain("TRUNCATION NOTICE");
+  });
 });

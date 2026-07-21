@@ -152,29 +152,47 @@ function inferCategory(pagePath: string): WikiIndexEntry["category"] {
 // appended whenever pages are omitted so Claude knows the context is partial.
 
 export function buildWikiContext(pages: WikiPage[], maxTokens = 80_000): string {
+  const maxChars = maxTokens * 4;
+  // No single page may consume more than 1/8 of the budget: production topic
+  // pages grow by append on every ingest and reached >500k chars — larger
+  // than entire budgets. The old code `break`ed at the first page that
+  // didn't fit, so one oversized page starved the whole context ("0 of 82
+  // pages included") and the LINT AI analyzed nothing (#257). Oversized
+  // pages are sliced to the cap; pages that don't fit the remaining budget
+  // are skipped, never fatal.
+  const perPageCap = Math.max(2_000, Math.floor(maxChars / 8));
+
   const sections: string[] = [];
   let cumulativeChars = 0;
-  let truncated = false;
+  let omitted = 0;
+  let sliced = 0;
 
   for (const p of pages) {
-    const section = `=== WIKI PAGE: ${p.path} (updated ${p.lastUpdated}) ===\n${p.content}`;
-    const estimatedTokens = (cumulativeChars + section.length) / 4;
-    if (estimatedTokens > maxTokens) {
-      truncated = true;
-      break;
+    const header = `=== WIKI PAGE: ${p.path} (updated ${p.lastUpdated}) ===\n`;
+    let body = p.content;
+    if (header.length + body.length > perPageCap) {
+      body =
+        body.slice(0, Math.max(0, perPageCap - header.length)) +
+        "\n<!-- page truncated to fit context budget -->";
+      sliced++;
+    }
+    const section = header + body;
+    if (cumulativeChars + section.length > maxChars) {
+      omitted++;
+      continue; // skip this page but keep trying smaller ones
     }
     sections.push(section);
     cumulativeChars += section.length + 2; // +2 for the "\n\n" separator
   }
 
   const context = sections.join("\n\n");
-  if (!truncated) return context;
+  if (omitted === 0 && sliced === 0) return context;
 
-  const included = sections.length;
-  const omitted = pages.length - included;
   const notice =
     `\n\n<!-- TRUNCATION NOTICE: Context limited to ~${maxTokens} tokens. ` +
-    `${included} of ${pages.length} pages included; ${omitted} page(s) omitted. -->`;
+    `${sections.length} of ${pages.length} pages included` +
+    `${sliced > 0 ? ` (${sliced} truncated to fit)` : ""}; ` +
+    `${omitted} page(s) omitted. -->`;
 
   return context + notice;
 }

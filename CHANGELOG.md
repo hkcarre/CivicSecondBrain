@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.7](https://github.com/xozai/CivicSecondBrain/compare/v1.31.6...v1.31.7) (2026-07-21)
+
+
+### Bug Fixes
+
+* one oversized page no longer starves the wiki analysis context (closes [#257](https://github.com/xozai/CivicSecondBrain/issues/257)) ([#259](https://github.com/xozai/CivicSecondBrain/issues/259)) ([844c943](https://github.com/xozai/CivicSecondBrain/commit/844c9437ba3055a8195f2d0d99cc10d9eac31ed5))
+
 ## [1.31.6](https://github.com/xozai/CivicSecondBrain/compare/v1.31.5...v1.31.6) (2026-07-21)
 
 

@@ -662,7 +662,7 @@ Railway's **"Wait for CI"** setting ensures deploys only happen after tests pass
 - **Testing:** Vitest unit tests (wiki, parser, scraper, AI provider, admin auth, export) + Playwright e2e smoke
 - **Linting:** ESLint 9 flat config (`eslint-config-next` core-web-vitals + typescript presets)
 - **Auth:** HMAC-SHA256 signed session cookie (admin panel), Bearer token (API routes)
-- **Deployment:** Docker on Railway with persistent volume + cron jobs
+- **Deployment:** Railway with persistent volume; scheduled jobs via GitHub Actions calling the app's API
 - **CI:** GitHub Actions
 - **Language:** TypeScript
 

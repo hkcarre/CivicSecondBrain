@@ -15,21 +15,8 @@ mountPath = "/data"
 numReplicas = 1
 
 # ─── Scheduled Jobs ──────────────────────────────────────────────────────────
-#
-# Railway cron services run the given command inside the container on schedule.
-# Both jobs use the CLI scripts (no HTTP server dependency, no auth required).
-# Required env vars (set in Railway dashboard):
-#   ANTHROPIC_API_KEY  — for Claude API calls
-#   WIKI_PATH          — should be /data/wiki (set by Railway volume)
-#   RAW_SOURCES_PATH   — should be /data/raw-sources
-#
-# Ingest: nightly at 2am CT (08:00 UTC) — scrapes new/changed documents
-[[cron]]
-schedule = "0 8 * * *"
-command = "node --max-old-space-size=768 --expose-gc -r ./scripts/load-env.cjs -r tsx/cjs scripts/ingest-seed.ts --limit 50"
-
-# Lint: weekly on Sunday at 3am CT (09:00 UTC) — analyzes wiki, writes recommendations
-[[cron]]
-schedule = "0 9 * * 0"
-command = "node --max-old-space-size=512 -r ./scripts/load-env.cjs -r tsx/cjs scripts/lint-wiki.ts"
+# Railway config-as-code has NO [[cron]] syntax — blocks of that shape are
+# silently ignored, and a dedicated Railway cron service could not share this
+# service's /data volume. Scheduled work (nightly ingest, weekly lint) runs
+# via .github/workflows/scheduled.yml, which calls the deployed app's API.
 

@@ -511,3 +511,86 @@ describe("POST /api/ingest/document — manual single-document ingest", () => {
     expect(vi.mocked(saveManifest)).not.toHaveBeenCalled();
   });
 });
+
+// ─── Async mode (#251) ───────────────────────────────────────────────────────
+//
+// {"async": true} → 202 immediately; the run executes in the background and
+// the mutex is released when it finishes, so scheduled callers never hold an
+// HTTP connection open across a multi-minute discovery+ingest batch.
+
+describe("POST /api/ingest — async mode", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  async function flushBackground() {
+    // Let the detached runIngest() promise chain settle
+    for (let i = 0; i < 10; i++) await new Promise((r) => setImmediate(r));
+  }
+
+  it("returns 202 immediately and completes the run in the background", async () => {
+    vi.resetModules();
+
+    const { discoverDocuments, downloadDocument, toCivicDocument } =
+      await import("@/lib/scraper/schertz-scraper");
+    const { ingestDocument } = await import("@/lib/claude/ingest-engine");
+    const { saveManifest } = await import("@/lib/manifest");
+
+    vi.mocked(discoverDocuments).mockResolvedValue([
+      { url: "http://example.com/a.pdf", title: "Doc A" },
+    ] as any);
+    vi.mocked(downloadDocument).mockResolvedValue("/tmp/a.pdf");
+    vi.mocked(toCivicDocument).mockReturnValue({ id: "a" } as any);
+    vi.mocked(ingestDocument).mockResolvedValue({ skipped: false } as any);
+
+    const { POST } = await import("@/api/ingest/route");
+
+    const res = await POST(makeRequest({ limit: 5, async: true }));
+    const data = await res.json();
+
+    expect(res.status).toBe(202);
+    expect(data.async).toBe(true);
+    expect(data.message).toMatch(/background/i);
+
+    await flushBackground();
+    // Background run actually happened and persisted the manifest
+    expect(vi.mocked(ingestDocument)).toHaveBeenCalledOnce();
+    expect(vi.mocked(saveManifest)).toHaveBeenCalledOnce();
+
+    // Mutex was released — a follow-up call is not 409
+    const res2 = await POST(makeRequest({ limit: 5, async: true }));
+    expect(res2.status).toBe(202);
+    await flushBackground();
+  });
+
+  it("returns 409 while a background run holds the mutex, and releases it on failure", async () => {
+    vi.resetModules();
+
+    const { discoverDocuments } = await import("@/lib/scraper/schertz-scraper");
+
+    // First call: discovery hangs until we resolve it
+    let releaseDiscovery!: (v: unknown[]) => void;
+    vi.mocked(discoverDocuments).mockImplementationOnce(
+      () => new Promise((resolve) => { releaseDiscovery = resolve as never; })
+    );
+
+    const { POST } = await import("@/api/ingest/route");
+
+    const first = await POST(makeRequest({ async: true }));
+    expect(first.status).toBe(202);
+
+    // Second call while in flight → mutex refusal
+    const second = await POST(makeRequest({ async: true }));
+    expect(second.status).toBe(409);
+
+    // Let the first run finish (empty discovery → clean completion)
+    releaseDiscovery([]);
+    await flushBackground();
+
+    // Mutex released again
+    vi.mocked(discoverDocuments).mockResolvedValue([] as any);
+    const third = await POST(makeRequest({ async: true }));
+    expect(third.status).toBe(202);
+    await flushBackground();
+  });
+});

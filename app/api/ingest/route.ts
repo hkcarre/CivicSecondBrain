@@ -27,6 +27,15 @@ export const maxDuration = 300;
 // Module-level flag to prevent concurrent ingest runs.
 let ingestInProgress = false;
 
+interface IngestSummary {
+  message: string;
+  processed: number;
+  succeeded: number;
+  skipped: number;
+  failed: number;
+  failedDocuments: string[];
+}
+
 export async function POST(req: Request): Promise<NextResponse> {
   if (!(await verifyIngestAccess(req))) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
@@ -42,16 +51,61 @@ export async function POST(req: Request): Promise<NextResponse> {
   }
   ingestInProgress = true;
 
-  try {
-    const limit = readLimit(body);
+  const limit = readLimit(body);
 
+  // Async mode (scheduled callers): acknowledge immediately and run in the
+  // background. Discovery + a real batch takes longer than any edge timeout
+  // (Cloudflare ~100s, Railway edge <15m) — a synchronous response cannot
+  // survive it, which made the nightly workflow's failure signal meaningless
+  // even when the ingest itself succeeded (#251). The mutex above still
+  // serializes runs; outcomes land in wiki/log.md as usual.
+  if (isAsyncRequest(body)) {
+    void runIngest(limit)
+      .then((s) => console.log(`[ingest:async] complete — ${s.message}`))
+      .catch((err) => {
+        console.error("[ingest:async] failed:", err);
+        appendToLog(
+          `## [ERROR] [${new Date().toISOString()}] Async ingest run failed\n\n${(err as Error).message}`
+        );
+      })
+      .finally(() => {
+        ingestInProgress = false;
+      });
+    return NextResponse.json(
+      { message: `Ingest started in background (limit ${limit}). Progress is recorded in wiki/log.md.`, async: true },
+      { status: 202 }
+    );
+  }
+
+  try {
+    const summary = await runIngest(limit);
+    return NextResponse.json(summary);
+  } catch (err) {
+    return NextResponse.json(
+      { message: `Error: ${(err as Error).message}` },
+      { status: 500 }
+    );
+  } finally {
+    ingestInProgress = false;
+  }
+}
+
+async function runIngest(limit: number): Promise<IngestSummary> {
+  {
     const manifest = loadManifest();
 
     // Discover new documents
     const discovered = await discoverDocuments();
 
     if (discovered.length === 0) {
-      return NextResponse.json({ message: "No pending documents to ingest." });
+      return {
+        message: "No pending documents to ingest.",
+        processed: 0,
+        succeeded: 0,
+        skipped: 0,
+        failed: 0,
+        failedDocuments: [],
+      };
     }
 
     let processed = 0;
@@ -106,23 +160,21 @@ export async function POST(req: Request): Promise<NextResponse> {
     // interleaved writes; the module-level mutex plus this single
     // post-loop write keeps the manifest consistent.
     saveManifest(manifest);
-    revalidatePath("/dashboard");
+    try {
+      revalidatePath("/dashboard");
+    } catch {
+      // In async mode this runs outside the request scope, where Next may
+      // reject revalidation — non-fatal; the dashboard's 60s ISR covers it.
+    }
 
-    return NextResponse.json({
+    return {
       message: `Ingested ${succeeded}/${processed} documents (${skipped} skipped — unsupported format).`,
       processed,
       succeeded,
       skipped,
       failed: failures.length,
       failedDocuments: failures,
-    });
-  } catch (err) {
-    return NextResponse.json(
-      { message: `Error: ${(err as Error).message}` },
-      { status: 500 }
-    );
-  } finally {
-    ingestInProgress = false;
+    };
   }
 }
 
@@ -133,4 +185,12 @@ function readLimit(body: unknown): number {
 
   const limit = (body as { limit?: unknown }).limit;
   return typeof limit === "number" ? limit : 10;
+}
+
+function isAsyncRequest(body: unknown): boolean {
+  return (
+    typeof body === "object" &&
+    body !== null &&
+    (body as { async?: unknown }).async === true
+  );
 }

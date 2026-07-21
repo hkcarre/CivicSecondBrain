@@ -43,18 +43,23 @@ jobs:
             echo "ERROR: APP_URL and INGEST_SECRET secrets must be set."
             exit 1
           fi
-          echo "Triggering ingest on $APP_URL ..."
+          echo "Triggering async ingest on $APP_URL ..."
+          # async:true → the app returns 202 immediately and runs the batch in
+          # the background (discovery + ingest outlives any edge timeout — see
+          # issue #251). Outcomes are recorded in wiki/log.md on the volume.
           response=$(curl -s -w "\n%{http_code}" -X POST "$APP_URL/api/ingest" \
             -H "Authorization: Bearer $INGEST_SECRET" \
             -H "Content-Type: application/json" \
-            -d '{"limit": 50}' \
-            --max-time 280)
+            -d '{"limit": 50, "async": true}' \
+            --max-time 60)
           http_code=$(echo "$response" | tail -1)
           body=$(echo "$response" | head -n -1)
           echo "HTTP $http_code"
           echo "$body"
-          if [ "$http_code" != "200" ]; then
-            echo "Ingest failed with HTTP $http_code"
+          # 202 = accepted (normal). 409 = a previous run is still going —
+          # not a failure, the mutex is doing its job; skip this night.
+          if [ "$http_code" != "202" ] && [ "$http_code" != "409" ]; then
+            echo "Ingest trigger failed with HTTP $http_code"
             exit 1
           fi
 

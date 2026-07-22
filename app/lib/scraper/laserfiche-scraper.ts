@@ -180,8 +180,16 @@ async function crawlFolder(
       if (!entry) continue;
 
       const ext = (entry.extension ?? "").toLowerCase();
-      const isDocument = entry.isEdoc || (ext !== "" && ["pdf", "doc", "docx", "txt"].includes(ext));
-      const isFolder = !isDocument;
+      // The API's explicit type field is authoritative when present
+      // (1 = folder, 2 = document). The old isEdoc/extension heuristic
+      // misclassified extensionless documents as folders — recursing into
+      // them and silently dropping them from discovery (#261). The
+      // heuristic remains only as a fallback for unrecognized type values.
+      const isFolder =
+        entry.type === 1 ||
+        (entry.type !== 2 &&
+          !entry.isEdoc &&
+          !["pdf", "doc", "docx", "txt"].includes(ext));
 
       if (isFolder) {
         // Folder — recurse

@@ -7,6 +7,7 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { LINT_SYSTEM_PROMPT, CITY_FULL } from "@/lib/claude/client";
+import { parseLintResponse } from "@/lib/claude/lint-parse";
 import { getAIProvider } from "@/lib/ai/provider";
 import { readFullWiki, buildWikiContext } from "@/lib/wiki/reader";
 import { writeRecommendationPage, updateWikiIndex, appendToLog } from "@/lib/wiki/writer";
@@ -39,8 +40,12 @@ export async function POST(req: Request) {
     const ai = getAIProvider();
     const text = await ai.complete({
       system: systemPrompt,
-      maxTokens: 8192,
+      // 16k output: with a rich context (post-#257) 8k truncated the JSON
+      // mid-array (#262). The prompt also caps recommendation count below.
+      maxTokens: 16384,
       prompt: `Analyze the following ${CITY_FULL} wiki and generate civic recommendations.
+
+Return AT MOST 5 recommendations — choose the highest-impact findings. Keep "finding" and "suggestedAction" concise (2-3 sentences each).
 
 Return a JSON object with:
 {
@@ -68,15 +73,15 @@ ${wikiContext}
 Return ONLY valid JSON.`,
     });
 
-    const jsonMatch =
-      text.match(/```json\n?([\s\S]+?)\n?```/) ?? text.match(/\{[\s\S]+\}/);
-
-    if (!jsonMatch) {
-      throw new Error("Claude returned no parseable JSON");
+    // Truncation-tolerant: salvages complete recommendation objects when the
+    // response exceeds the output cap and the JSON is cut off (#262).
+    const result = parseLintResponse(text);
+    if (result.truncated) {
+      console.warn(
+        `[lint] Response truncated — salvaged ${result.recommendations.length} complete recommendation(s).`
+      );
     }
-
-    const result = JSON.parse(jsonMatch[jsonMatch.length - 1]);
-    const recs: Recommendation[] = (result.recommendations ?? []).map(
+    const recs: Recommendation[] = (result.recommendations as Recommendation[]).map(
       (r: Recommendation) => ({
         ...r,
         id: `${today}-${r.title.slice(0, 20).replace(/\s/g, "-").toLowerCase()}`,

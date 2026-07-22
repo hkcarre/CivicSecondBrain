@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.31.8](https://github.com/xozai/CivicSecondBrain/compare/v1.31.7...v1.31.8) (2026-07-22)
+
+
+### Bug Fixes
+
+* salvage truncated LINT responses; honor Laserfiche type field (closes [#262](https://github.com/xozai/CivicSecondBrain/issues/262), closes [#261](https://github.com/xozai/CivicSecondBrain/issues/261)) ([#263](https://github.com/xozai/CivicSecondBrain/issues/263)) ([a8116e0](https://github.com/xozai/CivicSecondBrain/commit/a8116e03fbefefb881a2ab95805460f2647bf7fc))
+
 ## [1.31.7](https://github.com/xozai/CivicSecondBrain/compare/v1.31.6...v1.31.7) (2026-07-21)
 
 

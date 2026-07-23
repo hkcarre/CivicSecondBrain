@@ -14,12 +14,12 @@ Built on the [Karpathy LLM Wiki pattern](https://gist.github.com/karpathy/442a6b
 
 ## Recent Updates
 
-Recently shipped (v1.31.4–v1.31.6): topic pages stay on-topic during ingestion, unsupported file formats skip gracefully instead of counting as failures, file-size guards fail safe on misconfiguration, and the nightly scheduled ingest now acknowledges instantly (202) and runs in the background — so the GitHub Actions job reports truthfully instead of timing out at the network edge (#252).
+Recently shipped (v1.31.4–v1.31.7): topic pages stay on-topic during ingestion, unsupported file formats skip gracefully, file-size guards fail safe on misconfiguration, the nightly scheduled ingest acknowledges instantly and runs in the background so the GitHub Actions job reports truthfully (#252), and "Run Analysis" no longer receives an empty context when a single oversized wiki page exceeds the token budget — oversized pages are sliced in and smaller pages still included (#259).
 
 ### Unreleased
 
-- **Chat endpoint contracts pinned by tests** — rate limiting, public-records audit logging on errors and client disconnects, and malformed-request handling now have direct regression coverage; the suite stands at 417 tests (#255)
-- **Repo hygiene** — Vitest coverage output is gitignored so it can't be committed by accident (#254)
+- **Analysis survives long AI responses** — a truncated LINT response now yields every complete recommendation instead of crashing the run; the output cap doubled and the prompt asks for at most 5 concise, high-impact recommendations (#263)
+- **Laserfiche discovery captures extensionless documents** — the crawler now honors the archive API's explicit folder/document type field instead of guessing from file extensions, so extensionless e-docs are no longer silently dropped (#263)
 
 *(Full version history lives in [CHANGELOG.md](CHANGELOG.md), generated automatically by release-please.)*
 

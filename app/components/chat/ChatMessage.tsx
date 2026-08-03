@@ -1,8 +1,9 @@
 "use client";
 
-import { User, Bot, BookMarked, AlertTriangle } from "lucide-react";
+import { User, Bot, BookMarked, AlertTriangle, Volume2, VolumeX } from "lucide-react";
 import { clsx } from "clsx";
 import type { ChatMessage as ChatMessageType } from "@/types";
+import { useSpeechSynthesis } from "@/lib/hooks/useSpeechSynthesis";
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -12,6 +13,15 @@ interface ChatMessageProps {
 
 export function ChatMessage({ message, onFile, isStreaming = false }: ChatMessageProps) {
   const isUser = message.role === "user";
+  const speech = useSpeechSynthesis();
+
+  const handleReadAloud = () => {
+    if (speech.isSpeaking) {
+      speech.stop();
+    } else {
+      speech.speak(message.content);
+    }
+  };
 
   return (
     <div
@@ -26,7 +36,7 @@ export function ChatMessage({ message, onFile, isStreaming = false }: ChatMessag
           "w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5",
           isUser
             ? "bg-city-navy text-white"
-            : "bg-city-gold/20 text-city-navy dark:text-city-gold border border-city-gold/30"
+            : "bg-city-maroon/20 text-city-navy dark:text-city-maroon border border-city-maroon/30"
         )}
       >
         {isUser ? <User size={16} /> : <Bot size={16} />}
@@ -49,18 +59,32 @@ export function ChatMessage({ message, onFile, isStreaming = false }: ChatMessag
 
         {/* Streaming cursor — visible while response is still generating */}
         {!isUser && isStreaming && (
-          <span className="inline-block w-2 h-4 bg-city-navy/60 dark:bg-city-gold/60 animate-pulse rounded-sm ml-0.5 align-middle" />
+          <span className="inline-block w-2 h-4 bg-city-navy/60 dark:bg-city-maroon/60 animate-pulse rounded-sm ml-0.5 align-middle" />
         )}
 
         {/* Actions for assistant messages — only shown after stream is complete */}
-        {!isUser && !isStreaming && onFile && !message.filed && (
-          <button
-            onClick={() => onFile(message)}
-            className="mt-3 flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
-          >
-            <BookMarked size={12} />
-            Save answer to wiki
-          </button>
+        {!isUser && !isStreaming && (onFile || speech.isSupported) && (
+          <div className="mt-3 flex items-center gap-3">
+            {onFile && !message.filed && (
+              <button
+                onClick={() => onFile(message)}
+                className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
+              >
+                <BookMarked size={12} />
+                Save answer to wiki
+              </button>
+            )}
+            {speech.isSupported && (
+              <button
+                onClick={handleReadAloud}
+                aria-label={speech.isSpeaking ? "Stop reading aloud" : "Read answer aloud"}
+                className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+              >
+                {speech.isSpeaking ? <VolumeX size={12} /> : <Volume2 size={12} />}
+                {speech.isSpeaking ? "Stop" : "Read aloud"}
+              </button>
+            )}
+          </div>
         )}
 
         {message.filed && (

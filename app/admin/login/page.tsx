@@ -92,7 +92,7 @@ export default function AdminLoginPage() {
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold text-city-navy dark:text-white">Admin Access</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            CivicSecondBrain · {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, {process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"}
+            Strata Civic Solutions · {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, {process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"}
           </p>
         </div>
 

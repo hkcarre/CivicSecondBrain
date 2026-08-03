@@ -5,11 +5,16 @@
 @config "../tailwind.config.ts";
 
 :root {
-  /* Schertz brand colors — navy + gold */
-  --city-navy: #1a3660;
-  --city-gold: #c9a84c;
-  --city-gold-light: #f0d990;
-  --city-navy-light: #2d5096;
+  /* Strata Civic Solutions brand — official palette, fixed across every city deployment */
+  --city-navy: #081A33;
+  --city-navy-light: #3e4c60;
+  --city-navy-dark-text: #9098a3;
+  --city-maroon: #8B1E2D;
+  --city-maroon-dark: #681722;
+  --city-maroon-light: #ae626c;
+  --city-cream: #F4EFE4;
+  --city-light-blue: #8FA9C4;
+  --city-charcoal: #2B2B2B;
 }
 
 @layer base {
@@ -50,6 +55,14 @@
   .prose-civic .ai-analysis {
     @apply block bg-amber-50 dark:bg-amber-900/30 border-l-4 border-amber-400 px-3 py-2
            text-amber-800 dark:text-amber-200 text-sm rounded-r my-3;
+  }
+  /* Subtle dot-grid texture for hero/empty-state panels — Strata brand pattern */
+  .dot-grid {
+    background-image: radial-gradient(rgba(8, 26, 51, 0.12) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .dark .dot-grid {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
   }
 }
 

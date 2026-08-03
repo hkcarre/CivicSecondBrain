@@ -39,7 +39,7 @@ const BASE_API = "https://library.municode.com";
 const MAX_SECTIONS = 200; // cap to avoid runaway crawls
 
 const HEADERS = {
-  "User-Agent": "CivicSecondBrain/1.0 (City Council Research Tool)",
+  "User-Agent": "Strata Civic Solutions/1.0 (City Council Research Tool)",
   Accept: "application/json",
   "Accept-Language": "en-US,en;q=0.9",
 };
@@ -129,21 +129,34 @@ export async function fetchSectionText(codesId: number, nodeId: string): Promise
  * Discover MuniCode ordinance sections and return them as DiscoveredDocument
  * objects that the main ingest pipeline can process.
  *
- * Returns an empty array (gracefully) if MUNICODE_URL is not configured.
+ * Each city deployment configures its own MUNICODE_URL (this app is one
+ * Railway service per city — see CLAUDE.md), so the default (no argument)
+ * reads that env var as before. `override` lets a caller target a specific
+ * city's Municode instance directly — e.g. a multi-city admin/seeding
+ * script, or tests — without needing a real per-deployment env var set.
+ *
+ * Returns an empty array (gracefully) if no URL is configured/resolved.
  */
-export async function discoverMunicodeDocs(): Promise<DiscoveredDocument[]> {
-  if (!MUNICODE_URL) {
-    console.log("[municode] MUNICODE_URL not set — skipping MuniCode scrape.");
-    return [];
-  }
+export async function discoverMunicodeDocs(
+  override?: { state: string; slug: string }
+): Promise<DiscoveredDocument[]> {
+  let state: string;
+  let slug: string;
 
-  const parsed = parseMunicodeUrl(MUNICODE_URL);
-  if (!parsed) {
-    console.warn(`[municode] Could not parse MUNICODE_URL: ${MUNICODE_URL}`);
-    return [];
+  if (override) {
+    ({ state, slug } = override);
+  } else {
+    if (!MUNICODE_URL) {
+      console.log("[municode] MUNICODE_URL not set — skipping MuniCode scrape.");
+      return [];
+    }
+    const parsed = parseMunicodeUrl(MUNICODE_URL);
+    if (!parsed) {
+      console.warn(`[municode] Could not parse MUNICODE_URL: ${MUNICODE_URL}`);
+      return [];
+    }
+    ({ state, slug } = parsed);
   }
-
-  const { state, slug } = parsed;
   console.log(`[municode] Fetching TOC for ${state}/${slug}...`);
 
   const toc = await fetchMunicodeToc(state, slug);

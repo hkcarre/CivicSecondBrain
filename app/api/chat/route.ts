@@ -17,6 +17,7 @@ import {
 } from "@/lib/wiki/reader";
 import { selectRelevantPages } from "@/lib/wiki/select";
 import { appendToLog } from "@/lib/wiki/writer";
+import { appendMessage } from "@/lib/db/queries/conversations";
 
 export const runtime = "nodejs";
 
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { messages, fileAnswer } = await req.json();
+    const { messages, fileAnswer, conversationId } = await req.json();
     const userMessage: string = messages[messages.length - 1]?.content ?? "";
 
     const today = new Date().toISOString().split("T")[0];
@@ -121,6 +122,24 @@ export async function POST(req: Request) {
         provider: `${process.env.AI_PROVIDER ?? "anthropic"}/${ai.model}`,
         latencyMs: Date.now() - startedAt,
       });
+
+      // ── 5b. Conversation persistence (optional — only signed-in users with
+      // a selected conversation send this) ─────────────────────────────────
+      // Separate from the audit log above: that's a permanent public-records
+      // JSONL trail regardless of login state; this is the user-facing,
+      // editable/organizable chat history behind real accounts. Fire-and-
+      // forget, same rationale — a save failure here shouldn't break the
+      // response the user already received.
+      if (conversationId && typeof conversationId === "string") {
+        void appendMessage(conversationId, "user", userMessage).catch((err) =>
+          console.error("[chat] Failed to persist user message:", (err as Error).message)
+        );
+        void appendMessage(conversationId, "assistant", answerParts.join(""), {
+          pagesUsed: relevantPaths,
+        }).catch((err) =>
+          console.error("[chat] Failed to persist assistant message:", (err as Error).message)
+        );
+      }
     };
 
     // Pipe text chunks from the provider into a ReadableStream

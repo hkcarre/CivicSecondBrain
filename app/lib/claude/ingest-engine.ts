@@ -17,44 +17,10 @@ import {
 } from "../wiki/writer";
 import { parseDocument, chunkDocument } from "../parser/pdf-parser";
 import type { CivicDocument, IngestResult } from "@/types";
-
-// ─── Structured extraction schema (returned by Claude) ────────────────────
-
-interface ExtractedKnowledge {
-  documentType: string;
-  documentDate: string;
-  fiscalYear?: string;
-  board?: string;
-  summary: string;
-  keyDecisions: Array<{
-    description: string;
-    vote?: string;
-    ayes?: number;
-    noes?: number;
-    abstentions?: number;
-    ordinanceNumber?: string;
-  }>;
-  dollarAmounts: Array<{
-    description: string;
-    amount: string;
-    fiscalYear?: string;
-    context: string;
-  }>;
-  ordinancesReferenced: Array<{
-    number: string;
-    title: string;
-    action: string;
-  }>;
-  namedEntities: {
-    people: string[];
-    departments: string[];
-    locations: string[];
-    externalOrgs: string[];
-  };
-  topicsAffected: string[];
-  keyFacts: string[];
-  openQuestions: string[];
-}
+import {
+  parseExtractedKnowledge,
+  type ExtractedKnowledge,
+} from "./extraction-schema";
 
 // ─── Main INGEST function ──────────────────────────────────────────────────
 
@@ -248,7 +214,7 @@ Return ONLY valid JSON matching the extraction schema. No prose.`,
     throw new Error("Claude returned no parseable JSON in INGEST response");
   }
 
-  return JSON.parse(jsonMatch[jsonMatch.length - 1]) as ExtractedKnowledge;
+  return parseExtractedKnowledge(jsonMatch[jsonMatch.length - 1]);
 }
 
 // ─── Merge knowledge from multiple chunks ─────────────────────────────────

@@ -84,7 +84,7 @@ async function createSession(): Promise<AxiosInstance> {
     timeout: 20000,
     maxRedirects: 0, // handle manually so we can collect cookies at each hop
     headers: {
-      "User-Agent": "CivicSecondBrain/1.0 (City Council Research Tool)",
+      "User-Agent": "Strata Civic Solutions/1.0 (City Council Research Tool)",
       "x-lf-suppress-login-redirect": "1",
     },
     validateStatus: (s) => s < 500,

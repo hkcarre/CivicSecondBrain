@@ -702,7 +702,7 @@ function ExportLink({
                  hover:border-city-navy/40 hover:bg-gray-50 dark:hover:bg-gray-600
                  transition-all group"
     >
-      <FileText size={15} className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-city-navy dark:group-hover:text-city-gold" />
+      <FileText size={15} className="flex-shrink-0 text-gray-400 dark:text-gray-500 group-hover:text-city-navy dark:group-hover:text-city-maroon" />
       <div className="min-w-0">
         <p className="text-sm font-medium truncate">{label}</p>
         <p className="text-xs text-gray-400 dark:text-gray-500 truncate">{description}</p>

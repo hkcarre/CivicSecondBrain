@@ -1,8 +1,9 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, Mic, MicOff } from "lucide-react";
 import { clsx } from "clsx";
+import { useSpeechRecognition } from "@/lib/hooks/useSpeechRecognition";
 
 interface ChatInputProps {
   value: string;
@@ -20,6 +21,18 @@ export function ChatInput({
   placeholder = `Ask anything about ${process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, ${process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"}…`,
 }: ChatInputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const speech = useSpeechRecognition();
+
+  const handleMicClick = () => {
+    if (speech.isListening) {
+      speech.stop();
+      return;
+    }
+    speech.start((transcript) => {
+      // Append rather than replace so voice input composes with typed text.
+      onChange(value ? `${value} ${transcript}` : transcript);
+    });
+  };
 
   // Auto-resize textarea
   useEffect(() => {
@@ -44,7 +57,7 @@ export function ChatInput({
             "flex items-end gap-2 rounded-2xl border bg-gray-50 dark:bg-gray-800 px-4 py-2.5 transition-colors",
             isLoading
               ? "border-gray-200 dark:border-gray-700"
-              : "border-gray-300 dark:border-gray-600 focus-within:border-city-navy dark:focus-within:border-city-gold focus-within:bg-white dark:focus-within:bg-gray-900 focus-within:shadow-sm"
+              : "border-gray-300 dark:border-gray-600 focus-within:border-city-navy dark:focus-within:border-city-maroon focus-within:bg-white dark:focus-within:bg-gray-900 focus-within:shadow-sm"
           )}
         >
           <textarea
@@ -52,13 +65,30 @@ export function ChatInput({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={speech.isListening ? "Listening…" : placeholder}
             disabled={isLoading}
             rows={1}
             className="flex-1 bg-transparent resize-none outline-none text-sm text-gray-800 dark:text-gray-200
                        placeholder:text-gray-400 dark:placeholder:text-gray-500 min-h-[24px] max-h-[160px] py-0.5
                        disabled:opacity-50"
           />
+          {speech.isSupported && (
+            <button
+              onClick={handleMicClick}
+              disabled={isLoading}
+              aria-label={speech.isListening ? "Stop voice input" : "Start voice input"}
+              title={speech.error ?? undefined}
+              className={clsx(
+                "flex-shrink-0 w-9 h-9 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-all",
+                speech.isListening
+                  ? "bg-red-500 text-white animate-pulse"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600",
+                isLoading && "opacity-50 cursor-not-allowed"
+              )}
+            >
+              {speech.isListening ? <MicOff size={15} /> : <Mic size={15} />}
+            </button>
+          )}
           <button
             onClick={onSubmit}
             disabled={isLoading || !value.trim()}
@@ -66,7 +96,7 @@ export function ChatInput({
             className={clsx(
               "flex-shrink-0 w-9 h-9 md:w-8 md:h-8 rounded-lg flex items-center justify-center transition-all",
               !isLoading && value.trim()
-                ? "bg-city-navy dark:bg-city-gold text-white dark:text-city-navy hover:bg-city-navy-light dark:hover:opacity-90"
+                ? "bg-city-navy dark:bg-city-maroon text-white dark:text-city-navy hover:bg-city-navy-light dark:hover:opacity-90"
                 : "bg-gray-200 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
             )}
           >
@@ -77,9 +107,13 @@ export function ChatInput({
             )}
           </button>
         </div>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 text-center">
-          Answers cite official {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"} city documents · Press Enter to send
-        </p>
+        {speech.error ? (
+          <p className="text-xs text-red-500 mt-1.5 text-center">{speech.error}</p>
+        ) : (
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-1.5 text-center">
+            Answers cite official {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"} city documents · Press Enter to send
+          </p>
+        )}
       </div>
     </div>
   );

@@ -87,7 +87,7 @@ export function HealthCard({
       {path && (
         <Link
           href={`/wiki/${encodeURIComponent(path.replace(/\.md$/, ""))}`}
-          className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-city-navy dark:hover:text-city-gold transition-colors self-start"
+          className="flex items-center gap-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-city-navy dark:hover:text-city-maroon transition-colors self-start"
         >
           View full analysis <ChevronRight size={12} />
         </Link>

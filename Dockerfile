@@ -28,6 +28,26 @@ WORKDIR /app
 # libc6-compat intentionally not installed here: node_modules is pre-built in
 # the deps stage and `npm run build` executes no native binaries needing it.
 
+# NEXT_PUBLIC_* vars are inlined into the client bundle AT BUILD TIME by
+# `next build` — they must be explicit Docker build args, not just runtime
+# env vars, or this isolated build stage never sees them (Railway's
+# Variables tab only becomes a build arg for ARGs declared here; anything
+# not listed silently stays unset during the build regardless of what's
+# configured in the dashboard). NEXT_PUBLIC_CITY_NAME/STATE/APP_NAME have
+# fallback defaults in next.config.ts so their absence degrades quietly;
+# the Supabase ones don't (and shouldn't — there's no sane default), which
+# is why only those surfaced as a hard client-side error.
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ARG NEXT_PUBLIC_CITY_NAME
+ARG NEXT_PUBLIC_CITY_STATE
+ARG NEXT_PUBLIC_APP_NAME
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_CITY_NAME=$NEXT_PUBLIC_CITY_NAME
+ENV NEXT_PUBLIC_CITY_STATE=$NEXT_PUBLIC_CITY_STATE
+ENV NEXT_PUBLIC_APP_NAME=$NEXT_PUBLIC_APP_NAME
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 

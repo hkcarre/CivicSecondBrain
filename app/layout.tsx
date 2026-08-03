@@ -6,7 +6,7 @@ import { Sidebar } from "./components/Sidebar";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: `CivicSecondBrain — ${process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, ${process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"}`,
+  title: `Strata Civic Solutions — ${process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, ${process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"}`,
   description: `AI-powered city knowledge base for the ${process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"} City Council`,
 };
 

@@ -306,7 +306,7 @@ export async function downloadDocument(doc: DiscoveredDocument): Promise<string 
     fs.mkdirSync(dir, { recursive: true });
 
     const HEADERS = {
-      "User-Agent": `CivicSecondBrain/1.0 (City Council Research Tool; ${BASE_URL})`,
+      "User-Agent": `Strata Civic Solutions/1.0 (City Council Research Tool; ${BASE_URL})`,
       "Accept": "application/pdf,*/*",
     };
 

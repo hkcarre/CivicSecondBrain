@@ -3,7 +3,7 @@ import { Bot } from "lucide-react";
 export function TypingIndicator() {
   return (
     <div className="flex gap-3 message-enter">
-      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-city-gold/20 text-city-navy border border-city-gold/30">
+      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 bg-city-maroon/20 text-city-navy border border-city-maroon/30">
         <Bot size={16} />
       </div>
       <div className="bg-white border border-gray-200 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">

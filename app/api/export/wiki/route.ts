@@ -72,7 +72,7 @@ function buildMarkdownExport(files: WikiFile[]): string {
   });
 
   const lines: string[] = [
-    "# CivicSecondBrain — Full Wiki Export",
+    "# Strata Civic Solutions — Full Wiki Export",
     "",
     `> Generated: ${now} CT`,
     `> Total pages: ${files.length}`,

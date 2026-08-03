@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useEffect, useState } from "react";
+import { StrataLogoMark } from "./brand/StrataLogoMark";
 
 const NAV_ITEMS = [
   {
@@ -83,14 +84,12 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-5 py-5 border-b border-white/10 dark:border-gray-700">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-city-gold flex items-center justify-center flex-shrink-0">
-            <span className="text-city-navy font-bold text-sm">🏛</span>
-          </div>
+          <StrataLogoMark variant="reversed" size={30} className="text-white flex-shrink-0" />
           <div>
-            <p className="text-white font-semibold text-sm leading-tight">
-              CivicSecondBrain
+            <p className="text-white font-extrabold text-sm leading-tight tracking-tight">
+              Strata Civic Solutions
             </p>
-            <p className="text-white/50 text-xs">
+            <p className="text-white/50 text-[10px] font-medium tracking-widest uppercase">
               {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"}, {process.env.NEXT_PUBLIC_CITY_STATE ?? "TX"}
             </p>
           </div>
@@ -117,7 +116,7 @@ export function Sidebar() {
                 size={18}
                 className={clsx(
                   "flex-shrink-0",
-                  active ? "text-city-gold" : "text-white/50 group-hover:text-white/80"
+                  active ? "text-city-maroon" : "text-white/50 group-hover:text-white/80"
                 )}
               />
               <span className="text-sm font-medium">{item.label}</span>
@@ -138,12 +137,12 @@ export function Sidebar() {
         >
           {isDark ? (
             <>
-              <Sun size={15} className="text-city-gold" />
+              <Sun size={15} className="text-city-maroon" />
               <span>Light mode</span>
             </>
           ) : (
             <>
-              <Moon size={15} className="text-city-gold" />
+              <Moon size={15} className="text-city-maroon" />
               <span>Dark mode</span>
             </>
           )}
@@ -166,10 +165,8 @@ export function Sidebar() {
       {/* ── Mobile: top header bar ───────────────────────────────────── */}
       <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-city-navy dark:bg-gray-900 border-b border-white/10">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-city-gold flex items-center justify-center flex-shrink-0">
-            <span className="text-city-navy font-bold text-xs">🏛</span>
-          </div>
-          <p className="text-white font-semibold text-sm">CivicSecondBrain</p>
+          <StrataLogoMark variant="reversed" size={26} className="text-white flex-shrink-0" />
+          <p className="text-white font-extrabold text-sm tracking-tight">Strata</p>
         </div>
         <button
           onClick={() => setMobileOpen(true)}

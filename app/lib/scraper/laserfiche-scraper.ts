@@ -21,10 +21,16 @@ import { envWithDeprecatedFallback } from "@/lib/env";
 // Laserfiche WebLink base URL — the host that serves /WebLink/Browse.aspx.
 // Canonical env var: LASERFICHE_URL (e.g. https://laserfiche.schertzweb.com).
 // SCHERTZ_LASERFICHE_URL is a deprecated alias — still honored, logs a
-// one-time warning. Defaults to the Schertz instance.
-const BASE_URL =
-  envWithDeprecatedFallback("LASERFICHE_URL", "SCHERTZ_LASERFICHE_URL") ??
-  "https://laserfiche.schertzweb.com";
+// one-time warning.
+//
+// Deliberately NO Schertz-instance default: this previously fell back to
+// Schertz's own Laserfiche URL when unset, which meant any other city
+// deployment without LASERFICHE_URL configured would silently scrape
+// Schertz's documents (via the also-hardcoded REPO/ROOT_FOLDER_ID/
+// CIVIC_FOLDERS below, all Schertz-specific) into its own wiki. None of the
+// currently known non-Schertz cities use Laserfiche at all, so this now
+// just skips — see the unconfigured-guard in discoverLaserficheDocs().
+const BASE_URL = envWithDeprecatedFallback("LASERFICHE_URL", "SCHERTZ_LASERFICHE_URL");
 const REPO = "SCHERTZ";
 const DBID = 1;
 const ROOT_FOLDER_ID = 25548;
@@ -229,6 +235,11 @@ async function crawlFolder(
 // ─── Main entry point ─────────────────────────────────────────────────────
 
 export async function discoverLaserficheDocs(): Promise<DiscoveredDocument[]> {
+  if (!BASE_URL) {
+    console.log("[laserfiche] LASERFICHE_URL not set — skipping Laserfiche scrape.");
+    return [];
+  }
+
   const client = await createSession();
   const results: DiscoveredDocument[] = [];
 

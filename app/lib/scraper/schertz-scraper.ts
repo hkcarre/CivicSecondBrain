@@ -213,7 +213,19 @@ async function crawlDcFolder(
 
 async function scrapeDocumentCenter(): Promise<DiscoveredDocument[]> {
   const results: DiscoveredDocument[] = [];
-  for (const folder of DC_CIVIC_FOLDERS) {
+
+  // Schertz has a hand-verified folder map (exact type/board per folder ID,
+  // built from manual inspection of its site) — preserved exactly rather
+  // than risk changing behavior for the one deployment already ingesting
+  // real production data. Every other CivicPlus city discovers its own
+  // folder tree at runtime instead: DocumentCenter's root is folder ID 1 by
+  // convention across CivicPlus tenants (see the comment on DC_CIVIC_FOLDERS
+  // above — Schertz's own list was originally built by querying that same
+  // root), and inferDocType()/inferBoard() classify by folder name rather
+  // than needing a hand-built per-city ID map.
+  const folders = CITY_NAME === "Schertz" ? DC_CIVIC_FOLDERS : await discoverTopLevelFolders();
+
+  for (const folder of folders) {
     try {
       const before = results.length;
       await crawlDcFolder(folder.id, folder.name, folder.type, folder.board, 0, results);
@@ -223,6 +235,38 @@ async function scrapeDocumentCenter(): Promise<DiscoveredDocument[]> {
     }
   }
   return results;
+}
+
+// Folder names that show up on CivicPlus sites but never hold civic
+// documents worth ingesting — photo galleries, blank forms, logo assets.
+const NON_CIVIC_FOLDER_PATTERN = /photo|gallery|\bform\b|application|logo|headshot|flyer/i;
+
+async function discoverTopLevelFolders(): Promise<
+  Array<{ id: number; name: string; type: DocumentType; board?: BoardName }>
+> {
+  const rootFolders = await dcFolderTree(1);
+  return rootFolders
+    .filter((f) => !NON_CIVIC_FOLDER_PATTERN.test(f.Text))
+    .map((f) => ({
+      id: parseInt(f.Value, 10),
+      name: f.Text,
+      type: inferDocType(f.Text, "") ?? "public-notice",
+      board: inferBoard(f.Text),
+    }));
+}
+
+function inferBoard(folderName: string): BoardName | undefined {
+  const n = folderName.toLowerCase();
+  if (n.includes("city council")) return "city-council";
+  if (n.includes("planning") || n.includes("zoning")) return "planning-zoning";
+  if (n.includes("parks") || n.includes("recreation")) return "parks-recreation";
+  if (n.includes("board of adjustment")) return "board-of-adjustment";
+  if (n.includes("historic")) return "historical-preservation";
+  if (n.includes("library")) return "library-advisory";
+  if (n.includes("animal")) return "animal-services";
+  if (n.includes("senior")) return "senior-center";
+  if (n.includes("economic development")) return "edc";
+  return undefined;
 }
 
 // ─── Finance sub-page scrapers ─────────────────────────────────────────────
@@ -238,6 +282,12 @@ const FINANCE_SUBPAGES: Array<{ url: string; type: DocumentType }> = [
 ];
 
 async function scrapeFinanceSubpages(): Promise<DiscoveredDocument[]> {
+  // Schertz-specific page slugs (/250/Financial-Transparency etc.) — not
+  // transferable to another city's site, and not required for other
+  // cities: the DocumentCenter root crawl (discoverTopLevelFolders) already
+  // picks up an equivalent Budget/Finance folder generically for them.
+  if (CITY_NAME !== "Schertz") return [];
+
   const results: DiscoveredDocument[] = [];
   const seen = new Set<string>();
 

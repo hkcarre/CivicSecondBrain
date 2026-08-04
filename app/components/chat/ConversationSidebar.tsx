@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { clsx } from "clsx";
-import { Plus, FolderPlus, Folder, MessageSquare, ChevronDown, ChevronRight } from "lucide-react";
+import { Plus, FolderPlus, Folder, MessageSquare, ChevronDown, ChevronRight, X } from "lucide-react";
 
 interface Project {
   id: string;
@@ -21,12 +21,17 @@ interface ConversationSidebarProps {
   onSelectConversation: (id: string) => void;
   /** Bumped by the parent whenever it creates a conversation itself (e.g. lazily on first message), so the list refetches. */
   refreshKey: number;
+  /** Mobile drawer state — owned by the parent page so its header toggle button and this drawer stay in sync. Has no effect on md+ screens, where this renders as a normal inline column regardless. */
+  isMobileOpen: boolean;
+  onCloseMobile: () => void;
 }
 
 export function ConversationSidebar({
   activeConversationId,
   onSelectConversation,
   refreshKey,
+  isMobileOpen,
+  onCloseMobile,
 }: ConversationSidebarProps) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -65,6 +70,7 @@ export function ConversationSidebar({
     const { conversation } = await res.json();
     setConversations((prev) => [conversation, ...prev]);
     onSelectConversation(conversation.id);
+    onCloseMobile();
   }
 
   async function handleCreateProject(e: React.FormEvent) {
@@ -92,14 +98,19 @@ export function ConversationSidebar({
     });
   }
 
+  function handleSelect(id: string) {
+    onSelectConversation(id);
+    onCloseMobile();
+  }
+
   if (loading) {
-    return <div className="w-56 flex-shrink-0 border-r border-gray-200 dark:border-gray-700" />;
+    return <div className="hidden md:block w-56 flex-shrink-0 border-r border-gray-200 dark:border-gray-700" />;
   }
 
   const unassigned = conversations.filter((c) => !c.projectId);
 
-  return (
-    <div className="w-56 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex flex-col h-full">
+  const content = (
+    <>
       <div className="p-3 space-y-1.5 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={handleNewChat}
@@ -158,7 +169,7 @@ export function ConversationSidebar({
                         key={c.id}
                         conversation={c}
                         active={c.id === activeConversationId}
-                        onSelect={onSelectConversation}
+                        onSelect={handleSelect}
                       />
                     ))
                   )}
@@ -181,14 +192,40 @@ export function ConversationSidebar({
                   key={c.id}
                   conversation={c}
                   active={c.id === activeConversationId}
-                  onSelect={onSelectConversation}
+                  onSelect={handleSelect}
                 />
               ))}
             </div>
           </div>
         )}
       </div>
-    </div>
+    </>
+  );
+
+  return (
+    <>
+      {/* Desktop: normal inline column */}
+      <div className="hidden md:flex w-56 flex-shrink-0 border-r border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex-col h-full">
+        {content}
+      </div>
+
+      {/* Mobile: drawer overlay */}
+      {isMobileOpen && (
+        <div className="md:hidden fixed inset-0 z-50 flex" role="dialog" aria-modal="true" aria-label="Chats and projects">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onCloseMobile} />
+          <div className="relative w-72 max-w-[85vw] bg-gray-50 dark:bg-gray-900 flex flex-col h-full shadow-2xl">
+            <button
+              onClick={onCloseMobile}
+              aria-label="Close chats panel"
+              className="absolute top-3 right-3 p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors z-10"
+            >
+              <X size={18} />
+            </button>
+            {content}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

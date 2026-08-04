@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { nanoid } from "nanoid";
+import { PanelLeft } from "lucide-react";
 import { ChatMessage } from "./components/chat/ChatMessage";
 import { ChatInput } from "./components/chat/ChatInput";
 import { TypingIndicator } from "./components/chat/TypingIndicator";
@@ -41,6 +42,7 @@ export default function ChatPage() {
   const [sessionRestored, setSessionRestored] = useState(false);
   const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [sidebarRefreshKey, setSidebarRefreshKey] = useState(0);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   // Load from localStorage on mount — only relevant when there's no signed-in
@@ -257,17 +259,28 @@ export default function ChatPage() {
         activeConversationId={activeConversationId}
         onSelectConversation={handleSelectConversation}
         refreshKey={sidebarRefreshKey}
+        isMobileOpen={mobileSidebarOpen}
+        onCloseMobile={() => setMobileSidebarOpen(false)}
       />
 
       <div className="flex flex-col h-full flex-1 min-w-0">
         {/* Page header */}
         <header className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-4 md:px-6 py-3 md:py-4 flex-shrink-0">
           <div className="max-w-3xl mx-auto flex items-center justify-between">
-            <div>
-              <h1 className="text-lg font-semibold text-city-navy">Ask the City</h1>
-              <p className="text-xs text-gray-400 mt-0.5">
-                Answers grounded in official {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"} city documents
-              </p>
+            <div className="flex items-center gap-2.5">
+              <button
+                onClick={() => setMobileSidebarOpen(true)}
+                aria-label="Open chats and projects"
+                className="md:hidden -ml-1 p-1.5 rounded-lg text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors flex-shrink-0"
+              >
+                <PanelLeft size={18} />
+              </button>
+              <div>
+                <h1 className="text-lg font-semibold text-city-navy">Ask the City</h1>
+                <p className="text-xs text-gray-400 mt-0.5">
+                  Answers grounded in official {process.env.NEXT_PUBLIC_CITY_NAME ?? "Schertz"} city documents
+                </p>
+              </div>
             </div>
             {messages.length > 0 && (
               <button

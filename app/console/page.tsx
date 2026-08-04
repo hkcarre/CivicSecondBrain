@@ -1,5 +1,12 @@
 import { Building2, Users, MessageSquare, Database } from "lucide-react";
-import { listMunicipalities, listUsers, getUsageByCity } from "@/lib/db/queries/console";
+import {
+  listMunicipalities,
+  listUsers,
+  getUsageByCity,
+  type MunicipalitySummary,
+  type UserSummary,
+  type UsagePoint,
+} from "@/lib/db/queries/console";
 import { UsageByCityChart } from "@/components/charts/UsageByCityChart";
 
 export const revalidate = 60;
@@ -9,12 +16,35 @@ function formatDate(iso: string | null): string {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
+/**
+ * This page is statically prerendered at build time (revalidate = 60, same
+ * ISR pattern as /dashboard) — Railway's Docker build stage doesn't have
+ * real Supabase access, only the running container does, so a missing/
+ * misconfigured env var during the build must degrade gracefully rather
+ * than crash the whole build. Runtime requests after the first successful
+ * revalidation get real data; mirrors app/dashboard/page.tsx's
+ * getFinancialTrendsData() try/catch for the exact same reason.
+ */
+async function getConsoleData(): Promise<{
+  municipalities: MunicipalitySummary[];
+  users: UserSummary[];
+  usagePoints: UsagePoint[];
+}> {
+  try {
+    const [municipalities, users, usagePoints] = await Promise.all([
+      listMunicipalities(),
+      listUsers(),
+      getUsageByCity(30),
+    ]);
+    return { municipalities, users, usagePoints };
+  } catch (err) {
+    console.warn("[console] Data unavailable:", (err as Error).message);
+    return { municipalities: [], users: [], usagePoints: [] };
+  }
+}
+
 export default async function ConsolePage() {
-  const [municipalities, users, usagePoints] = await Promise.all([
-    listMunicipalities(),
-    listUsers(),
-    getUsageByCity(30),
-  ]);
+  const { municipalities, users, usagePoints } = await getConsoleData();
 
   const totalUsers = municipalities.reduce((sum, m) => sum + m.userCount, 0);
   const totalMessages = municipalities.reduce((sum, m) => sum + m.messageCount, 0);

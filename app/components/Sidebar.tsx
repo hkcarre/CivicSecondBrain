@@ -12,6 +12,7 @@ import {
   Moon,
   Menu,
   X,
+  Building2,
 } from "lucide-react";
 import { clsx } from "clsx";
 import { useEffect, useState } from "react";
@@ -44,15 +45,36 @@ const NAV_ITEMS = [
   },
 ];
 
+// Separate from NAV_ITEMS — only ever shown to Strata's own team (see
+// isStrataAdmin below), never per-city staff, so it's kept out of the
+// always-rendered list rather than conditionally filtered inline.
+const CONSOLE_ITEM = {
+  href: "/console",
+  label: "Strata Console",
+  icon: Building2,
+  description: "Cross-city municipalities, users & usage",
+};
+
 export function Sidebar() {
   const pathname = usePathname();
   const [isDark, setIsDark] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isStrataAdmin, setIsStrataAdmin] = useState(false);
 
   // Sync dark state with class already applied by the inline script
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- document is unavailable during SSR; must read post-mount
     setIsDark(document.documentElement.classList.contains("dark"));
+  }, []);
+
+  // Fetched client-side (not by the root layout server-side) so pages keep
+  // their static/ISR rendering — see the comment in app/layout.tsx. Fails
+  // silently to false for signed-out users or if Supabase isn't configured.
+  useEffect(() => {
+    fetch("/api/me")
+      .then((res) => (res.ok ? res.json() : { isStrataAdmin: false }))
+      .then((data) => setIsStrataAdmin(Boolean(data.isStrataAdmin)))
+      .catch(() => setIsStrataAdmin(false));
   }, []);
 
   // Close mobile drawer on route change
@@ -98,34 +120,17 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-3 py-4 space-y-1">
-        {NAV_ITEMS.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.href;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={clsx(
-                "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group",
-                active
-                  ? "bg-white/15 text-white"
-                  : "text-white/70 hover:bg-white/10 hover:text-white"
-              )}
-            >
-              <Icon
-                size={18}
-                className={clsx(
-                  "flex-shrink-0",
-                  active ? "text-city-maroon" : "text-white/50 group-hover:text-white/80"
-                )}
-              />
-              <span className="text-sm font-medium">{item.label}</span>
-              {active && (
-                <ChevronRight size={14} className="ml-auto text-white/40" />
-              )}
-            </Link>
-          );
-        })}
+        {NAV_ITEMS.map((item) => (
+          <NavLink key={item.href} item={item} active={pathname === item.href} />
+        ))}
+        {isStrataAdmin && (
+          <>
+            <div className="pt-3 mt-2 border-t border-white/10">
+              <p className="px-3 pb-1.5 text-[10px] font-semibold text-white/30 uppercase tracking-widest">Strata</p>
+              <NavLink item={CONSOLE_ITEM} active={pathname === CONSOLE_ITEM.href} />
+            </div>
+          </>
+        )}
       </nav>
 
       {/* Footer */}
@@ -206,5 +211,32 @@ export function Sidebar() {
         </div>
       )}
     </>
+  );
+}
+
+interface NavLinkItem {
+  href: string;
+  label: string;
+  icon: typeof MessageSquare;
+  description: string;
+}
+
+function NavLink({ item, active }: { item: NavLinkItem; active: boolean }) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      className={clsx(
+        "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group",
+        active ? "bg-white/15 text-white" : "text-white/70 hover:bg-white/10 hover:text-white"
+      )}
+    >
+      <Icon
+        size={18}
+        className={clsx("flex-shrink-0", active ? "text-city-maroon" : "text-white/50 group-hover:text-white/80")}
+      />
+      <span className="text-sm font-medium">{item.label}</span>
+      {active && <ChevronRight size={14} className="ml-auto text-white/40" />}
+    </Link>
   );
 }

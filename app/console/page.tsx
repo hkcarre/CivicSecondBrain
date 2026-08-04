@@ -1,4 +1,4 @@
-import { Building2, Users, MessageSquare, Database } from "lucide-react";
+import { Building2, Users, MessageSquare, Database, ExternalLink } from "lucide-react";
 import {
   listMunicipalities,
   listUsers,
@@ -95,7 +95,21 @@ export default async function ConsolePage() {
                 {municipalities.map((m) => (
                   <tr key={m.cityId} className="border-t border-gray-100 dark:border-gray-700">
                     <td className="px-4 py-2.5 font-medium text-gray-800 dark:text-gray-200">
-                      {m.name}, {m.state}
+                      {m.deploymentUrl ? (
+                        <a
+                          href={m.deploymentUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 hover:text-city-maroon transition-colors"
+                        >
+                          {m.name}, {m.state}
+                          <ExternalLink size={11} className="text-gray-400" />
+                        </a>
+                      ) : (
+                        <span title="Not deployed yet">
+                          {m.name}, {m.state}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400 tabular-nums">{m.userCount}</td>
                     <td className="px-4 py-2.5 text-gray-600 dark:text-gray-400 tabular-nums">{m.conversationCount}</td>

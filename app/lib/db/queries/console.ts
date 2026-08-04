@@ -21,6 +21,7 @@ export interface MunicipalitySummary {
   cityId: string;
   name: string;
   state: string;
+  deploymentUrl: string | null;
   userCount: number;
   conversationCount: number;
   messageCount: number;
@@ -70,7 +71,7 @@ export async function listMunicipalities(): Promise<MunicipalitySummary[]> {
 
   const [{ data: cities }, { data: users }, { data: conversations }, { data: messages }, { data: facts }] =
     await Promise.all([
-      client.from("cities").select("id, name, state"),
+      client.from("cities").select("id, name, state, deployment_url"),
       client.from("app_users").select("id, city_id"),
       client.from("conversations").select("id, city_id"),
       client.from("messages").select("id, conversation_id, created_at, conversation:conversations(city_id)"),
@@ -92,6 +93,7 @@ export async function listMunicipalities(): Promise<MunicipalitySummary[]> {
       cityId: city.id,
       name: city.name,
       state: city.state,
+      deploymentUrl: city.deployment_url,
       userCount: cityUsers.length,
       conversationCount: cityConversationIds.size,
       messageCount: cityMessages.length,

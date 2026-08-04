@@ -29,6 +29,11 @@ export default function RootLayout({
         className={`${inter.className} h-full bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100`}
       >
         <div className="flex h-full">
+          {/* Sidebar fetches its own is_strata_admin status client-side
+              (see useEffect inside) rather than this layout checking it
+              server-side — that would force every page in the app to
+              render dynamically (no more ISR on /dashboard, /wiki, etc.)
+              just to conditionally show one nav link. */}
           <Sidebar />
           {/* pt-14 on mobile offsets the fixed top header bar; md:pt-0 removes it on desktop */}
           <main className="flex-1 overflow-auto pt-14 md:pt-0">{children}</main>

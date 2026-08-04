@@ -34,6 +34,21 @@ function LoginForm() {
     return () => clearInterval(timer);
   }, [cooldown]);
 
+  // /auth/callback redirects here with ?error=auth_failed when the magic
+  // link's code exchange fails — most commonly because it was requested on
+  // one device/browser and opened on another (Supabase's magic-link flow
+  // ties the exchange to where it was requested), or because the link was
+  // already used or has expired. Surface a specific, actionable message
+  // rather than silently dropping the person back on a blank form.
+  useEffect(() => {
+    if (searchParams.get("error") === "auth_failed") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reads the URL, unavailable during SSR; must run post-mount
+      setError(
+        "That sign-in link didn't work — it may have expired, already been used, or been opened in a different browser than the one you requested it from. Request a new one below."
+      );
+    }
+  }, [searchParams]);
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError("");

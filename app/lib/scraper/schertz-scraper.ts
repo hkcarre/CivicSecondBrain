@@ -19,6 +19,7 @@ import crypto from "crypto";
 import type { CivicDocument, DocumentType, BoardName } from "@/types";
 import { discoverLaserficheDocs } from "./laserfiche-scraper";
 import { discoverMunicodeDocs } from "./municode-scraper";
+import { discoverMunibitDocs } from "./munibit-scraper";
 import { docId } from "@/lib/manifest";
 import { envWithDeprecatedFallback, getCityName, getMaxFileSizeMb } from "@/lib/env";
 
@@ -54,6 +55,18 @@ export interface DiscoveredDocument {
 
 export async function discoverDocuments(): Promise<DiscoveredDocument[]> {
   console.log(`🔍 Scraping ${CITY_NAME} government documents (parallel)...`);
+
+  // Munibit cities (Von Ormy) run on a completely different CMS than the
+  // rest of this file's CivicPlus/Laserfiche/MuniCode pipeline. Dispatch
+  // to the Munibit scraper and return early instead of falling through to
+  // BASE_URL's Schertz default, which would otherwise silently scrape
+  // Schertz's own CivicPlus site under this city's ingest run.
+  if (process.env.MUNIBIT_URL) {
+    const munibitDocs = await discoverMunibitDocs();
+    console.log(`  ✓ Munibit: ${munibitDocs.length} documents found`);
+    console.log(`\n📋 Total documents discovered: ${munibitDocs.length}`);
+    return munibitDocs;
+  }
 
   // All scrapers are independent — run them concurrently
   const [dcResult, financeResult, noticesResult, lfResult, municodeResult] = await Promise.allSettled([

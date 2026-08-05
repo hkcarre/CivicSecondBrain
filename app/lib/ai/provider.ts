@@ -25,6 +25,20 @@ import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 import { withRetry } from "./retry";
 
+/**
+ * `.env.example` ships `AI_MODEL=` (empty, deliberately — it's an optional
+ * override) — an empty string is not nullish, so `process.env.AI_MODEL ??
+ * fallback` silently resolves to `""` instead of the intended default,
+ * and every completion call fails with the API's own
+ * "model: String should have at least 1 character" error. Same gotcha
+ * app/lib/env.ts already documents and guards against; provider.ts hadn't
+ * been given the same treatment.
+ */
+function readModelOverride(): string | undefined {
+  const value = process.env.AI_MODEL;
+  return value === undefined || value === "" ? undefined : value;
+}
+
 export interface AICompleteOptions {
   system: string;
   prompt: string;
@@ -58,7 +72,7 @@ function logRetry(label: string) {
 
 function buildAnthropicProvider(): AIProvider {
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  const model = process.env.AI_MODEL ?? "claude-sonnet-4-5";
+  const model = readModelOverride() ?? "claude-sonnet-4-5";
 
   return {
     model,
@@ -119,7 +133,7 @@ function buildOpenAIProvider(isGemini = false): AIProvider {
   const client = new OpenAI({ apiKey, ...(baseURL ? { baseURL } : {}) });
 
   const defaultModel = isGemini ? "gemini-2.0-flash" : "gpt-4o";
-  const model = process.env.AI_MODEL ?? defaultModel;
+  const model = readModelOverride() ?? defaultModel;
 
   return {
     model,

@@ -18,6 +18,13 @@ export const FACT_VALUE_TYPES = [
   "projected",
 ] as const;
 
+// .optional() rejects an explicit JSON `null`, which models routinely emit
+// for an inapplicable optional field instead of omitting the key (see the
+// same fix, with the full incident writeup, in extraction-schema.ts).
+// Normalizing to undefined here too, proactively, before it fails the same
+// way this pass's sibling schema did.
+const nullishToUndefined = <T>(v: T | null | undefined) => v ?? undefined;
+
 const NumericFactSchema = z.object({
   metric_id: z
     .string()
@@ -28,7 +35,7 @@ const NumericFactSchema = z.object({
   period: z.string(),
   value_type: z.enum(FACT_VALUE_TYPES),
   source_citation: z.string().min(1, "source_citation is required — never emit a number without one"),
-  source_quote: z.string().optional(),
+  source_quote: z.string().nullish().transform(nullishToUndefined),
   confidence: z.number().min(0).max(1),
 });
 

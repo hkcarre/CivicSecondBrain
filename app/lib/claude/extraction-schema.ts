@@ -11,19 +11,40 @@
 
 import { z } from "zod";
 
+/**
+ * `.optional()` accepts `undefined` (or an omitted key) but rejects an
+ * explicit JSON `null` — and Claude routinely emits `null` for
+ * inapplicable optional fields rather than omitting the key, since the
+ * prompt lists a fixed JSON shape for it to fill in. That mismatch was
+ * silently failing every real INGEST response that hit it (100% of
+ * production ingests since the guardrail was added — a document with zero
+ * optional fields present is effectively never). This normalizes null
+ * back to undefined so the *output* type stays exactly what callers
+ * already expect (`T | undefined`, never `T | null`), while the *input*
+ * tolerates whatever shape the model actually sends.
+ */
+function nullishOptional<T extends z.ZodTypeAny>(schema: T) {
+  return schema.nullish().transform((v) => v ?? undefined);
+}
+
 const KeyDecisionSchema = z.object({
   description: z.string(),
-  vote: z.string().optional(),
-  ayes: z.number().optional(),
-  noes: z.number().optional(),
-  abstentions: z.number().optional(),
-  ordinanceNumber: z.string().optional(),
+  vote: nullishOptional(z.string()),
+  ayes: nullishOptional(z.number()),
+  noes: nullishOptional(z.number()),
+  abstentions: nullishOptional(z.number()),
+  ordinanceNumber: nullishOptional(z.string()),
 });
 
 const DollarAmountSchema = z.object({
   description: z.string(),
-  amount: z.string(),
-  fiscalYear: z.string().optional(),
+  // The prompt asks for a formatted amount but doesn't mandate a string
+  // shape, and Claude legitimately returns a bare number for some
+  // documents (e.g. a plain rate/dollar figure with no "$"/"M" to
+  // include). Accept either, normalize to string for downstream code
+  // that interpolates it directly (wiki writer, log entries).
+  amount: z.union([z.string(), z.number()]).transform(String),
+  fiscalYear: nullishOptional(z.string()),
   context: z.string(),
 });
 
@@ -43,8 +64,8 @@ const NamedEntitiesSchema = z.object({
 export const ExtractedKnowledgeSchema = z.object({
   documentType: z.string(),
   documentDate: z.string(),
-  fiscalYear: z.string().optional(),
-  board: z.string().optional(),
+  fiscalYear: nullishOptional(z.string()),
+  board: nullishOptional(z.string()),
   summary: z.string(),
   keyDecisions: z.array(KeyDecisionSchema).default([]),
   dollarAmounts: z.array(DollarAmountSchema).default([]),

@@ -60,15 +60,16 @@ export function ConversationSidebar({
     void refetch();
   }, [refetch, refreshKey]);
 
-  async function handleNewChat() {
+  async function handleNewChat(projectId?: string) {
     const res = await fetch("/api/conversations", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
+      body: JSON.stringify(projectId ? { projectId } : {}),
     });
     if (!res.ok) return;
     const { conversation } = await res.json();
     setConversations((prev) => [conversation, ...prev]);
+    if (projectId) setExpandedProjects((prev) => new Set(prev).add(projectId));
     onSelectConversation(conversation.id);
     onCloseMobile();
   }
@@ -113,7 +114,7 @@ export function ConversationSidebar({
     <>
       <div className="p-3 space-y-1.5 border-b border-gray-200 dark:border-gray-700">
         <button
-          onClick={handleNewChat}
+          onClick={() => handleNewChat()}
           className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-sm font-medium
                      text-white bg-city-maroon hover:opacity-90 transition-colors"
         >
@@ -149,20 +150,38 @@ export function ConversationSidebar({
           const projectConvos = conversations.filter((c) => c.projectId === project.id);
           const expanded = expandedProjects.has(project.id);
           return (
-            <div key={project.id}>
-              <button
-                onClick={() => toggleProject(project.id)}
-                className="w-full flex items-center gap-1.5 px-1.5 py-1 rounded-md text-xs font-semibold
-                           text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-800 transition-colors"
-              >
-                {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-                <Folder size={12} className="text-city-maroon" />
-                <span className="truncate">{project.name}</span>
-              </button>
+            <div key={project.id} className="group/proj">
+              <div className="flex items-center">
+                <button
+                  onClick={() => toggleProject(project.id)}
+                  className="flex-1 min-w-0 flex items-center gap-1.5 px-1.5 py-1 rounded-md text-xs font-semibold
+                             text-gray-600 dark:text-gray-300 hover:bg-gray-200/60 dark:hover:bg-gray-800 transition-colors"
+                >
+                  {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+                  <Folder size={12} className="text-city-maroon flex-shrink-0" />
+                  <span className="truncate">{project.name}</span>
+                </button>
+                <button
+                  onClick={() => handleNewChat(project.id)}
+                  aria-label={`New chat in ${project.name}`}
+                  title={`New chat in ${project.name}`}
+                  className="flex-shrink-0 p-1 rounded-md text-gray-400 dark:text-gray-500
+                             hover:bg-gray-200/60 dark:hover:bg-gray-800 hover:text-city-maroon
+                             opacity-0 group-hover/proj:opacity-100 focus:opacity-100 transition-opacity"
+                >
+                  <Plus size={12} />
+                </button>
+              </div>
               {expanded && (
                 <div className="ml-4 mt-0.5 space-y-0.5">
                   {projectConvos.length === 0 ? (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 px-1.5 py-1">No chats yet</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 px-1.5 py-1">
+                      No chats yet — click{" "}
+                      <button onClick={() => handleNewChat(project.id)} className="underline hover:text-city-maroon">
+                        + New chat
+                      </button>{" "}
+                      above
+                    </p>
                   ) : (
                     projectConvos.map((c) => (
                       <ConversationRow

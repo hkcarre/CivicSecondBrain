@@ -55,6 +55,11 @@ export interface DiscoveredDocument {
   // an anti-hotlinking check, not an IP/auth restriction. Optional because
   // most sources (CivicPlus, Laserfiche) don't require it.
   refererUrl?: string;
+  // Session cookie captured from the page's own response (e.g. an ASP.NET
+  // Core antiforgery cookie). Confirmed required alongside refererUrl for
+  // Munibit's blob endpoint — a Referer with no matching session cookie
+  // still 400s. Raw "name=value; name2=value2" Cookie-header format.
+  sessionCookie?: string;
 }
 
 // ─── Main scraper entry point ──────────────────────────────────────────────
@@ -381,6 +386,9 @@ export async function downloadDocument(doc: DiscoveredDocument): Promise<string 
       // request for the file with 400/403 unless Referer matches a page that
       // actually links to it — see the DiscoveredDocument.refererUrl comment.
       ...(doc.refererUrl ? { Referer: doc.refererUrl } : {}),
+      // See DiscoveredDocument.sessionCookie — Referer alone isn't enough
+      // for Munibit; the page's session cookie must be replayed too.
+      ...(doc.sessionCookie ? { Cookie: doc.sessionCookie } : {}),
     };
 
     // HEAD request first to check Content-Length before downloading

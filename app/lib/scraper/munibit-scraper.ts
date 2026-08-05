@@ -54,10 +54,22 @@ export async function discoverMunibitDocs(): Promise<DiscoveredDocument[]> {
 
   for (const page of MUNIBIT_PAGES) {
     try {
-      const { data: html } = await axios.get(`${MUNIBIT_URL}/${page.slug}`, {
+      const pageResponse = await axios.get(`${MUNIBIT_URL}/${page.slug}`, {
         headers: HEADERS,
         timeout: 15000,
       });
+      const html = pageResponse.data;
+
+      // The blob download endpoint (/api/blob/viewBlob) 400s on a cold
+      // request — confirmed by testing directly: it needs the ASP.NET Core
+      // antiforgery session cookie the page response sets, replayed on the
+      // download request alongside a matching Referer. Without it, neither
+      // a valid Referer alone nor a "clean" IP is enough — the endpoint
+      // genuinely requires the session established by loading this exact
+      // page, so each page's documents carry that page's own cookie.
+      const setCookies = (pageResponse.headers["set-cookie"] as string[] | undefined) ?? [];
+      const sessionCookie = setCookies.map((c) => c.split(";")[0]).join("; ") || undefined;
+
       const $ = cheerio.load(html);
 
       $("div.fileDiv").each((_i, el) => {
@@ -77,6 +89,7 @@ export async function discoverMunibitDocs(): Promise<DiscoveredDocument[]> {
           board: page.board,
           date: extractYearFromTitle(filename),
           refererUrl: `${MUNIBIT_URL}/${page.slug}`,
+          sessionCookie,
         });
       });
     } catch (err) {

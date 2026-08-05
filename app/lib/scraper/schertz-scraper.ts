@@ -49,6 +49,12 @@ export interface DiscoveredDocument {
   date?: string;
   checksum?: string;
   sourceModifiedAt?: string; // Last-Modified or ETag from the server
+  // The page this document's link was found on. Some CMS backends (confirmed:
+  // Munibit's /api/blob/viewBlob) reject a blind request for the file URL with
+  // 400/403 unless the Referer matches a page that actually links to it —
+  // an anti-hotlinking check, not an IP/auth restriction. Optional because
+  // most sources (CivicPlus, Laserfiche) don't require it.
+  refererUrl?: string;
 }
 
 // ─── Main scraper entry point ──────────────────────────────────────────────
@@ -371,6 +377,10 @@ export async function downloadDocument(doc: DiscoveredDocument): Promise<string 
     const HEADERS = {
       "User-Agent": `Strata Civic Solutions/1.0 (City Council Research Tool; ${BASE_URL})`,
       "Accept": "application/pdf,*/*",
+      // Some sources (confirmed: Munibit's /api/blob/viewBlob) reject a blind
+      // request for the file with 400/403 unless Referer matches a page that
+      // actually links to it — see the DiscoveredDocument.refererUrl comment.
+      ...(doc.refererUrl ? { Referer: doc.refererUrl } : {}),
     };
 
     // HEAD request first to check Content-Length before downloading

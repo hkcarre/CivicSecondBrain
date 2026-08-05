@@ -76,6 +76,7 @@ export async function discoverMunibitDocs(): Promise<DiscoveredDocument[]> {
           type: inferDocType(filename) ?? page.type,
           board: page.board,
           date: extractYearFromTitle(filename),
+          refererUrl: `${MUNIBIT_URL}/${page.slug}`,
         });
       });
     } catch (err) {

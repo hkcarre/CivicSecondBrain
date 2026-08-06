@@ -66,7 +66,11 @@ async function buildStructuredFactsBlock(userMessage: string): Promise<string> {
       "\n\n## STRUCTURED FACTS (verified numeric data — prefer these exact " +
       "figures and citations over any number mentioned in the wiki text " +
       "below when both cover the same thing)\n\n" +
-      sections.join("\n\n")
+      sections.join("\n\n") +
+      "\n\nNote: this chat is text-only and cannot render a chart. If the " +
+      "user is asking for a chart, graph, or trend, answer with the figures " +
+      "above and also mention that a visual chart of this data is on the " +
+      "dashboard (the \"City Health\" link in the sidebar)."
     );
   } catch (err) {
     console.warn("[chat] Structured facts unavailable:", (err as Error).message);

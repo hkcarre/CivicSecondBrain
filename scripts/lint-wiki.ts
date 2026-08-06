@@ -12,7 +12,7 @@
 import { claude, MODELS, LINT_SYSTEM_PROMPT } from "../app/lib/claude/client";
 import { readWikiPage, buildWikiContext } from "../app/lib/wiki/reader";
 import type { WikiPage } from "../app/types";
-import { writeRecommendationPage, updateWikiIndex, appendToLog } from "../app/lib/wiki/writer";
+import { queueForReview, type PendingAction, type IndexEntryInput } from "../app/lib/wiki/pending-review";
 import type { Recommendation } from "../app/types";
 
 // Lint focuses on high-value topic pages — not every ingested document page.
@@ -105,29 +105,30 @@ Return ONLY valid JSON.`,
     })
   );
 
-  // 3. Write recommendation pages
+  // 3. Queue recommendation pages for review instead of publishing them
+  // live — these directly influence council decisions, so they get the
+  // same human-checkpoint treatment as /api/lint (see pending-review.ts).
+  const actions: PendingAction[] = [];
+  const indexEntries: IndexEntryInput[] = [];
   const newPaths: string[] = [];
   for (const rec of recs) {
-    const p = writeRecommendationPage(rec);
-    rec.path = p;
-    newPaths.push(p);
+    const slug = rec.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+    const predictedPath = `recommendations/${rec.generatedAt}-${slug}.md`;
+    rec.path = predictedPath;
+    newPaths.push(predictedPath);
+    actions.push({ kind: "create-recommendation", recommendation: rec });
+    indexEntries.push({
+      path: predictedPath,
+      summary: rec.finding.slice(0, 80),
+      date: today,
+      sourceCount: rec.sourcesAnalyzed.length,
+      category: "recommendation",
+    });
   }
 
-  // 4. Update wiki index
-  if (newPaths.length > 0) {
-    updateWikiIndex(
-      newPaths.map((p, i) => ({
-        path: p,
-        summary: recs[i].finding.slice(0, 80),
-        date: today,
-        sourceCount: recs[i].sourcesAnalyzed.length,
-        category: "recommendation",
-      }))
-    );
-  }
-
-  // 5. Append to log
-  appendToLog(`## [${today}] LINT | full
+  // 4. Queue the log entry too — it should only land once these
+  // recommendations are actually live, not the moment this script finishes.
+  const logEntry = `## [${today}] LINT | full
 **Pages analyzed:** ${pages.length}
 **Issues found:** ${recs.filter((r) => r.severity === "high").length} high | ${recs.filter((r) => r.severity === "medium").length} medium | ${recs.filter((r) => r.severity === "low").length} low
 **Stale pages:** ${(result.stalePages ?? []).join(", ") || "none"}
@@ -136,9 +137,19 @@ Return ONLY valid JSON.`,
 ${(result.topActions ?? [])
   .slice(0, 3)
   .map((a: string, i: number) => `  ${i + 1}. ${a}`)
-  .join("\n")}`);
+  .join("\n")}`;
 
-  // 6. Print summary
+  if (actions.length > 0) {
+    queueForReview({
+      title: "LINT nightly analysis",
+      preview: `${recs.length} recommendation(s): ${recs.map((r) => r.title).join(", ")}`,
+      actions,
+      indexEntries,
+      logEntry,
+    });
+  }
+
+  // 5. Print summary
   console.log("═══════════════════════════════════════════════════");
   console.log("  LINT COMPLETE");
   console.log("═══════════════════════════════════════════════════");
@@ -156,8 +167,8 @@ ${(result.topActions ?? [])
     });
   }
 
-  console.log(`\n✓ Recommendations written to wiki/recommendations/`);
-  console.log("  View on the dashboard: /dashboard\n");
+  console.log(`\n✓ Recommendations queued for review — nothing is live yet.`);
+  console.log("  Review and approve at /admin/review\n");
 }
 
 main().catch((err) => {

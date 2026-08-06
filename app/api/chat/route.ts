@@ -134,9 +134,11 @@ export async function POST(req: Request) {
       ? "\n\n## IMPORTANT — CHART/GRAPH REQUESTS\nThis chat is text-only and " +
         "cannot render a chart, even though the STRUCTURED FACTS above are " +
         "chartable. If the user's question asks for a chart, graph, plot, " +
-        "or visualization, your answer MUST end with this exact line: " +
-        "\"You can see this as an interactive chart on your dashboard " +
-        "(the 'City Health' link in the sidebar).\""
+        "or visualization, your answer MUST end with this exact line, " +
+        "including the markdown link exactly as written (the chat UI " +
+        "renders [text](/path) as a clickable link): " +
+        "\"You can see this as an interactive chart on your " +
+        "[City Health dashboard](/dashboard).\""
       : "";
 
     // ── 3. Stream response via provider-agnostic AI client ───────────────────

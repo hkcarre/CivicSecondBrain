@@ -12,6 +12,7 @@
     "ingest:facts": "node --max-old-space-size=768 --expose-gc -r ./scripts/load-env.cjs -r tsx/cjs scripts/ingest-facts.ts",
     "lint:wiki": "node --max-old-space-size=512 -r ./scripts/load-env.cjs -r tsx/cjs scripts/lint-wiki.ts",
     "scrape:check": "node --max-old-space-size=256 -r ./scripts/load-env.cjs -r tsx/cjs scripts/scraper-check.ts",
+    "eval:chat": "node -r ./scripts/load-env.cjs -r ./scripts/load-eval-fixture.cjs -r tsx/cjs scripts/eval-chat.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",

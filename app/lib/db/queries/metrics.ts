@@ -36,6 +36,7 @@ export interface MetricSummary {
   metricId: string;
   metricName: string;
   unit: string;
+  valueType: FactValueType;
   periodCount: number;
   latestPeriod: string;
 }
@@ -84,12 +85,17 @@ export async function getMetricSeries(
 /**
  * Discovers what's queryable for a city — for a metric picker UI, or to
  * decide what to chart on a dashboard without hardcoding metric_ids.
+ *
+ * Grouped by (metric_id, value_type), not metric_id alone: a metric with
+ * both "adopted" and "actual" rows is two distinct, non-mixable series (see
+ * the module-level comment on why value_type is never conflated), so each
+ * needs its own summary entry and its own call to getMetricSeries().
  */
 export async function listAvailableMetrics(cityId: string): Promise<MetricSummary[]> {
   const client = getServiceRoleClient();
   const { data, error } = await client
     .from("facts")
-    .select("metric_id, metric_name, unit, period")
+    .select("metric_id, metric_name, unit, value_type, period")
     .eq("city_id", cityId)
     .eq("flagged", false)
     .neq("review_status", "rejected")
@@ -101,12 +107,14 @@ export async function listAvailableMetrics(cityId: string): Promise<MetricSummar
 
   const byMetric = new Map<string, MetricSummary>();
   for (const row of data ?? []) {
-    const existing = byMetric.get(row.metric_id);
+    const key = `${row.metric_id}::${row.value_type}`;
+    const existing = byMetric.get(key);
     if (!existing) {
-      byMetric.set(row.metric_id, {
+      byMetric.set(key, {
         metricId: row.metric_id,
         metricName: row.metric_name,
         unit: row.unit,
+        valueType: row.value_type as FactValueType,
         periodCount: 1,
         latestPeriod: row.period,
       });
@@ -115,4 +123,28 @@ export async function listAvailableMetrics(cityId: string): Promise<MetricSummar
     }
   }
   return Array.from(byMetric.values());
+}
+
+/**
+ * Every queryable metric series for a city, ready to chart — combines
+ * listAvailableMetrics() with a getMetricSeries() call per (metric,
+ * value_type) pair. This is the one function a dashboard/grid should call;
+ * it keeps the "never mix value_types" rule enforced in one place rather
+ * than every caller re-implementing the same loop.
+ */
+export interface MetricSeries extends MetricSummary {
+  points: MetricPoint[];
+}
+
+export async function getAllMetricSeries(cityId: string): Promise<MetricSeries[]> {
+  const summaries = await listAvailableMetrics(cityId);
+  const series = await Promise.all(
+    summaries.map(async (summary) => ({
+      ...summary,
+      points: await getMetricSeries(cityId, summary.metricId, summary.valueType),
+    }))
+  );
+  // Series with the longest history first — the most substantive trend
+  // lines lead, single-point "series" (nothing to trend yet) trail.
+  return series.sort((a, b) => b.periodCount - a.periodCount);
 }

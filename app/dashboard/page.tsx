@@ -3,9 +3,9 @@ import { WikiHealthPanel } from "../components/dashboard/WikiHealthPanel";
 import { RecentActivity } from "../components/dashboard/RecentActivity";
 import { RunAnalysisButton } from "../components/dashboard/RunAnalysisButton";
 import { getDashboardData } from "../lib/wiki/dashboard-data";
-import { FinancialTrends, type FinancialTrendsData } from "../components/dashboard/FinancialTrends";
+import { FinancialTrends } from "../components/dashboard/FinancialTrends";
 import { getCurrentCityId } from "../lib/db/cities";
-import { getMetricSeries } from "../lib/db/queries/metrics";
+import { getAllMetricSeries, type MetricSeries } from "../lib/db/queries/metrics";
 
 export const revalidate = 60; // Revalidate every 60 seconds
 
@@ -16,15 +16,13 @@ export const revalidate = 60; // Revalidate every 60 seconds
  * should still get a working dashboard — never let this section's absence
  * take down the page that already works.
  */
-async function getFinancialTrendsData(): Promise<FinancialTrendsData | null> {
+async function getFinancialTrendsData(): Promise<MetricSeries[]> {
   try {
     const cityId = await getCurrentCityId();
-    const propertyTaxRate = await getMetricSeries(cityId, "property-tax-rate-per-100", "actual");
-    if (propertyTaxRate.length === 0) return null;
-    return { propertyTaxRate };
+    return await getAllMetricSeries(cityId);
   } catch (err) {
     console.warn("[dashboard] Financial trends unavailable:", (err as Error).message);
-    return null;
+    return [];
   }
 }
 
@@ -56,9 +54,9 @@ export default async function DashboardPage() {
         </div>
 
         {/* Financial trends — only renders once numeric facts exist for this city */}
-        {financialTrends && (
+        {financialTrends.length > 0 && (
           <div className="mb-6">
-            <FinancialTrends data={financialTrends} />
+            <FinancialTrends series={financialTrends} />
           </div>
         )}
 

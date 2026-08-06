@@ -10,14 +10,21 @@
  * index/log — runs for real against a temp WIKI_PATH fixture, following the
  * vi.resetModules() + dynamic import pattern (module-level path constants).
  *
+ * ingestDocument() queues its writes for human review (pending-review.ts)
+ * rather than publishing them live — see that module's own comment for why.
+ * Tests that need to inspect the eventual live content call approveReview()
+ * on the queued item first, same as a reviewer clicking Approve would.
+ *
  * Matrix:
  *  - missing localPath → throws
- *  - happy path (.txt): topic stub created, index updated, log appended,
- *    IngestResult fields formatted (keyFacts joined, dollarAmounts with FY)
+ *  - happy path (.txt): topic stub queued for review, IngestResult fields
+ *    formatted (keyFacts joined, dollarAmounts with FY); approving writes
+ *    the stub live, updates the index, appends the log
  *  - fenced ```json response parses; bare-JSON response parses
  *  - malformed AI response (no JSON) → clear error
- *  - meeting-minutes with keyDecisions → decisions page with votes + [SOURCE:]
- *  - existing topic page → append path (pagesUpdated, not created)
+ *  - meeting-minutes with keyDecisions → queued decisions page with votes +
+ *    [SOURCE:], live only after approval
+ *  - existing topic page → append path queued (pagesUpdated, not created)
  *  - topic relevance filter in buildTopicUpdate (documented by the strict
  *    dollarAmounts filter next to it): facts unrelated to the topic must not
  *    be appended to that topic's page when relevant facts exist
@@ -49,6 +56,14 @@ let docsDir: string;
 async function importEngine() {
   vi.resetModules();
   return import("@/lib/claude/ingest-engine");
+}
+
+/** Approves every currently-queued review item — mirrors a reviewer clicking Approve on each. */
+async function approveAllPending() {
+  const { listPendingReviews, approveReview } = await import("@/lib/wiki/pending-review");
+  for (const item of listPendingReviews()) {
+    approveReview(item.id);
+  }
 }
 
 function extraction(overrides: Record<string, unknown> = {}) {
@@ -139,6 +154,11 @@ describe("ingestDocument — happy path", () => {
     expect(result.dollarAmounts).toContain("General fund: $42M (FY2026)");
     expect(result.votesRecorded).toBe(0);
 
+    // Nothing is live yet — it's queued for review, not written directly.
+    expect(fs.existsSync(path.join(tmpDir, "topics/budget.md"))).toBe(false);
+
+    await approveAllPending();
+
     // Topic stub written with citation
     const stub = fs.readFileSync(path.join(tmpDir, "topics/budget.md"), "utf-8");
     expect(stub).toContain("[SOURCE: FY2026 Budget]");
@@ -191,6 +211,10 @@ describe("ingestDocument — decisions pages", () => {
     expect(result.pagesCreated.some((p) => p.startsWith("decisions/"))).toBe(true);
 
     const decisionPath = result.pagesCreated.find((p) => p.startsWith("decisions/"))!;
+    expect(fs.existsSync(path.join(tmpDir, decisionPath))).toBe(false);
+
+    await approveAllPending();
+
     const page = fs.readFileSync(path.join(tmpDir, decisionPath), "utf-8");
     expect(page).toContain("Approved water rate ordinance");
     expect(page).toContain("5 Ayes / 2 Noes");
@@ -222,7 +246,14 @@ describe("ingestDocument — existing topic pages", () => {
     expect(result.pagesUpdated).toContain("topics/budget.md");
     expect(result.pagesCreated).not.toContain("topics/budget.md");
 
-    const page = fs.readFileSync(path.join(tmpDir, "topics/budget.md"), "utf-8");
+    // Pre-existing content is untouched until the queued append is approved.
+    let page = fs.readFileSync(path.join(tmpDir, "topics/budget.md"), "utf-8");
+    expect(page).toContain("Existing content.");
+    expect(page).not.toContain("General fund budget adopted at $42M");
+
+    await approveAllPending();
+
+    page = fs.readFileSync(path.join(tmpDir, "topics/budget.md"), "utf-8");
     expect(page).toContain("Existing content.");
     expect(page).toContain("General fund budget adopted at $42M");
   });
@@ -250,6 +281,7 @@ describe("ingestDocument — existing topic pages", () => {
     );
     const { ingestDocument } = await importEngine();
     await ingestDocument(makeDoc());
+    await approveAllPending();
 
     const page = fs.readFileSync(path.join(tmpDir, "topics/budget.md"), "utf-8");
     expect(page).toContain("Budget reserve fund increased");

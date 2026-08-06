@@ -8,13 +8,7 @@
 import { INGEST_SYSTEM_PROMPT } from "./client";
 import { getAIProvider } from "../ai/provider";
 import { readWikiPage } from "../wiki/reader";
-import {
-  writeWikiPage,
-  writeDecisionsPage,
-  appendToWikiPage,
-  updateWikiIndex,
-  appendToLog,
-} from "../wiki/writer";
+import { queueForReview, type PendingAction, type IndexEntryInput } from "../wiki/pending-review";
 import { parseDocument, chunkDocument } from "../parser/pdf-parser";
 import type { CivicDocument, IngestResult } from "@/types";
 import {
@@ -78,85 +72,99 @@ export async function ingestDocument(
   // Merge multi-chunk results
   const merged = mergeKnowledge(allKnowledge);
 
-  // 3. Determine which wiki pages to update
+  // 3. Determine which wiki pages would be updated — these are queued for
+  // human review (see pending-review.ts), not written live. pagesUpdated/
+  // pagesCreated below describe what's PENDING, matching this function's
+  // existing return shape, not what's actually live yet.
   const pagesUpdated: string[] = [];
   const pagesCreated: string[] = [];
+  const actions: PendingAction[] = [];
 
-  // 4. For meeting minutes → create decisions page
+  // 4. For meeting minutes → queue a decisions page
   if (
     doc.type === "meeting-minutes" &&
     merged.keyDecisions.length > 0
   ) {
     const decisionsContent = buildDecisionsContent(merged, doc);
-    const decisionPath = writeDecisionsPage(
-      merged.documentDate || doc.date,
-      doc.board ?? "city-council",
-      decisionsContent,
-      [doc.title]
-    );
+    const meetingDate = merged.documentDate || doc.date;
+    const decisionSlug = (doc.board ?? "city-council").replace(/\s+/g, "-").toLowerCase();
+    const decisionPath = `decisions/${meetingDate}-${decisionSlug}.md`;
+    actions.push({
+      kind: "create-decisions",
+      meetingDate,
+      board: doc.board ?? "city-council",
+      content: decisionsContent,
+      sources: [doc.title],
+    });
     pagesCreated.push(decisionPath);
-    console.log(`  ✓ Created decisions page: ${decisionPath}`);
+    console.log(`  ✓ Queued decisions page for review: ${decisionPath}`);
   }
 
-  // 5. Update relevant topic pages
+  // 5. Queue updates to relevant topic pages
   for (const topic of merged.topicsAffected) {
     const topicPath = `topics/${topic}.md`;
     const topicPage = readWikiPage(topicPath);
 
     if (topicPage) {
       const updateContent = buildTopicUpdate(merged, doc, topic);
-      const updated = appendToWikiPage(
-        topicPath,
-        `From ${doc.title} (${doc.date})`,
-        updateContent,
-        today
-      );
-      if (updated) {
-        pagesUpdated.push(topicPath);
-        console.log(`  ✓ Updated topic: ${topicPath}`);
-      }
+      actions.push({
+        kind: "append-page",
+        pagePath: topicPath,
+        sectionHeading: `From ${doc.title} (${doc.date})`,
+        content: updateContent,
+        updatedDate: today,
+      });
+      pagesUpdated.push(topicPath);
+      console.log(`  ✓ Queued topic update for review: ${topicPath}`);
     } else {
-      // Create stub topic page if it doesn't exist
+      // Queue a stub topic page if it doesn't exist yet
       const stubContent = buildTopicStub(merged, doc, topic);
-      writeWikiPage({
-        title: topicLabel(topic),
-        type: "wiki",
-        category: "topic",
-        sources: [doc.title],
-        lastUpdated: today,
-        content: stubContent,
-        path: topicPath,
+      actions.push({
+        kind: "create-page",
+        page: {
+          title: topicLabel(topic),
+          type: "wiki",
+          category: "topic",
+          sources: [doc.title],
+          lastUpdated: today,
+          content: stubContent,
+          path: topicPath,
+        },
       });
       pagesCreated.push(topicPath);
-      console.log(`  ✓ Created topic stub: ${topicPath}`);
+      console.log(`  ✓ Queued topic stub for review: ${topicPath}`);
     }
   }
 
-  // 6. Update wiki/index.md
-  const newIndexEntries = [
-    ...pagesCreated.map((p) => ({
-      path: p,
-      summary: merged.summary.slice(0, 80),
-      date: today,
-      sourceCount: 1,
-      category: p.startsWith("decisions/")
-        ? "decision"
-        : p.startsWith("topics/")
-        ? "topic"
-        : "topic",
-    })),
-  ];
+  // 6. Index entries for any newly-created pages — applied on approval,
+  // alongside the actions above, not now.
+  const newIndexEntries: IndexEntryInput[] = pagesCreated.map((p) => ({
+    path: p,
+    summary: merged.summary.slice(0, 80),
+    date: today,
+    sourceCount: 1,
+    category: p.startsWith("decisions/")
+      ? "decision"
+      : p.startsWith("topics/")
+      ? "topic"
+      : "topic",
+  }));
 
-  if (newIndexEntries.length > 0) {
-    updateWikiIndex(newIndexEntries);
-  }
-
-  // 7. Append to log
+  // 7. Queue the log entry too — it should only land once this content is
+  // actually live, not the moment extraction finishes.
   const logEntry = buildLogEntry(doc, merged, pagesUpdated, pagesCreated, today);
-  appendToLog(logEntry);
+
+  queueForReview({
+    title: doc.title,
+    sourceUrl: doc.sourceUrl,
+    preview: merged.summary,
+    actions,
+    indexEntries: newIndexEntries,
+    logEntry,
+  });
 
   console.log(
-    `  ✅ INGEST complete — ${pagesUpdated.length} updated, ${pagesCreated.length} created`
+    `  ✅ INGEST complete — ${pagesUpdated.length} update(s), ${pagesCreated.length} new page(s) queued for review`
   );
 
   return {

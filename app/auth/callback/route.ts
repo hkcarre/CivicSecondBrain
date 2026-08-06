@@ -15,8 +15,26 @@ function sanitizeNext(raw: string | null): string {
   return "/";
 }
 
+/**
+ * `req.nextUrl.origin` resolves to the container's own internal bind
+ * address (e.g. "https://localhost:8080") rather than the public domain
+ * when running behind Railway's edge proxy — confirmed directly: every
+ * redirect from this route was silently sending users to localhost instead
+ * of back to the app, on every deployment, the whole time this route has
+ * existed. The `Host` header (set by the proxy to the public domain) is the
+ * reliable source; `X-Forwarded-Host` is checked first in case a future
+ * proxy hop changes that convention. Always assumes https — this app never
+ * runs production traffic over plain http.
+ */
+function resolveOrigin(req: NextRequest): string {
+  const host = req.headers.get("x-forwarded-host") ?? req.headers.get("host");
+  if (host) return `https://${host}`;
+  return req.nextUrl.origin;
+}
+
 export async function GET(req: NextRequest) {
-  const { searchParams, origin } = req.nextUrl;
+  const { searchParams } = req.nextUrl;
+  const origin = resolveOrigin(req);
   const code = searchParams.get("code");
   const next = sanitizeNext(searchParams.get("next"));
 

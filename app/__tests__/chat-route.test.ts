@@ -50,6 +50,22 @@ vi.mock("@/lib/wiki/select", () => ({
   selectRelevantPages: vi.fn(() => ["topics/budget.md"]),
 }));
 
+// Numeric facts are a separately-configured layer (Supabase) — unmocked by
+// default, getCurrentCityId() throws "SUPABASE_URL ... must be set" (no
+// such env var in this test process), which buildStructuredFactsBlock()
+// catches and treats as "no structured facts available" (see the "no
+// numeric facts configured" test below, which exercises this real path).
+// Individual tests override these mocks to exercise the populated case.
+vi.mock("@/lib/db/cities", () => ({
+  getCurrentCityId: vi.fn(() => {
+    throw new Error("[db] SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.");
+  }),
+}));
+vi.mock("@/lib/db/queries/metrics", () => ({
+  getAllMetricSeries: vi.fn(() => []),
+  selectRelevantMetrics: vi.fn(() => []),
+}));
+
 // Provider stream is swappable per test
 let streamImpl: () => AsyncGenerator<string>;
 vi.mock("@/lib/ai/provider", () => ({
@@ -218,5 +234,81 @@ describe("POST /api/chat — malformed requests", () => {
     expect(res.status).toBe(500);
     const body = await res.json();
     expect(typeof body.error).toBe("string");
+  });
+});
+
+describe("POST /api/chat — structured facts (numeric metrics table)", () => {
+  it("includes a STRUCTURED FACTS block with real figures and citations when relevant metrics exist", async () => {
+    const { getCurrentCityId } = await import("@/lib/db/cities");
+    const { getAllMetricSeries, selectRelevantMetrics } = await import(
+      "@/lib/db/queries/metrics"
+    );
+    vi.mocked(getCurrentCityId).mockResolvedValue("city-123");
+    const series = [
+      {
+        metricId: "property-tax-rate-per-100",
+        metricName: "Property Tax Rate",
+        unit: "usd",
+        valueType: "actual" as const,
+        periodCount: 1,
+        latestPeriod: "FY2026",
+        points: [
+          {
+            period: "FY2026",
+            value: 0.12,
+            unit: "usd",
+            valueType: "actual" as const,
+            confidence: 0.95,
+            sourceCitation: "FY2026 Audit, p.4",
+          },
+        ],
+      },
+    ];
+    vi.mocked(getAllMetricSeries).mockResolvedValue(series);
+    vi.mocked(selectRelevantMetrics).mockReturnValue(series);
+
+    let capturedSystem = "";
+    const { POST } = await importRoute();
+    const providerMod = await import("@/lib/ai/provider");
+    vi.spyOn(providerMod, "getAIProvider").mockReturnValue({
+      stream: (opts: { system: string }) => {
+        capturedSystem = opts.system;
+        return streamImpl();
+      },
+      complete: vi.fn(),
+      model: "test-model",
+    } as never);
+
+    const res = await POST(
+      makeChat({ messages: [{ role: "user", content: "What is the property tax rate?" }] })
+    );
+    await readAll(res);
+
+    expect(capturedSystem).toContain("STRUCTURED FACTS");
+    expect(capturedSystem).toContain("Property Tax Rate");
+    expect(capturedSystem).toContain("0.12");
+    expect(capturedSystem).toContain("[SOURCE: FY2026 Audit, p.4]");
+  });
+
+  it("omits the STRUCTURED FACTS block when numeric facts aren't configured for this deployment", async () => {
+    // Default mock from the top of this file: getCurrentCityId() throws,
+    // exercising the real fail-gracefully path (see buildStructuredFactsBlock
+    // in app/api/chat/route.ts) rather than a contrived empty-array case.
+    let capturedSystem = "";
+    const { POST } = await importRoute();
+    const providerMod = await import("@/lib/ai/provider");
+    vi.spyOn(providerMod, "getAIProvider").mockReturnValue({
+      stream: (opts: { system: string }) => {
+        capturedSystem = opts.system;
+        return streamImpl();
+      },
+      complete: vi.fn(),
+      model: "test-model",
+    } as never);
+
+    const res = await POST(makeChat({ messages: [{ role: "user", content: "anything" }] }));
+    await readAll(res);
+
+    expect(capturedSystem).not.toContain("STRUCTURED FACTS");
   });
 });

@@ -26,7 +26,10 @@ import type { WikiIndexEntry } from "@/types";
 const TOP_K = 8;          // max pages returned per query
 const SCORE_THRESHOLD = 0.05; // min cosine sim to include a page
 
-function tokenise(text: string): string[] {
+// Exported so other selectors over small corpora (e.g. numeric metrics —
+// see app/lib/db/queries/metrics.ts's selectRelevantMetrics) can reuse the
+// same TF-IDF/cosine approach instead of reimplementing it.
+export function tokenise(text: string): string[] {
   return text
     .toLowerCase()
     .replace(/[^a-z0-9\s]/g, " ")
@@ -34,7 +37,7 @@ function tokenise(text: string): string[] {
     .filter((t) => t.length > 1);
 }
 
-function buildIdf(documents: string[][]): Map<string, number> {
+export function buildIdf(documents: string[][]): Map<string, number> {
   const df = new Map<string, number>();
   for (const doc of documents) {
     for (const term of new Set(doc)) {
@@ -49,7 +52,7 @@ function buildIdf(documents: string[][]): Map<string, number> {
   return idf;
 }
 
-function tfidfVector(
+export function tfidfVector(
   tokens: string[],
   idf: Map<string, number>
 ): Map<string, number> {
@@ -62,7 +65,7 @@ function tfidfVector(
   return vec;
 }
 
-function cosine(a: Map<string, number>, b: Map<string, number>): number {
+export function cosine(a: Map<string, number>, b: Map<string, number>): number {
   let dot = 0;
   let normA = 0;
   let normB = 0;

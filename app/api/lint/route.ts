@@ -5,12 +5,11 @@
  */
 
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { LINT_SYSTEM_PROMPT, CITY_FULL } from "@/lib/claude/client";
 import { parseLintResponse } from "@/lib/claude/lint-parse";
 import { getAIProvider } from "@/lib/ai/provider";
 import { readFullWiki, buildWikiContext } from "@/lib/wiki/reader";
-import { writeRecommendationPage, updateWikiIndex, appendToLog } from "@/lib/wiki/writer";
+import { queueForReview, type PendingAction, type IndexEntryInput } from "@/lib/wiki/pending-review";
 import type { Recommendation } from "@/types";
 import { verifyIngestAccess } from "@/lib/auth";
 
@@ -90,29 +89,31 @@ Return ONLY valid JSON.`,
       })
     );
 
-    // 3. Write recommendation pages
+    // 3. Queue recommendation pages for review instead of publishing them
+    // live — these directly influence council decisions, the highest-
+    // stakes surface this pipeline produces, so they get the same
+    // human-checkpoint treatment ingested wiki content now gets.
+    const actions: PendingAction[] = [];
+    const indexEntries: IndexEntryInput[] = [];
     const newPaths: string[] = [];
     for (const rec of recs) {
-      const p = writeRecommendationPage(rec);
-      rec.path = p;
-      newPaths.push(p);
+      const slug = rec.title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+      const predictedPath = `recommendations/${rec.generatedAt}-${slug}.md`;
+      rec.path = predictedPath;
+      newPaths.push(predictedPath);
+      actions.push({ kind: "create-recommendation", recommendation: rec });
+      indexEntries.push({
+        path: predictedPath,
+        summary: rec.finding.slice(0, 80),
+        date: today,
+        sourceCount: rec.sourcesAnalyzed.length,
+        category: "recommendation",
+      });
     }
 
-    // 4. Update index
-    if (newPaths.length > 0) {
-      updateWikiIndex(
-        newPaths.map((p, i) => ({
-          path: p,
-          summary: recs[i].finding.slice(0, 80),
-          date: today,
-          sourceCount: recs[i].sourcesAnalyzed.length,
-          category: "recommendation",
-        }))
-      );
-    }
-
-    // 5. Log
-    appendToLog(`## [${today}] LINT | full
+    // 4. Queue the log entry too — it should only land once these
+    // recommendations are actually live, not the moment LINT finishes.
+    const logEntry = `## [${today}] LINT | full
 **Pages analyzed:** ${pages.length}
 **Issues found:** ${recs.filter((r) => r.severity === "high").length} high | ${recs.filter((r) => r.severity === "medium").length} medium | ${recs.filter((r) => r.severity === "low").length} low
 **Stale pages:** ${(result.stalePages ?? []).join(", ") || "none"}
@@ -121,13 +122,20 @@ Return ONLY valid JSON.`,
 ${(result.topActions ?? [])
   .slice(0, 3)
   .map((a: string, i: number) => `  ${i + 1}. ${a}`)
-  .join("\n")}`);
+  .join("\n")}`;
 
-    // Bust the dashboard ISR cache so recommendations appear immediately
-    revalidatePath("/dashboard");
+    if (actions.length > 0) {
+      queueForReview({
+        title: "LINT nightly analysis",
+        preview: `${recs.length} recommendation(s): ${recs.map((r) => r.title).join(", ")}`,
+        actions,
+        indexEntries,
+        logEntry,
+      });
+    }
 
     return NextResponse.json({
-      message: `LINT complete. ${recs.length} recommendations generated.`,
+      message: `LINT complete. ${recs.length} recommendation(s) queued for review.`,
       recommendations: recs.length,
       paths: newPaths,
     });

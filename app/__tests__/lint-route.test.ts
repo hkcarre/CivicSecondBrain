@@ -7,8 +7,11 @@
  *  - route auth (401 without secret when INGEST_SECRET set; open in dev)
  *  - "no wiki pages" short-circuit
  *  - JSON extraction from both fenced (```json ... ```) and raw responses
- *  - recommendation pages written via the real wiki writer against a temp
- *    WIKI_PATH, index updated, log appended
+ *  - recommendations are QUEUED for review (pending-review.ts) rather than
+ *    written live — LINT recommendations directly influence council
+ *    decisions, so they get the same human-checkpoint ingested wiki content
+ *    now gets. Tests that need the eventual live page/index/log content
+ *    call approveReview() first, same as a reviewer clicking Approve would.
  *  - 500 with a clean error message when the AI response has no
  *    parseable JSON
  *
@@ -97,6 +100,14 @@ function makeRequest(headers: Record<string, string> = {}): Request {
   });
 }
 
+/** Approves every currently-queued review item — mirrors a reviewer clicking Approve on each. */
+async function approveAllPending() {
+  const { listPendingReviews, approveReview } = await import("@/lib/wiki/pending-review");
+  for (const item of listPendingReviews()) {
+    approveReview(item.id);
+  }
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.resetModules();
@@ -179,6 +190,11 @@ describe("POST /api/lint — JSON extraction and recommendation writing", () => 
     expect(data.recommendations).toBe(1);
     expect(data.paths).toHaveLength(1);
 
+    // Queued, not live yet.
+    expect(fs.existsSync(path.join(tmpWiki, data.paths[0]))).toBe(false);
+
+    await approveAllPending();
+
     const written = fs.readFileSync(
       path.join(tmpWiki, data.paths[0]),
       "utf-8"
@@ -208,17 +224,22 @@ describe("POST /api/lint — JSON extraction and recommendation writing", () => 
     const { POST } = await import("@/api/lint/route");
 
     await POST(makeRequest());
+    await approveAllPending();
 
     const index = fs.readFileSync(path.join(tmpWiki, "index.md"), "utf-8");
     expect(index).toContain("recommendations/");
   });
 
-  it("appends a log entry with severity counts", async () => {
+  it("appends a log entry with severity counts once approved", async () => {
     seedWiki();
     mockComplete.mockResolvedValue(recommendationJson(2)); // 1 high, 1 medium
     const { POST } = await import("@/api/lint/route");
 
     await POST(makeRequest());
+    // Not written yet — the log entry is part of the queued item too.
+    expect(fs.existsSync(path.join(tmpWiki, "log.md"))).toBe(false);
+
+    await approveAllPending();
 
     const log = fs.readFileSync(path.join(tmpWiki, "log.md"), "utf-8");
     expect(log).toContain("LINT | full");
@@ -226,14 +247,14 @@ describe("POST /api/lint — JSON extraction and recommendation writing", () => 
     expect(log).toContain("1 medium");
   });
 
-  it("busts the dashboard ISR cache after a successful run", async () => {
+  it("does not bust the dashboard ISR cache itself — that happens on approval, not on generation", async () => {
     seedWiki();
     mockComplete.mockResolvedValue(recommendationJson(1));
     const { POST } = await import("@/api/lint/route");
 
     await POST(makeRequest());
 
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
   it("returns 500 with a clean message when the AI response has no parseable JSON", async () => {

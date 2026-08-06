@@ -1,4 +1,7 @@
+import Link from "next/link";
+import { ClipboardList } from "lucide-react";
 import { getAdminData } from "../lib/wiki/admin-data";
+import { listPendingReviews } from "../lib/wiki/pending-review";
 import { AdminIngestPanel } from "../components/admin/AdminIngestPanel";
 import { ManifestTable } from "../components/admin/ManifestTable";
 import { AdminLogoutButton } from "../components/admin/AdminLogoutButton";
@@ -7,6 +10,7 @@ export const revalidate = 60;
 
 export default async function AdminPage() {
   const { manifest, wikiStats, logSummary, schedule } = await getAdminData();
+  const pendingCount = listPendingReviews().length;
 
   return (
     <div className="h-full overflow-y-auto">
@@ -19,7 +23,21 @@ export default async function AdminPage() {
               Knowledge base management · Document ingestion · Wiki health
             </p>
           </div>
-          {process.env.ADMIN_PASSWORD && <AdminLogoutButton />}
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/review"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-50 transition-all"
+            >
+              <ClipboardList size={14} />
+              Pending Review
+              {pendingCount > 0 && (
+                <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-city-maroon text-white text-[11px] font-semibold">
+                  {pendingCount}
+                </span>
+              )}
+            </Link>
+            {process.env.ADMIN_PASSWORD && <AdminLogoutButton />}
+          </div>
         </div>
 
         {/* Main grid — stacked on mobile, 3-col on lg+ */}

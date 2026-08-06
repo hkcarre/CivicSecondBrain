@@ -127,3 +127,13 @@ export async function verifyExportAccess(req: Request): Promise<boolean> {
 export async function verifyIngestAccess(req: Request): Promise<boolean> {
   return verifyAdminOrSecret(req, "/api/ingest, /api/lint, and /api/briefing");
 }
+
+/**
+ * Verifies access to the pending-review approve/reject routes
+ * (/api/admin/review/*). Same dual-check as the routes above — the admin
+ * panel's own buttons work via the session cookie; scripted callers can
+ * still use the bearer secret.
+ */
+export async function verifyReviewAccess(req: Request): Promise<boolean> {
+  return verifyAdminOrSecret(req, "/api/admin/review/*");
+}

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import type { FormEvent, DragEvent } from "react";
-import { RefreshCw, Play, FileSearch, CheckCircle, Loader2, FileText, Upload, X, ClipboardList } from "lucide-react";
+import { RefreshCw, Play, FileSearch, CheckCircle, Loader2, FileText, Upload, X, ClipboardList, Hash } from "lucide-react";
 import { clsx } from "clsx";
 
 const DOCUMENT_TYPE_OPTIONS = [
@@ -152,7 +152,7 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
     setUploadForm((f) => ({ ...f, file: selected }));
   };
 
-  const run = async (action: "ingest" | "lint" | "scrape-check") => {
+  const run = async (action: "ingest" | "lint" | "scrape-check" | "ingest/facts") => {
     setStatus("running");
     setActiveAction(action);
     setResult(null);
@@ -319,6 +319,14 @@ export function AdminIngestPanel({ stats, logSummary, schedule }: AdminIngestPan
             description="Health check + recommendations"
             active={activeAction === "lint" && status === "running"}
             onClick={() => run("lint")}
+            disabled={status === "running"}
+          />
+          <ActionButton
+            icon={Hash}
+            label="Extract numeric facts"
+            description="Vision-extract budget/financial-report tables into the facts table"
+            active={activeAction === "ingest/facts" && status === "running"}
+            onClick={() => run("ingest/facts")}
             disabled={status === "running"}
           />
         </div>

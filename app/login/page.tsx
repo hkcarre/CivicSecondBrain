@@ -124,7 +124,7 @@ function LoginForm() {
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
                      bg-white dark:bg-gray-700 text-gray-900 dark:text-white
                      focus:outline-none focus:ring-2 focus:ring-city-navy"
-          placeholder="you@schertz.gov"
+          placeholder={`you@${(process.env.NEXT_PUBLIC_CITY_NAME ?? "schertz").toLowerCase().replace(/\s+/g, "")}.gov`}
         />
       </div>
 

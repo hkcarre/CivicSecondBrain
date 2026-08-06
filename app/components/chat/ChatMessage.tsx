@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { User, Bot, BookMarked, AlertTriangle, Volume2, VolumeX } from "lucide-react";
 import { clsx } from "clsx";
 import type { ChatMessage as ChatMessageType } from "@/types";
@@ -136,12 +137,7 @@ function AssistantContent({ content }: { content: string }) {
           );
         }
         // Plain text — render simple markdown-like formatting
-        return (
-          <span
-            key={i}
-            dangerouslySetInnerHTML={{ __html: renderInlineMarkdown(part.text) }}
-          />
-        );
+        return <span key={i}>{renderInlineMarkdown(part.text, `md-${i}`)}</span>;
       })}
     </div>
   );
@@ -172,21 +168,67 @@ function parseContent(content: string): ContentPart[] {
   return parts;
 }
 
-function renderInlineMarkdown(text: string): string {
-  return text
-    // Only relative paths and https:// URLs — this text is LLM-generated,
-    // so no javascript:/data: schemes make it into an href.
-    .replace(
-      /\[([^\]]+)\]\((\/[\w\-./]*|https:\/\/[^\s)]+)\)/g,
-      (_match, label: string, url: string) =>
-        `<a href="${url}" class="text-city-navy dark:text-city-maroon underline hover:no-underline"${
-          url.startsWith("http") ? ' target="_blank" rel="noopener noreferrer"' : ""
-        }>${label}</a>`
-    )
-    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-    .replace(/\*(.+?)\*/g, "<em>$1</em>")
-    .replace(/`(.+?)`/g, '<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded text-xs font-mono">$1</code>')
-    .replace(/\n/g, "<br>");
+// Link URL is restricted to relative paths or https:// (no javascript:/data:
+// schemes, no quote/angle-bracket characters) — but the real safety property
+// here isn't the regex, it's that every piece goes through JSX as a prop or
+// child rather than being concatenated into an HTML string. This text is
+// LLM-generated (and the model may echo attacker-influenced document
+// content it was told to treat as data, not instructions — see the SECURITY
+// preambles in claude/client.ts), so building raw HTML + dangerouslySetInnerHTML
+// here previously meant a quote character in a "safe-looking" https:// URL
+// could break out of the href attribute. Real elements can't do that: React
+// escapes every prop and child value it renders, so there's no string to
+// break out of.
+const INLINE_MARKDOWN_PATTERN =
+  /\[([^\]]+)\]\((\/[\w\-./]*|https:\/\/[^\s)"'<>]+)\)|\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`|\n/g;
+
+function renderInlineMarkdown(text: string, keyPrefix: string): ReactNode[] {
+  const nodes: ReactNode[] = [];
+  const pattern = new RegExp(INLINE_MARKDOWN_PATTERN);
+  let lastIndex = 0;
+  let key = 0;
+  let match: RegExpExecArray | null;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
+    }
+    const [full, linkLabel, linkUrl, bold, italic, code] = match;
+    if (linkUrl !== undefined) {
+      const external = linkUrl.startsWith("http");
+      nodes.push(
+        <a
+          key={`${keyPrefix}-${key++}`}
+          href={linkUrl}
+          className="text-city-navy dark:text-city-maroon underline hover:no-underline"
+          target={external ? "_blank" : undefined}
+          rel={external ? "noopener noreferrer" : undefined}
+        >
+          {linkLabel}
+        </a>
+      );
+    } else if (bold !== undefined) {
+      nodes.push(<strong key={`${keyPrefix}-${key++}`}>{bold}</strong>);
+    } else if (italic !== undefined) {
+      nodes.push(<em key={`${keyPrefix}-${key++}`}>{italic}</em>);
+    } else if (code !== undefined) {
+      nodes.push(
+        <code
+          key={`${keyPrefix}-${key++}`}
+          className="bg-gray-100 dark:bg-gray-700 px-1 rounded text-xs font-mono"
+        >
+          {code}
+        </code>
+      );
+    } else if (full === "\n") {
+      nodes.push(<br key={`${keyPrefix}-${key++}`} />);
+    }
+    lastIndex = pattern.lastIndex;
+  }
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+  return nodes;
 }
 
 function formatTime(iso: string): string {

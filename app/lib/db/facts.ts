@@ -118,3 +118,83 @@ export async function upsertFacts(
     duplicatesCollapsed,
   };
 }
+
+export interface FlaggedFact {
+  id: string;
+  metricId: string;
+  metricName: string;
+  value: number;
+  unit: string;
+  period: string;
+  valueType: string;
+  sourceCitation: string;
+  sourceQuote: string | null;
+  confidence: number;
+  createdAt: string;
+}
+
+/**
+ * Facts held back from charts/chat pending human review — either
+ * low-confidence or a disagreement between two readings of the same
+ * document (see FLAG_CONFIDENCE_THRESHOLD above). Uses the service-role
+ * client, same as the rest of this module: the /admin review UI is gated
+ * by the shared-secret verifyReviewAccess() check (see app/lib/auth.ts),
+ * not a per-user Supabase session, so there's no RLS-scoped client to use
+ * here — this mirrors how ingest/lint/briefing already write facts.
+ */
+export async function listFlaggedFacts(cityId: string): Promise<FlaggedFact[]> {
+  const client = getServiceRoleClient();
+  const { data, error } = await client
+    .from("facts")
+    .select(
+      "id, metric_id, metric_name, value, unit, period, value_type, source_citation, source_quote, confidence, created_at"
+    )
+    .eq("city_id", cityId)
+    .eq("flagged", true)
+    .eq("review_status", "pending")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw new Error(`Failed to list flagged facts: ${error.message}`);
+  }
+
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    metricId: row.metric_id,
+    metricName: row.metric_name,
+    value: row.value,
+    unit: row.unit,
+    period: row.period,
+    valueType: row.value_type,
+    sourceCitation: row.source_citation,
+    sourceQuote: row.source_quote,
+    confidence: row.confidence,
+    createdAt: row.created_at,
+  }));
+}
+
+/**
+ * Approves or rejects a flagged fact. Approving does NOT clear `flagged` —
+ * the RLS policy and the app-level filter in queries/metrics.ts both treat
+ * `review_status = 'approved'` as sufficient on its own (see the
+ * 20260807000000 migration), so the flag stays as an honest record of why
+ * this fact needed review in the first place.
+ */
+export async function reviewFact(factId: string, decision: "approve" | "reject"): Promise<boolean> {
+  const client = getServiceRoleClient();
+  const { data, error } = await client
+    .from("facts")
+    .update({
+      review_status: decision === "approve" ? "approved" : "rejected",
+      reviewed_at: new Date().toISOString(),
+    })
+    .eq("id", factId)
+    .eq("review_status", "pending")
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Failed to ${decision} fact ${factId}: ${error.message}`);
+  }
+  return data !== null;
+}

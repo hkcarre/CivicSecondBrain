@@ -130,6 +130,14 @@ async function importGenerate() {
   return import("../lib/briefing/generate");
 }
 
+/** Approves every currently-queued review item — mirrors a reviewer clicking Approve. */
+async function approveAllPending() {
+  const { listPendingReviews, approveReview } = await import("../lib/wiki/pending-review");
+  for (const item of listPendingReviews()) {
+    approveReview(item.id);
+  }
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
   vi.resetModules();
@@ -224,18 +232,9 @@ describe("slug and filename generation", () => {
     expect(slugify("  --Weird__Name!!  ")).toBe("weird-name");
   });
 
-  it("writeBriefingPage builds briefings/YYYY-MM-DD-<slug>-briefing.md", async () => {
-    const { writeBriefingPage } = await import("../lib/wiki/writer");
-    const pagePath = writeBriefingPage(
-      "2026-08-04",
-      "City Council",
-      "Meeting Briefing Packet — City Council — 2026-08-04",
-      "Body",
-      ["https://example.gov/agenda.pdf"]
-    );
-    expect(pagePath).toBe("briefings/2026-08-04-city-council-briefing.md");
-    expect(fs.existsSync(path.join(tmpWiki, pagePath))).toBe(true);
-  });
+  // The predicted-path format (briefings/YYYY-MM-DD-<slug>-briefing.md) is
+  // covered end-to-end by the generateBriefing tests below, which assert
+  // both the predicted path and the file it becomes once approved.
 });
 
 // ─── Packet composition ──────────────────────────────────────────────────────
@@ -328,6 +327,10 @@ describe("generateBriefing", () => {
     expect(result.itemCount).toBe(2);
     expect(result.truncated).toBe(false);
 
+    // Nothing is live yet — it's queued for review, not written directly.
+    expect(fs.existsSync(path.join(tmpWiki, result.path))).toBe(false);
+    await approveAllPending();
+
     const fullPath = path.join(tmpWiki, result.path);
     expect(fs.existsSync(fullPath)).toBe(true);
 
@@ -356,6 +359,7 @@ describe("generateBriefing", () => {
       meetingDate: "2026-08-04",
       board: "city-council",
     });
+    await approveAllPending();
 
     const index = fs.readFileSync(path.join(tmpWiki, "index.md"), "utf-8");
     expect(index).toContain(`[[${result.path}]]`);
@@ -471,7 +475,7 @@ describe("POST /api/briefing", () => {
     expect(mockDownloadDocument).not.toHaveBeenCalled();
   });
 
-  it("returns the generate result and revalidates the dashboard on success", async () => {
+  it("returns the generate result but queues it for review instead of publishing live", async () => {
     primeHappyPathMocks(2);
     const { POST } = await import("@/api/briefing/route");
 
@@ -488,7 +492,10 @@ describe("POST /api/briefing", () => {
     expect(data.success).toBe(true);
     expect(data.path).toBe("briefings/2026-08-04-city-council-briefing.md");
     expect(data.itemCount).toBe(2);
-    expect(mockRevalidatePath).toHaveBeenCalledWith("/dashboard");
+    // Not live yet — see /admin/review. Revalidation happens on approval,
+    // not at generation time (see /api/admin/review/[id]).
+    expect(fs.existsSync(path.join(tmpWiki, data.path))).toBe(false);
+    expect(mockRevalidatePath).not.toHaveBeenCalled();
   });
 
   it("returns a structured 502 JSON error when the agenda download fails", async () => {

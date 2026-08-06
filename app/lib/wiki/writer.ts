@@ -78,37 +78,6 @@ export function writeDecisionsPage(
   return pagePath;
 }
 
-// ─── Write a meeting briefing packet page ─────────────────────────────────
-
-export function writeBriefingPage(
-  meetingDate: string,
-  board: string,
-  title: string,
-  content: string,
-  sources: string[]
-): string {
-  const slug =
-    board
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "") || "council";
-  const pagePath = `briefings/${meetingDate}-${slug}-briefing.md`;
-
-  const page: WikiPage = {
-    title,
-    type: "wiki",
-    category: "briefing",
-    sources,
-    lastUpdated: meetingDate,
-    content,
-    path: pagePath,
-  };
-
-  writeWikiPage(page);
-  return pagePath;
-}
-
 // ─── Write a recommendation page ──────────────────────────────────────────
 
 export function writeRecommendationPage(rec: Recommendation): string {

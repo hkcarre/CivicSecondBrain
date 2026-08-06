@@ -2,15 +2,31 @@ import Link from "next/link";
 import { ClipboardList } from "lucide-react";
 import { getAdminData } from "../lib/wiki/admin-data";
 import { listPendingReviews } from "../lib/wiki/pending-review";
+import { listFlaggedFacts } from "../lib/db/facts";
+import { getCurrentCityId } from "../lib/db/cities";
 import { AdminIngestPanel } from "../components/admin/AdminIngestPanel";
 import { ManifestTable } from "../components/admin/ManifestTable";
 import { AdminLogoutButton } from "../components/admin/AdminLogoutButton";
 
 export const revalidate = 60;
 
+/** See app/admin/review/page.tsx's loadFlaggedFacts — same fail-silently pattern. */
+async function countFlaggedFacts(): Promise<number> {
+  try {
+    const cityId = await getCurrentCityId();
+    return (await listFlaggedFacts(cityId)).length;
+  } catch {
+    return 0;
+  }
+}
+
 export default async function AdminPage() {
   const { manifest, wikiStats, logSummary, schedule } = await getAdminData();
-  const pendingCount = listPendingReviews().length;
+  const [wikiPendingCount, flaggedFactsCount] = await Promise.all([
+    Promise.resolve(listPendingReviews().length),
+    countFlaggedFacts(),
+  ]);
+  const pendingCount = wikiPendingCount + flaggedFactsCount;
 
   return (
     <div className="h-full overflow-y-auto">

@@ -20,6 +20,7 @@
 
 import { getServiceRoleClient } from "../supabase";
 import type { FACT_VALUE_TYPES } from "../../claude/fact-extraction-schema";
+import { tokenise, buildIdf, tfidfVector, cosine } from "../../wiki/select";
 
 export type FactValueType = (typeof FACT_VALUE_TYPES)[number];
 
@@ -147,4 +148,38 @@ export async function getAllMetricSeries(cityId: string): Promise<MetricSeries[]
   // Series with the longest history first — the most substantive trend
   // lines lead, single-point "series" (nothing to trend yet) trail.
   return series.sort((a, b) => b.periodCount - a.periodCount);
+}
+
+const METRIC_SCORE_THRESHOLD = 0.05; // same threshold selectRelevantPages uses
+const METRIC_TOP_K = 3; // small on purpose — a chat answer citing 3 precise figures beats one citing 8
+
+/**
+ * Scores a city's metric series against a free-text question using the same
+ * TF-IDF/cosine approach selectRelevantPages() uses for wiki pages (see
+ * app/lib/wiki/select.ts) — reused rather than reimplemented so both
+ * selectors behave consistently. Lets chat answer numeric questions from
+ * the same precise, reviewed facts table the dashboard's charts read from,
+ * instead of only ever re-deriving numbers from narrative wiki prose (the
+ * two pipelines extract independently and could otherwise disagree).
+ */
+export function selectRelevantMetrics(
+  query: string,
+  allSeries: MetricSeries[]
+): MetricSeries[] {
+  if (allSeries.length === 0) return [];
+
+  const queryTokens = tokenise(query);
+  const seriesTexts = allSeries.map((s) => tokenise(`${s.metricName} ${s.metricId}`));
+  const idf = buildIdf([queryTokens, ...seriesTexts]);
+  const queryVec = tfidfVector(queryTokens, idf);
+
+  return allSeries
+    .map((series, i) => ({
+      series,
+      score: cosine(queryVec, tfidfVector(seriesTexts[i], idf)),
+    }))
+    .filter((s) => s.score >= METRIC_SCORE_THRESHOLD)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, METRIC_TOP_K)
+    .map((s) => s.series);
 }

@@ -18,8 +18,61 @@ import {
 import { selectRelevantPages } from "@/lib/wiki/select";
 import { appendToLog } from "@/lib/wiki/writer";
 import { appendMessage } from "@/lib/db/queries/conversations";
+import { getCurrentCityId } from "@/lib/db/cities";
+import { getAllMetricSeries, selectRelevantMetrics, type MetricSeries } from "@/lib/db/queries/metrics";
 
 export const runtime = "nodejs";
+
+const VALUE_TYPE_LABEL: Record<MetricSeries["valueType"], string> = {
+  adopted: "Adopted",
+  amended: "Amended",
+  actual: "Actual",
+  estimate: "Estimate",
+  projected: "Projected",
+};
+
+/**
+ * Chat previously only ever answered numeric questions by re-deriving
+ * figures from narrative wiki prose — a completely separate extraction
+ * pass from the one that populates the `facts` table the dashboard's
+ * charts read from (see vision-extraction.ts's own comment on why the two
+ * are kept independent). The two could disagree. This gives chat access to
+ * the same precise, reviewed numbers the charts use, so both surfaces cite
+ * the same source of truth for a given figure.
+ *
+ * Fails silently to "" — numeric facts are a separately-configured layer
+ * (Supabase) on top of the wiki chat otherwise reads from; a deployment
+ * without it configured, or a city with no facts extracted yet, should
+ * still get a working chat answer from wiki content alone.
+ */
+async function buildStructuredFactsBlock(userMessage: string): Promise<string> {
+  try {
+    const cityId = await getCurrentCityId();
+    const allSeries = await getAllMetricSeries(cityId);
+    const relevant = selectRelevantMetrics(userMessage, allSeries);
+    if (relevant.length === 0) return "";
+
+    const sections = relevant.map((s) => {
+      const rows = s.points
+        .map(
+          (p) =>
+            `- ${p.period}: ${p.value} ${p.unit} [SOURCE: ${p.sourceCitation}]`
+        )
+        .join("\n");
+      return `### ${s.metricName} (${VALUE_TYPE_LABEL[s.valueType]})\n${rows}`;
+    });
+
+    return (
+      "\n\n## STRUCTURED FACTS (verified numeric data — prefer these exact " +
+      "figures and citations over any number mentioned in the wiki text " +
+      "below when both cover the same thing)\n\n" +
+      sections.join("\n\n")
+    );
+  } catch (err) {
+    console.warn("[chat] Structured facts unavailable:", (err as Error).message);
+    return "";
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -64,6 +117,8 @@ export async function POST(req: Request) {
 
     const systemPrompt = QUERY_SYSTEM_PROMPT.replace("{DATE}", today);
 
+    const structuredFactsBlock = await buildStructuredFactsBlock(userMessage);
+
     const contextBlock =
       wikiPages.length > 0
         ? `\n\n## WIKI KNOWLEDGE BASE\n\nThe following wiki pages are relevant to this query:\n\n${wikiContext}`
@@ -75,7 +130,7 @@ export async function POST(req: Request) {
     const startedAt = Date.now();
     const ai = getAIProvider();
     const aiStream = ai.stream({
-      system: systemPrompt + contextBlock,
+      system: systemPrompt + structuredFactsBlock + contextBlock,
       maxTokens: 2048,
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as "user" | "assistant",

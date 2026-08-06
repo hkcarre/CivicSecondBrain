@@ -174,6 +174,15 @@ function parseContent(content: string): ContentPart[] {
 
 function renderInlineMarkdown(text: string): string {
   return text
+    // Only relative paths and https:// URLs — this text is LLM-generated,
+    // so no javascript:/data: schemes make it into an href.
+    .replace(
+      /\[([^\]]+)\]\((\/[\w\-./]*|https:\/\/[^\s)]+)\)/g,
+      (_match, label: string, url: string) =>
+        `<a href="${url}" class="text-city-navy dark:text-city-maroon underline hover:no-underline"${
+          url.startsWith("http") ? ' target="_blank" rel="noopener noreferrer"' : ""
+        }>${label}</a>`
+    )
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`(.+?)`/g, '<code class="bg-gray-100 dark:bg-gray-700 px-1 rounded text-xs font-mono">$1</code>')

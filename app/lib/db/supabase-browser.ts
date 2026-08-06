@@ -26,6 +26,15 @@ export function getSupabaseBrowserClient() {
     throw new Error("[db] NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be set. See .env.example.");
   }
 
-  client = createBrowserClient(url, key);
+  // Implicit flow (not the @supabase/ssr default of PKCE): PKCE ties the
+  // magic-link exchange to a verifier cookie set on the browser that
+  // *requested* the link, so clicking the emailed link on a different
+  // device/browser (very common — request on desktop, tap from a phone
+  // notification) always fails. Implicit flow puts the session tokens
+  // directly in the callback URL's fragment, so whichever browser opens the
+  // link can establish the session itself — see app/auth/callback/page.tsx.
+  client = createBrowserClient(url, key, {
+    auth: { flowType: "implicit" },
+  });
   return client;
 }

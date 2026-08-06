@@ -66,11 +66,7 @@ async function buildStructuredFactsBlock(userMessage: string): Promise<string> {
       "\n\n## STRUCTURED FACTS (verified numeric data — prefer these exact " +
       "figures and citations over any number mentioned in the wiki text " +
       "below when both cover the same thing)\n\n" +
-      sections.join("\n\n") +
-      "\n\nNote: this chat is text-only and cannot render a chart. If the " +
-      "user is asking for a chart, graph, or trend, answer with the figures " +
-      "above and also mention that a visual chart of this data is on the " +
-      "dashboard (the \"City Health\" link in the sidebar)."
+      sections.join("\n\n")
     );
   } catch (err) {
     console.warn("[chat] Structured facts unavailable:", (err as Error).message);
@@ -129,12 +125,26 @@ export async function POST(req: Request) {
         : "\n\n## WIKI KNOWLEDGE BASE\n\nNo wiki pages have been ingested yet. " +
           "Run `npm run ingest:seed` to populate the knowledge base.";
 
+    // Placed after contextBlock (up to 40K chars of wiki text) rather than
+    // inside structuredFactsBlock — an instruction buried mid-prompt, ahead
+    // of a large context dump, was reliably getting ignored in practice.
+    // Recency matters for instruction-following; putting it last and making
+    // it an imperative fixed that.
+    const chartPointer = structuredFactsBlock
+      ? "\n\n## IMPORTANT — CHART/GRAPH REQUESTS\nThis chat is text-only and " +
+        "cannot render a chart, even though the STRUCTURED FACTS above are " +
+        "chartable. If the user's question asks for a chart, graph, plot, " +
+        "or visualization, your answer MUST end with this exact line: " +
+        "\"You can see this as an interactive chart on your dashboard " +
+        "(the 'City Health' link in the sidebar).\""
+      : "";
+
     // ── 3. Stream response via provider-agnostic AI client ───────────────────
 
     const startedAt = Date.now();
     const ai = getAIProvider();
     const aiStream = ai.stream({
-      system: systemPrompt + structuredFactsBlock + contextBlock,
+      system: systemPrompt + structuredFactsBlock + contextBlock + chartPointer,
       maxTokens: 2048,
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as "user" | "assistant",

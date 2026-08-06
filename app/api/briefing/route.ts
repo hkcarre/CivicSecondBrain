@@ -11,7 +11,6 @@
  */
 
 import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
 import { verifyIngestAccess } from "@/lib/auth";
 import { generateBriefing } from "@/lib/briefing/generate";
 import {
@@ -33,12 +32,11 @@ export async function POST(req: Request): Promise<NextResponse> {
     const input = parseBriefingInput(body);
     const result = await generateBriefing(input);
 
-    // Bust the dashboard ISR cache so the new packet appears immediately
-    revalidatePath("/dashboard");
-
+    // Queued for review, not live yet — see /admin/review. Cache busting
+    // happens in /api/admin/review/[id] on approval, not here.
     return NextResponse.json({
       success: true,
-      message: `Briefing packet generated: ${result.itemCount} agenda item${result.itemCount !== 1 ? "s" : ""} briefed${result.truncated ? ` (of ${result.totalItems} — capped)` : ""}.`,
+      message: `Briefing packet queued for review: ${result.itemCount} agenda item${result.itemCount !== 1 ? "s" : ""} briefed${result.truncated ? ` (of ${result.totalItems} — capped)` : ""}.`,
       ...result,
     });
   } catch (err) {

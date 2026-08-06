@@ -1,22 +1,28 @@
-# CivicSecondBrain — Wiki Schema & Governing Document
+# Strata Civic Solutions — Wiki Schema & Governing Document
 
-> **City:** Schertz, Texas | **Owner:** City Council Members & Staff
+> **Scope:** Shared across every city deployment — not city-specific. The
+> actual current city comes from this deployment's NEXT_PUBLIC_CITY_NAME/
+> NEXT_PUBLIC_CITY_STATE env vars, not from this file. Examples below use
+> Schertz, TX (the first city this app was built for) purely to illustrate
+> the conventions; treat every Schertz-specific detail as an example, not
+> a universal fact.
 > **AI Engine:** Anthropic Claude | **Last Updated:** 2026-06-03
 >
 > This file governs the entire wiki/ layer. Every session and every
 > automated job MUST read this file first. It defines structure,
-> conventions, navigation files, and the three executable operations.
+> conventions, navigation files, and the core executable operations.
 
 ---
 
 ## 1. VAULT OVERVIEW
 
-**Purpose:** CivicSecondBrain is a persistent, AI-maintained knowledge base
-for the City of Schertz, TX. It transforms raw city documents into a
+**Purpose:** Strata Civic Solutions is a persistent, AI-maintained
+knowledge base for a city council. It transforms raw city documents into a
 structured wiki that council members can query via natural language, and
-that the AI continuously analyzes for recommendations.
+that the AI continuously analyzes for recommendations. (This section uses
+Schertz, TX as a worked example — see the Scope note above.)
 
-**Primary data source:** https://www.schertz.com/27/Government
+**Primary data source (example, Schertz):** https://www.schertz.com/27/Government
 
 **Document corpus includes:**
 - City Council meeting agendas and minutes (Laserfiche)
@@ -181,9 +187,11 @@ last_updated: YYYY-MM-DD
 4. If no source supports a claim, say so explicitly — never speculate
 5. Offer to file valuable answers back into `wiki/queries/`
 
-**Claude system prompt for QUERY:**
+**Claude system prompt for QUERY (illustrative — see the real, current
+version in app/lib/claude/client.ts's QUERY_SYSTEM_PROMPT, which is
+templated per-deployment rather than naming a city literally):**
 ```
-You are CivicSecondBrain, an AI assistant for the Schertz, TX City Council.
+You are Strata Civic Solutions, an AI assistant for the [city] City Council.
 You have access to a curated wiki of city documents updated through [DATE].
 Rules:
 - Every factual claim MUST include [SOURCE: filename, p.N]
@@ -265,17 +273,28 @@ last_updated: YYYY-MM-DD
 
 ---
 
-## 6. SCHERTZ-SPECIFIC ENTITY CONVENTIONS
+## 6. WORKED EXAMPLE — SCHERTZ'S ENTITY CONVENTIONS
 
-**Fiscal year:** City of Schertz FY runs October 1 – September 30.
-Tag all budget figures: `$X (FY2024)` = Oct 2023 – Sep 2024.
+**This whole section is one deployment's specific configuration, not a
+universal rule.** Every real deployment (Schertz, Von Ormy, or any city
+added later) has its own fiscal year, council structure, and board list —
+never assume Schertz's below apply elsewhere. The general RULE those
+deployments must each follow is: tag every budget figure with its actual
+fiscal year, e.g. `$X (FY2024)`, using whatever fiscal calendar that city
+actually runs (see the wiki content itself, never assume Oct–Sep).
 
-**Council structure:**
+**Schertz's fiscal year (example only):** City of Schertz FY runs
+October 1 – September 30. Tag all budget figures: `$X (FY2024)` = Oct
+2023 – Sep 2024.
+
+**Schertz's council structure (example only):**
 - Mayor + 6 Council Members (Places 1–6)
 - City Manager (appointed, non-voting)
 - City Attorney and City Secretary (staff roles)
 
-**14 Advisory Boards to track:**
+**Schertz's 14 advisory boards (example only — a smaller/newer city like
+Von Ormy may have a handful, not 14; read this from the wiki content
+itself per city, never hardcode a board list or count):**
 1. Planning & Zoning Commission (P&Z)
 2. Board of Adjustment
 3. Parks & Recreation Advisory Board

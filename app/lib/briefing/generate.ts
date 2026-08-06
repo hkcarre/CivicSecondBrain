@@ -30,11 +30,7 @@ import {
   buildWikiContext,
 } from "@/lib/wiki/reader";
 import { selectRelevantPages } from "@/lib/wiki/select";
-import {
-  writeBriefingPage,
-  updateWikiIndex,
-  appendToLog,
-} from "@/lib/wiki/writer";
+import { queueForReview } from "@/lib/wiki/pending-review";
 import {
   BriefingGenerationError,
   ITEM_CONTEXT_TOKENS,
@@ -46,7 +42,7 @@ import {
   slugify,
   type BriefingInput,
 } from "./helpers";
-import type { AgendaItem, BriefingResult } from "@/types";
+import type { AgendaItem, BriefingResult, WikiPage } from "@/types";
 
 export async function generateBriefing(
   input: BriefingInput
@@ -116,7 +112,11 @@ Return ONLY valid JSON.`,
     }
   }
 
-  // ── 4. Compose, save, index, log ────────────────────────────────────────
+  // ── 4. Compose, then queue for review ───────────────────────────────────
+  // A briefing packet is read minutes before a vote — exactly the kind of
+  // AI content that needs a human checkpoint, same as INGEST/LINT (see
+  // pending-review.ts). This used to call writeBriefingPage/updateWikiIndex/
+  // appendToLog directly, publishing live with no review step.
   const markdown = composeBriefingPacket({
     meetingDate,
     boardSlug: resolvedBoard,
@@ -127,29 +127,48 @@ Return ONLY valid JSON.`,
   });
 
   const title = `Meeting Briefing Packet — ${boardLabel(resolvedBoard)} — ${meetingDate}`;
-  const pagePath = writeBriefingPage(
-    meetingDate,
-    resolvedBoard,
+  const summary = `Briefing packet: ${items.length} agenda item${items.length !== 1 ? "s" : ""} for ${meetingDate} ${boardLabel(resolvedBoard)} meeting`;
+
+  // Mirrors writeBriefingPage's own slug logic exactly (app/lib/wiki/writer.ts)
+  // so the predicted path matches what approval will actually write.
+  const slug =
+    resolvedBoard
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "council";
+  const pagePath = `briefings/${meetingDate}-${slug}-briefing.md`;
+
+  const page: WikiPage = {
     title,
-    markdown,
-    [input.agendaUrl]
-  );
+    type: "wiki",
+    category: "briefing",
+    sources: [input.agendaUrl],
+    lastUpdated: meetingDate,
+    content: markdown,
+    path: pagePath,
+  };
 
-  updateWikiIndex([
-    {
-      path: pagePath,
-      summary: `Briefing packet: ${items.length} agenda item${items.length !== 1 ? "s" : ""} for ${meetingDate} ${boardLabel(resolvedBoard)} meeting`,
-      date: today,
-      sourceCount: 1,
-      category: "briefing",
-    },
-  ]);
-
-  appendToLog(`## [${today}] BRIEFING | ${meetingDate} ${resolvedBoard}
+  queueForReview({
+    title,
+    sourceUrl: input.agendaUrl,
+    preview: summary,
+    actions: [{ kind: "create-page", page }],
+    indexEntries: [
+      {
+        path: pagePath,
+        summary,
+        date: today,
+        sourceCount: 1,
+        category: "briefing",
+      },
+    ],
+    logEntry: `## [${today}] BRIEFING | ${meetingDate} ${resolvedBoard}
 **Agenda:** ${input.agendaUrl}
 **Items briefed:** ${items.length} of ${totalItems}${totalItems > items.length ? ` (capped at ${MAX_BRIEFING_ITEMS})` : ""}
 **Wiki pages consulted:** ${[...pagesConsulted].join(", ") || "none"}
-**Packet:** ${pagePath}`);
+**Packet:** ${pagePath}`,
+  });
 
   return {
     path: pagePath,

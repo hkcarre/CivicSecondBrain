@@ -6,73 +6,14 @@
  * Provider is controlled by AI_PROVIDER env var (anthropic | openai | gemini).
  */
 
-import { QUERY_SYSTEM_PROMPT } from "@/lib/claude/client";
 import { getAIProvider } from "@/lib/ai/provider";
 import { appendChatTurn } from "@/lib/chat-log";
 import { checkChatRateLimit, getClientIp } from "@/lib/rate-limit";
-import {
-  readWikiIndex,
-  readRelevantPages,
-  buildWikiContext,
-} from "@/lib/wiki/reader";
-import { selectRelevantPages } from "@/lib/wiki/select";
 import { appendToLog } from "@/lib/wiki/writer";
 import { appendMessage } from "@/lib/db/queries/conversations";
-import { getCurrentCityId } from "@/lib/db/cities";
-import { getAllMetricSeries, selectRelevantMetrics, type MetricSeries } from "@/lib/db/queries/metrics";
+import { buildChatSystemPrompt } from "@/lib/chat/system-prompt";
 
 export const runtime = "nodejs";
-
-const VALUE_TYPE_LABEL: Record<MetricSeries["valueType"], string> = {
-  adopted: "Adopted",
-  amended: "Amended",
-  actual: "Actual",
-  estimate: "Estimate",
-  projected: "Projected",
-};
-
-/**
- * Chat previously only ever answered numeric questions by re-deriving
- * figures from narrative wiki prose — a completely separate extraction
- * pass from the one that populates the `facts` table the dashboard's
- * charts read from (see vision-extraction.ts's own comment on why the two
- * are kept independent). The two could disagree. This gives chat access to
- * the same precise, reviewed numbers the charts use, so both surfaces cite
- * the same source of truth for a given figure.
- *
- * Fails silently to "" — numeric facts are a separately-configured layer
- * (Supabase) on top of the wiki chat otherwise reads from; a deployment
- * without it configured, or a city with no facts extracted yet, should
- * still get a working chat answer from wiki content alone.
- */
-async function buildStructuredFactsBlock(userMessage: string): Promise<string> {
-  try {
-    const cityId = await getCurrentCityId();
-    const allSeries = await getAllMetricSeries(cityId);
-    const relevant = selectRelevantMetrics(userMessage, allSeries);
-    if (relevant.length === 0) return "";
-
-    const sections = relevant.map((s) => {
-      const rows = s.points
-        .map(
-          (p) =>
-            `- ${p.period}: ${p.value} ${p.unit} [SOURCE: ${p.sourceCitation}]`
-        )
-        .join("\n");
-      return `### ${s.metricName} (${VALUE_TYPE_LABEL[s.valueType]})\n${rows}`;
-    });
-
-    return (
-      "\n\n## STRUCTURED FACTS (verified numeric data — prefer these exact " +
-      "figures and citations over any number mentioned in the wiki text " +
-      "below when both cover the same thing)\n\n" +
-      sections.join("\n\n")
-    );
-  } catch (err) {
-    console.warn("[chat] Structured facts unavailable:", (err as Error).message);
-    return "";
-  }
-}
 
 export async function POST(req: Request) {
   try {
@@ -106,47 +47,21 @@ export async function POST(req: Request) {
 
     const today = new Date().toISOString().split("T")[0];
 
-    // ── 1. Select relevant wiki pages ────────────────────────────────────────
+    // ── 1 & 2. Select relevant wiki pages + build the full system prompt ────
+    // (structured facts block, wiki context, chart-pointer instruction — see
+    // app/lib/chat/system-prompt.ts, shared with scripts/eval-chat.ts)
 
-    const indexEntries = readWikiIndex();
-    const relevantPaths = selectRelevantPages(userMessage, indexEntries);
-    const wikiPages = readRelevantPages(relevantPaths);
-    const wikiContext = buildWikiContext(wikiPages, 40_000);
-
-    // ── 2. Build system prompt ───────────────────────────────────────────────
-
-    const systemPrompt = QUERY_SYSTEM_PROMPT.replace("{DATE}", today);
-
-    const structuredFactsBlock = await buildStructuredFactsBlock(userMessage);
-
-    const contextBlock =
-      wikiPages.length > 0
-        ? `\n\n## WIKI KNOWLEDGE BASE\n\nThe following wiki pages are relevant to this query:\n\n${wikiContext}`
-        : "\n\n## WIKI KNOWLEDGE BASE\n\nNo wiki pages have been ingested yet. " +
-          "Run `npm run ingest:seed` to populate the knowledge base.";
-
-    // Placed after contextBlock (up to 40K chars of wiki text) rather than
-    // inside structuredFactsBlock — an instruction buried mid-prompt, ahead
-    // of a large context dump, was reliably getting ignored in practice.
-    // Recency matters for instruction-following; putting it last and making
-    // it an imperative fixed that.
-    const chartPointer = structuredFactsBlock
-      ? "\n\n## IMPORTANT — CHART/GRAPH REQUESTS\nThis chat is text-only and " +
-        "cannot render a chart, even though the STRUCTURED FACTS above are " +
-        "chartable. If the user's question asks for a chart, graph, plot, " +
-        "or visualization, your answer MUST end with this exact line, " +
-        "including the markdown link exactly as written (the chat UI " +
-        "renders [text](/path) as a clickable link): " +
-        "\"You can see this as an interactive chart on your " +
-        "[City Health dashboard](/dashboard).\""
-      : "";
+    const { system, relevantPaths, wikiPageCount } = await buildChatSystemPrompt(
+      userMessage,
+      today
+    );
 
     // ── 3. Stream response via provider-agnostic AI client ───────────────────
 
     const startedAt = Date.now();
     const ai = getAIProvider();
     const aiStream = ai.stream({
-      system: systemPrompt + structuredFactsBlock + contextBlock + chartPointer,
+      system,
       maxTokens: 2048,
       messages: messages.map((m: { role: string; content: string }) => ({
         role: m.role as "user" | "assistant",
@@ -163,7 +78,7 @@ export async function POST(req: Request) {
 **Question:** ${userMessage}
 **Wiki pages read:** ${relevantPaths.join(", ") || "none"}
 **Filed:** ${fileAnswer ? "pending" : "not filed"}
-**Gap noted:** ${wikiPages.length === 0 ? "No wiki pages ingested — run ingest:seed" : "none"}`;
+**Gap noted:** ${wikiPageCount === 0 ? "No wiki pages ingested — run ingest:seed" : "none"}`;
         appendToLog(logEntry);
       } catch {
         // Log write failures are non-fatal

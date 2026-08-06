@@ -101,6 +101,9 @@ function LoginForm() {
         <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
           It&rsquo;ll expire shortly — request a new one if you don&rsquo;t click it in time.
         </p>
+        <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+          Anyone who clicks this link signs in as you — don&rsquo;t forward it.
+        </p>
       </div>
     );
   }

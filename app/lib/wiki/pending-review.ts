@@ -4,10 +4,11 @@
  * ingestDocument() and /api/lint previously called writer.ts directly the
  * moment Claude's extraction passed schema validation — no human ever saw
  * the content before chat could cite it or a recommendation could reach
- * the dashboard, unlike the numeric facts table (which has a real
- * confidence-threshold + RLS review gate). This queues the exact same
- * writes instead, replaying them through the same writer.ts functions only
- * once a reviewer approves the item from /admin/review.
+ * the dashboard. This queues the exact same writes instead, replaying them
+ * through the same writer.ts functions only once a reviewer approves the
+ * item from /admin/review. The numeric facts table has the equivalent gate
+ * for flagged facts — see listFlaggedFacts()/reviewFact() in
+ * app/lib/db/facts.ts and the same /admin/review page.
  *
  * File-based (mirrors manifest.ts's pattern), not a database table — wiki
  * content lives on the filesystem/volume, so this queue does too.

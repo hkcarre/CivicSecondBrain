@@ -28,7 +28,25 @@
  * preload hook (same pattern load-env.cjs uses) — required because
  * reader.ts/writer.ts read WIKI_PATH as a module-level constant at import
  * time, so it must be set before this file's own imports resolve, not
- * from code inside this file.
+ * from code inside this file. The same hook also overrides
+ * NEXT_PUBLIC_CITY_NAME/STATE so buildChatSystemPrompt()'s structured-facts
+ * lookup fails cleanly instead of hitting a real city's live Supabase data
+ * (see load-eval-fixture.cjs for why that matters).
+ *
+ * Calls buildChatSystemPrompt() from app/lib/chat/system-prompt.ts — the
+ * exact function /api/chat uses — rather than reassembling the prompt
+ * inline. This file previously hand-built its own copy (QUERY_SYSTEM_PROMPT
+ * + a manually-constructed wiki context block) that silently fell out of
+ * sync with production: when the structured-facts block and the
+ * chart-pointer instruction were added to the route, nothing broke here,
+ * so the "5/5 passing" result kept looking green while no longer testing
+ * what was actually live. Sharing the function makes that impossible —
+ * change the assembly once, this suite picks it up automatically. Note
+ * this eval environment always resolves buildChatSystemPrompt() through
+ * its "structured facts unavailable" branch (see above) — the "STRUCTURED
+ * FACTS wins over conflicting wiki text" behavior itself is covered by a
+ * mocked unit test in chat-route.test.ts, not a real-model call here,
+ * since a real-model version would need a controlled fake facts table.
  *
  * Checks are heuristic (keyword/substring), not an LLM-as-judge — cheaper
  * and fast enough to run often, at the cost of being less precise than a
@@ -37,9 +55,7 @@
  */
 
 import fs from "fs";
-import { readWikiIndex, readRelevantPages, buildWikiContext } from "../app/lib/wiki/reader";
-import { selectRelevantPages } from "../app/lib/wiki/select";
-import { QUERY_SYSTEM_PROMPT } from "../app/lib/claude/client";
+import { buildChatSystemPrompt } from "../app/lib/chat/system-prompt";
 import { getAIProvider } from "../app/lib/ai/provider";
 
 interface EvalCase {
@@ -139,18 +155,11 @@ const CASES: EvalCase[] = [
 
 async function runCase(evalCase: EvalCase): Promise<boolean> {
   const today = new Date().toISOString().split("T")[0];
-  const indexEntries = readWikiIndex();
-  const relevantPaths = selectRelevantPages(evalCase.question, indexEntries);
-  const wikiPages = readRelevantPages(relevantPaths);
-  const wikiContext = buildWikiContext(wikiPages, 40_000);
-  const contextBlock =
-    wikiPages.length > 0
-      ? `\n\n## WIKI KNOWLEDGE BASE\n\nThe following wiki pages are relevant to this query:\n\n${wikiContext}`
-      : "\n\n## WIKI KNOWLEDGE BASE\n\nNo wiki pages have been ingested yet.";
+  const { system } = await buildChatSystemPrompt(evalCase.question, today);
 
   const ai = getAIProvider();
   const response = await ai.complete({
-    system: QUERY_SYSTEM_PROMPT.replace("{DATE}", today) + contextBlock,
+    system,
     prompt: evalCase.question,
     maxTokens: 1024,
   });

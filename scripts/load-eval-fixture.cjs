@@ -15,6 +15,20 @@ const fixtureDir = fs.mkdtempSync(path.join(os.tmpdir(), "eval-chat-wiki-"));
 process.env.WIKI_PATH = fixtureDir;
 process.env.EVAL_FIXTURE_DIR = fixtureDir; // so eval-chat.ts can clean it up on exit
 
+// Override whatever real city load-env.cjs's .env.local set — eval-chat.ts
+// now calls the real buildChatSystemPrompt(), which tries to resolve a
+// Supabase `cities` row for structured facts. Without this override, a
+// developer running `npm run eval:chat` with real Supabase credentials
+// configured would have the eval silently pull in real, live production
+// facts data alongside the synthetic fixture wiki — breaking the eval's
+// determinism/isolation (results could change over time as real data
+// changes). "Eval City, ZZ" guarantees no matching `cities` row exists, so
+// getCurrentCityId() always fails cleanly and buildStructuredFactsBlock()
+// falls back to "" via its own error handling, same as a real deployment
+// with no facts extracted yet.
+process.env.NEXT_PUBLIC_CITY_NAME = "Eval City";
+process.env.NEXT_PUBLIC_CITY_STATE = "ZZ";
+
 const INDEX_MD = `# Wiki Index
 > City: Eval City, TX | Last updated: 2026-01-01 | Pages: 1 | Sources ingested: 1
 

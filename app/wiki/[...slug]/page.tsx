@@ -27,7 +27,14 @@ export default async function WikiDetailPage({ params }: Props) {
   const rawPath = slug.join("/");
   const pagePath = rawPath.endsWith(".md") ? rawPath : `${rawPath}.md`;
 
-  const page = readWikiPage(pagePath);
+  // SCHEMA.md is a committed dev/pipeline reference doc (wiki conventions
+  // for the LLM extraction pipeline, not end-user content) — unlike
+  // index.md it's never rewritten per-city (see writer.ts's
+  // updateWikiIndex()), so it still carries the original single-tenant
+  // example content verbatim. Treat it as not found rather than showing
+  // another city's name/governance facts to this deployment's users.
+  const isSchemaRequest = pagePath.toLowerCase() === "schema.md";
+  const page = isSchemaRequest ? null : readWikiPage(pagePath);
   if (!page) {
     return (
       <div className="h-full overflow-y-auto">

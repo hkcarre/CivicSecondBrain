@@ -32,8 +32,11 @@ const BOARD_OPTIONS = [
   "animal-services",
   "senior-center",
   "investment-advisory",
+  // "keep-schertz-beautiful" intentionally omitted from this UI list — it's
+  // a legacy alias kept in the BOARD_NAMES validation union (app/types) only
+  // so old Schertz manifests still parse; a new document ingested on any
+  // deployment should always use the generic "keep-city-beautiful".
   "keep-city-beautiful",
-  "keep-schertz-beautiful",
   "sslgc",
   "housing-authority",
   "tirz",

@@ -48,10 +48,12 @@ export interface MetricSummary {
  * value_types within the returned array; call it twice (and render two
  * clearly-labeled series) if you need e.g. adopted vs. actual compared.
  *
- * Only unflagged, non-rejected facts are returned — anything pending
- * review or flagged for disagreement stays out of charts until approved
- * (mirrors the RLS policy; enforced here too since this uses the
- * service-role client, which bypasses RLS).
+ * Only unflagged-or-approved, non-rejected facts are returned — anything
+ * flagged for low confidence or disagreement stays out of charts until a
+ * human reviewer approves it via /admin (see reviewFact() in
+ * app/lib/db/facts.ts), and never shows up here just because it was
+ * flagged=false originally (mirrors the RLS policy; enforced here too
+ * since this uses the service-role client, which bypasses RLS).
  */
 export async function getMetricSeries(
   cityId: string,
@@ -65,7 +67,7 @@ export async function getMetricSeries(
     .eq("city_id", cityId)
     .eq("metric_id", metricId)
     .eq("value_type", valueType)
-    .eq("flagged", false)
+    .or("flagged.eq.false,review_status.eq.approved")
     .neq("review_status", "rejected")
     .order("period", { ascending: true });
 
@@ -98,7 +100,7 @@ export async function listAvailableMetrics(cityId: string): Promise<MetricSummar
     .from("facts")
     .select("metric_id, metric_name, unit, value_type, period")
     .eq("city_id", cityId)
-    .eq("flagged", false)
+    .or("flagged.eq.false,review_status.eq.approved")
     .neq("review_status", "rejected")
     .order("period", { ascending: false });
 

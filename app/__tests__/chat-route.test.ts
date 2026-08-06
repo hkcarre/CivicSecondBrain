@@ -288,6 +288,9 @@ describe("POST /api/chat — structured facts (numeric metrics table)", () => {
     expect(capturedSystem).toContain("Property Tax Rate");
     expect(capturedSystem).toContain("0.12");
     expect(capturedSystem).toContain("[SOURCE: FY2026 Audit, p.4]");
+    // Chat can't render a chart itself — the model should be told to point
+    // chart/trend questions at the dashboard, which plots this same data.
+    expect(capturedSystem).toContain("dashboard");
   });
 
   it("omits the STRUCTURED FACTS block when numeric facts aren't configured for this deployment", async () => {

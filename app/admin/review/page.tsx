@@ -6,6 +6,14 @@ import { getCurrentCityId } from "@/lib/db/cities";
 import { ReviewQueue } from "@/components/admin/ReviewQueue";
 import { FactsReviewQueue } from "@/components/admin/FactsReviewQueue";
 
+// Neither listPendingReviews() (plain fs.readFileSync) nor listFlaggedFacts()
+// (a Supabase client call) uses a Next-recognized dynamic API, so without
+// this Next had no signal that this page needs to re-render per request —
+// it silently prerendered the review queue ONCE at build time (always
+// empty then) and served that frozen snapshot forever after. A queue of
+// actions waiting on a human is exactly the page that must never be stale.
+export const dynamic = "force-dynamic";
+
 /**
  * Facts review is a separately-configured layer (Supabase) on top of the
  * file-based wiki review queue — a deployment without it set up, or a city

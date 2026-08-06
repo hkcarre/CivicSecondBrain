@@ -8,7 +8,12 @@ import { AdminIngestPanel } from "../components/admin/AdminIngestPanel";
 import { ManifestTable } from "../components/admin/ManifestTable";
 import { AdminLogoutButton } from "../components/admin/AdminLogoutButton";
 
-export const revalidate = 60;
+// Was `revalidate = 60` — up to 60s stale is exactly what just caused a
+// confusing mismatch: this page's badge count updated on its own cadence
+// while /admin/review (frozen at build time — see that page's own comment)
+// showed something completely different. Always rendering fresh here too
+// means the badge and the page it links to can never disagree again.
+export const dynamic = "force-dynamic";
 
 /** See app/admin/review/page.tsx's loadFlaggedFacts — same fail-silently pattern. */
 async function countFlaggedFacts(): Promise<number> {

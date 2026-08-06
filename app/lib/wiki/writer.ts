@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import type { WikiPage, Recommendation } from "@/types";
+import { getCityFull } from "../env";
 
 const WIKI_PATH = process.env.WIKI_PATH ?? "./wiki";
 
@@ -184,6 +185,16 @@ export function updateWikiIndex(
   const today = new Date().toISOString().split("T")[0];
   content = content.replace(/Last updated: [\d-]+/, `Last updated: ${today}`);
 
+  // The seed file ships with "City: Schertz, TX" and "Sources ingested: 0"
+  // as literal placeholder text (wiki/index.md in the repo) — every other
+  // deployment's index.md was left showing that exact text forever, since
+  // nothing previously rewrote it. City is re-derived from this
+  // deployment's own env pair (same source every prompt/UI string already
+  // uses); sources-ingested is recomputed from log.md the same way the
+  // dashboard's own stat is (see app/lib/wiki/dashboard-data.ts).
+  content = content.replace(/City: [^|]+\|/, `City: ${getCityFull()} |`);
+  content = content.replace(/Sources ingested: \d+/, `Sources ingested: ${countIngestedSources()}`);
+
   // Remove the "empty" placeholder lines
   content = content.replace(/\| \*\(empty[^)]+\)\* \| \| \| \|\n/g, "");
 
@@ -227,6 +238,14 @@ export function updateWikiIndex(
   content = content.replace(/Pages: \d+/, `Pages: ${rowCount}`);
 
   fs.writeFileSync(indexPath, content, "utf-8");
+}
+
+/** Same counting logic as app/lib/wiki/dashboard-data.ts's computeStats() — kept in sync deliberately, not imported, since that module reads other dashboard-only state this one has no reason to depend on. */
+function countIngestedSources(): number {
+  const logPath = path.join(WIKI_PATH, "log.md");
+  if (!fs.existsSync(logPath)) return 0;
+  const log = fs.readFileSync(logPath, "utf-8");
+  return (log.match(/^## \[.+\] INGEST/gm) ?? []).length;
 }
 
 // ─── Write a saved query page ─────────────────────────────────────────────
